@@ -15,6 +15,7 @@ const BENCHMARK_EXPECTATIONS = {
     totalMarks: 70,
   },
 } as const;
+const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -22,9 +23,9 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
-async function getPaperSnapshot(year: 2023 | 2024) {
+async function getPaperSnapshot(paperId: string) {
   const paper = await db.paper.findFirst({
-    where: { year },
+    where: { id: paperId },
     include: {
       questions: {
         orderBy: {
@@ -34,13 +35,13 @@ async function getPaperSnapshot(year: 2023 | 2024) {
     },
   });
 
-  assert(paper, `Missing imported paper for ${year}`);
+  assert(paper, `Missing imported paper ${paperId}`);
 
   return paper;
 }
 
-async function assertPaperIntegrity(year: 2023 | 2024) {
-  const paper = await getPaperSnapshot(year);
+async function assertPaperIntegrity(year: 2023 | 2024, paperId: string) {
+  const paper = await getPaperSnapshot(paperId);
   const expectation = BENCHMARK_EXPECTATIONS[year];
 
   assert(
@@ -52,13 +53,17 @@ async function assertPaperIntegrity(year: 2023 | 2024) {
     `${year} imported ${paper.totalMarks} total marks, expected ${expectation.totalMarks}`,
   );
 
-  const emptyMarkSchemes = paper.questions
-    .filter((question) => question.markSchemeText.trim().length === 0)
+  const invalidMarkSchemes = paper.questions
+    .filter(
+      (question) =>
+        question.markSchemeText.trim().length === 0 ||
+        PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
+    )
     .map((question) => question.questionKey);
 
   assert(
-    emptyMarkSchemes.length === 0,
-    `${year} imported empty mark scheme text for ${emptyMarkSchemes.join(", ")}`,
+    invalidMarkSchemes.length === 0,
+    `${year} imported invalid mark scheme text for ${invalidMarkSchemes.join(", ")}`,
   );
 
   const multiPageQuestions = paper.questions.filter((question) => question.pageEnd > question.pageStart);
@@ -85,6 +90,10 @@ async function assertPaperIntegrity(year: 2023 | 2024) {
     }
   }
 
+  for (const question of paper.questions) {
+    await access(question.primaryCropPath);
+  }
+
   return paper;
 }
 
@@ -107,14 +116,17 @@ if (dbPushExitCode !== 0) {
   throw new Error("Failed to apply Prisma schema before smoke import");
 }
 
+const importedPaperIds: string[] = [];
+
 for (const year of [2023, 2024] as const) {
   const initialResult = await importAqaPhysicsPaper1HigherBenchmark(year);
-  const initialPaper = await assertPaperIntegrity(year);
+  importedPaperIds.push(initialResult.paperId);
+  const initialPaper = await assertPaperIntegrity(year, initialResult.paperId);
   const initialQuestionIds = new Map(
     initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
   );
   const repeatResult = await importAqaPhysicsPaper1HigherBenchmark(year);
-  const repeatedPaper = await assertPaperIntegrity(year);
+  const repeatedPaper = await assertPaperIntegrity(year, repeatResult.paperId);
 
   assert(
     initialResult.paperId === repeatResult.paperId,
@@ -137,7 +149,7 @@ for (const year of [2023, 2024] as const) {
   }
 }
 
-const results = await Promise.all([getPaperSnapshot(2023), getPaperSnapshot(2024)]);
+const results = await Promise.all(importedPaperIds.map((paperId) => getPaperSnapshot(paperId)));
 
 for (const paper of results) {
   console.log(

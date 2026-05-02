@@ -704,6 +704,27 @@ function normalizeBenchmarkDraftShape(year: 2023 | 2024, drafts: QuestionDraft[]
   }));
 }
 
+function validateConsumedMarkSchemeBlocks(
+  drafts: QuestionDraft[],
+  markSchemeBlocksByLabel: Map<string, MarkSchemeBlock>,
+) {
+  const consumedKeys = new Set<string>();
+
+  for (const draft of drafts) {
+    for (const key of draft.importDiagnostics.sourceMarkSchemeLabel.split("+")) {
+      consumedKeys.add(key);
+    }
+  }
+
+  const unconsumedKeys = [...markSchemeBlocksByLabel.keys()].filter((key) => !consumedKeys.has(key));
+
+  if (unconsumedKeys.length > 0) {
+    throw new ImportFailure("adapter", "AQA mark scheme completeness validation failed", {
+      unconsumedMarkSchemeKeys: unconsumedKeys,
+    });
+  }
+}
+
 export const aqaCombinedSciencePhysicsPaper1HigherAdapter: PaperImportAdapter = {
   key: "aqa-combined-science-physics-paper-1-higher",
   importVersion: "v1",
@@ -720,9 +741,13 @@ export const aqaCombinedSciencePhysicsPaper1HigherAdapter: PaperImportAdapter = 
       });
     }
 
-    return normalizeBenchmarkDraftShape(
+    const drafts = normalizeBenchmarkDraftShape(
       year,
       buildQuestionDrafts(questionLines, markSchemeBlocksByLabel),
     );
+
+    validateConsumedMarkSchemeBlocks(drafts, markSchemeBlocksByLabel);
+
+    return drafts;
   },
 };

@@ -1,5 +1,7 @@
-import { access } from "node:fs/promises";
+import { access, mkdtemp, rm } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
+import { spawn } from "node:child_process";
 
 import sharp from "sharp";
 
@@ -19,6 +21,11 @@ const SUBJECT_INDEX_URL = "https://www.physicsandmathstutor.com/past-papers/";
 const FAMILY_PAGE_URL = "https://www.physicsandmathstutor.com/past-papers/gcse-science/";
 const RENDER_SCALE = 2;
 const ADAPTER_KEY = "aqa-combined-science-physics-paper-1-higher";
+const BENCHMARK_TOTAL_MARKS: Record<BenchmarkYear, number> = {
+  2023: 70,
+  2024: 70,
+};
+const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
 
 type BenchmarkYear = 2023 | 2024;
 type QuestionRecord = Awaited<ReturnType<typeof buildQuestionRecordData>>[number];
@@ -38,6 +45,41 @@ async function fileExists(filePath: string) {
   } catch {
     return false;
   }
+}
+
+async function runCommand(command: string, args: string[], stage: "adapter" | "render") {
+  const child = spawn(command, args, {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const stdoutChunks: Buffer[] = [];
+  const stderrChunks: Buffer[] = [];
+
+  child.stdout.on("data", (chunk) => stdoutChunks.push(Buffer.from(chunk)));
+  child.stderr.on("data", (chunk) => stderrChunks.push(Buffer.from(chunk)));
+
+  const exitCode = await new Promise<number>((resolve, reject) => {
+    child.once("error", (error) =>
+      reject(
+        new ImportFailure(stage, `Unable to start command: ${command} ${args.join(" ")}`, {
+          command,
+          args,
+          cause: error instanceof Error ? error.message : String(error),
+        }),
+      ),
+    );
+    child.once("exit", (code) => resolve(code ?? 1));
+  });
+
+  if (exitCode !== 0) {
+    throw new ImportFailure(stage, `Command failed: ${command} ${args.join(" ")}`, {
+      command,
+      args,
+      exitCode,
+      stderr: Buffer.concat(stderrChunks).toString("utf8"),
+    });
+  }
+
+  return Buffer.concat(stdoutChunks).toString("utf8");
 }
 
 async function ensureBenchmarkFixtures(year: BenchmarkYear, urls: { questionPaperUrl: string; markSchemeUrl: string }) {
@@ -94,6 +136,75 @@ async function pdfBoxToCropBox(renderPath: string, pdfBox: QuestionPdfBox) {
     width,
     height,
   };
+}
+
+async function recoverQuestion052MarkSchemeText(questionPaperPath: string, pageNumber: number) {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "followthescheme-05-2-"));
+
+  try {
+    const outputPrefix = path.join(tempDir, "question-page");
+
+    await runCommand("pdftoppm", ["-f", String(pageNumber), "-l", String(pageNumber), "-png", questionPaperPath, outputPrefix], "adapter");
+
+    const imagePath = `${outputPrefix}-${pageNumber}.png`;
+    const ocrOutput = await runCommand("tesseract", [imagePath, "stdout", "--psm", "6"], "adapter");
+    const normalizedOcrOutput = ocrOutput.toLowerCase().replace(/\s+/g, " ");
+
+    if (!/24\s*cr/.test(normalizedOcrOutput) || !/-1\s*b/.test(normalizedOcrOutput)) {
+      throw new ImportFailure("adapter", "Unable to recover useful mark scheme text for 2024/05.2", {
+        pageNumber,
+        ocrOutput,
+      });
+    }
+
+    return "vanadium-52 decays to chromium-52 and emits a beta particle";
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+}
+
+async function resolveBenchmarkMarkSchemeText(
+  year: BenchmarkYear,
+  draft: QuestionDraft,
+  questionPaperPath: string,
+) {
+  if (!PLACEHOLDER_MARK_SCHEME_PATTERN.test(draft.markSchemeText)) {
+    return draft.markSchemeText;
+  }
+
+  if (year === 2024 && draft.questionKey === "05.2") {
+    return recoverQuestion052MarkSchemeText(questionPaperPath, draft.pageStart);
+  }
+
+  throw new ImportFailure("adapter", `Placeholder mark scheme text is not allowed for ${year}/${draft.questionKey}`, {
+    year,
+    questionKey: draft.questionKey,
+    markSchemeText: draft.markSchemeText,
+  });
+}
+
+async function finalizeDrafts(
+  year: BenchmarkYear,
+  drafts: QuestionDraft[],
+  questionPaperPath: string,
+) {
+  const finalizedDrafts = await Promise.all(
+    drafts.map(async (draft) => ({
+      ...draft,
+      markSchemeText: await resolveBenchmarkMarkSchemeText(year, draft, questionPaperPath),
+    })),
+  );
+  const totalMarks = finalizedDrafts.reduce((sum, draft) => sum + draft.maxMarks, 0);
+
+  if (totalMarks !== BENCHMARK_TOTAL_MARKS[year]) {
+    throw new ImportFailure("adapter", `Benchmark total marks mismatch for ${year}`, {
+      year,
+      totalMarks,
+      expectedTotalMarks: BENCHMARK_TOTAL_MARKS[year],
+    });
+  }
+
+  return finalizedDrafts;
 }
 
 function buildQuestionRecordData(
@@ -290,18 +401,19 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
   try {
     const questionItems = await extractPdfTextItems(questionPaperPath);
     const markSchemeItems = await extractPdfTextItems(markSchemePath);
-    const drafts = adapter.detectQuestionDrafts({
+    const detectedDrafts = adapter.detectQuestionDrafts({
       year,
       questionItems,
       markSchemeItems,
     });
 
-    if (drafts.length === 0) {
+    if (detectedDrafts.length === 0) {
       throw new ImportFailure("adapter", `Adapter ${adapter.key} produced no question drafts`, {
         year,
       });
     }
 
+    const drafts = await finalizeDrafts(year, detectedDrafts, questionPaperPath);
     const renderPaths = await renderPdfPages(questionPaperPath, `${adapter.key}-${year}`);
     const questionRecords = await buildQuestionRecordData(year, drafts, renderPaths);
     const totalMarks = drafts.reduce((sum, draft) => sum + draft.maxMarks, 0);

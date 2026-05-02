@@ -119,4 +119,38 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
       }),
     ).toThrow("incomplete output");
   });
+
+  it("fails fast when parsed mark scheme blocks are left unconsumed", () => {
+    const questionItems: TextItem[] = [
+      item(3, "0", 52.7, 707.9),
+      item(3, "1", 69.4, 707.9),
+      item(3, ".", 82.4, 707.9),
+      item(3, "1", 92.6, 707.9),
+      item(3, "Which of the following is also a renewable energy resource?", 114.8, 707.0, 320),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(7, "01.1", 67.3, 675.7, 24),
+      item(7, "geothermal", 113.2, 675.7, 64),
+      item(7, "1", 466.2, 675.7, 8),
+      item(7, "01.2", 67.3, 573.7, 24),
+      item(7, "36 x 10^9 J", 113.2, 573.7, 78),
+      item(7, "1", 466.2, 573.7, 8),
+      item(8, "Total Question 1 2", 49.5, 75.7, 96),
+    ];
+
+    expect(() =>
+      aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+        year: 2023,
+        questionItems,
+        markSchemeItems,
+      }),
+    ).toThrow(ImportFailure);
+    expect(() =>
+      aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+        year: 2023,
+        questionItems,
+        markSchemeItems,
+      }),
+    ).toThrow("completeness validation failed");
+  });
 });
