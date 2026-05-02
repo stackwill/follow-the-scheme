@@ -16,13 +16,21 @@ const NUMBERING_MAX_X = 105;
 const QUESTION_CONTENT_MIN_X = 110;
 const QUESTION_CONTENT_MAX_X = 490;
 const QUESTION_CROP_MAX_X = 535;
+const QUESTION_CROP_LEFT = 40;
+const QUESTION_CROP_RIGHT = 555;
+const QUESTION_FOOTER_CUTOFF_Y = 140;
+const QUESTION_PAGE_TOP_LIMIT = 804;
+const QUESTION_PAGE_NUMBER_MIN_Y = 790;
+const QUESTION_PAGE_NUMBER_MIN_X = 250;
+const QUESTION_PAGE_NUMBER_MAX_X = 320;
+const QUESTION_FOOTER_NUMBER_MAX_Y = 145;
+const QUESTION_FOOTER_NUMBER_MIN_X = 530;
+const QUESTION_START_BOTTOM_PADDING = 22;
 const MARK_SCHEME_CONTENT_MIN_X = 100;
 const MARK_SCHEME_CONTENT_MAX_X = 450;
 const MARK_COLUMN_MIN_X = 440;
 const MARK_COLUMN_MAX_X = 480;
-const MIN_BOX_WIDTH = 280;
 const MIN_BOX_HEIGHT = 120;
-const BOX_PADDING_X = 18;
 const BOX_PADDING_Y = 18;
 const MARK_RANGE_PATTERN = /^(\d+)[-\u2010-\u2015](\d+)$/;
 
@@ -130,9 +138,25 @@ function isQuestionPaperBoilerplate(line: Line) {
     return true;
   }
 
+  if (
+    /^\d+$/.test(text) &&
+    line.y >= QUESTION_PAGE_NUMBER_MIN_Y &&
+    line.minX >= QUESTION_PAGE_NUMBER_MIN_X &&
+    line.maxX <= QUESTION_PAGE_NUMBER_MAX_X
+  ) {
+    return true;
+  }
+
+  if (/^\d+$/.test(text) && line.y <= QUESTION_FOOTER_NUMBER_MAX_Y && line.minX >= QUESTION_FOOTER_NUMBER_MIN_X) {
+    return true;
+  }
+
   return (
+    text === "pmt" ||
+    (text === "box" && line.minX > 540) ||
     text.includes("do not write") ||
     text.includes("outside the box") ||
+    (text.includes("outside the") && line.minX > 540) ||
     text.includes("turn over") ||
     text.includes("question ") && text.includes("continues on the next page") ||
     text.includes("copyright") ||
@@ -494,43 +518,37 @@ function buildMarkSchemeBlocks(lines: Line[]) {
   };
 }
 
-function buildPrimaryPdfBox(lines: Line[], pageNumber: number) {
-  return buildPdfBoxForPage(lines, pageNumber);
-}
-
-function buildPdfBoxForPage(lines: Line[], pageNumber: number) {
+function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null = null) {
   const boxItems = lines
-    .filter((line) => line.pageNumber === pageNumber)
     .flatMap((line) => line.items)
     .filter((item) => item.x <= QUESTION_CROP_MAX_X);
 
   if (boxItems.length === 0) {
     return {
-      left: 48,
-      right: 48 + MIN_BOX_WIDTH,
+      left: QUESTION_CROP_LEFT,
+      right: QUESTION_CROP_RIGHT,
       top: 760,
       bottom: 760 - MIN_BOX_HEIGHT,
     } satisfies QuestionPdfBox;
   }
 
-  const minX = Math.min(...boxItems.map((item) => item.x));
-  const maxX = Math.max(...boxItems.map((item) => item.x + item.width));
-  const minY = Math.min(...boxItems.map((item) => item.y));
   const maxY = Math.max(...boxItems.map((item) => item.y + item.height));
-  const paddedLeft = Math.max(0, minX - BOX_PADDING_X);
-  const paddedRight = Math.max(paddedLeft + MIN_BOX_WIDTH, maxX + BOX_PADDING_X);
-  const paddedBottom = Math.max(0, minY - BOX_PADDING_Y);
-  const paddedTop = Math.max(paddedBottom + MIN_BOX_HEIGHT, maxY + BOX_PADDING_Y);
+  const nextQuestionBottom =
+    nextQuestionStartLine === null
+      ? QUESTION_FOOTER_CUTOFF_Y
+      : nextQuestionStartLine.y + Math.max(...nextQuestionStartLine.items.map((item) => item.height), 0) + QUESTION_START_BOTTOM_PADDING;
+  const paddedTop = Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, nextQuestionBottom + MIN_BOX_HEIGHT));
+  const paddedBottom = Math.max(0, Math.min(nextQuestionBottom, paddedTop - MIN_BOX_HEIGHT));
 
   return {
-    left: paddedLeft,
-    right: paddedRight,
+    left: QUESTION_CROP_LEFT,
+    right: QUESTION_CROP_RIGHT,
     top: paddedTop,
     bottom: paddedBottom,
   } satisfies QuestionPdfBox;
 }
 
-function buildSupportingPdfBoxes(lines: Line[], pageStart: number, pageEnd: number) {
+function buildSupportingPdfBoxes(lines: Line[], pageStart: number, pageEnd: number, nextStart: QuestionStart | null) {
   const supportingPdfBoxes: SupportingPdfBox[] = [];
 
   for (let pageNumber = pageStart + 1; pageNumber <= pageEnd; pageNumber += 1) {
@@ -542,7 +560,7 @@ function buildSupportingPdfBoxes(lines: Line[], pageStart: number, pageEnd: numb
 
     supportingPdfBoxes.push({
       pageNumber,
-      ...buildPdfBoxForPage(lines, pageNumber),
+      ...buildPageBandPdfBox(pageLines, nextStart?.line.pageNumber === pageNumber ? nextStart.line : null),
     });
   }
 
@@ -568,7 +586,8 @@ function buildQuestionDrafts(
   const fatalErrors: string[] = [];
 
   starts.forEach((start, index) => {
-    const nextStartLineIndex = starts[index + 1]?.lineIndex ?? filteredQuestionLines.length;
+    const nextStart = starts[index + 1] ?? null;
+    const nextStartLineIndex = nextStart?.lineIndex ?? filteredQuestionLines.length;
 
     if (start.kind === "main") {
       currentMainContext = {
@@ -597,7 +616,7 @@ function buildQuestionDrafts(
         ? currentMainContext.lines
         : [];
     const relevantLines = [...contextLines, ...segmentLines];
-    const supportingPdfBoxes = buildSupportingPdfBoxes(relevantLines, pageStart, pageEnd);
+    const supportingPdfBoxes = buildSupportingPdfBoxes(relevantLines, pageStart, pageEnd, nextStart);
 
     if (!markSchemeBlock.markSchemeText.trim()) {
       fatalErrors.push(`empty mark scheme text for ${start.label.label}`);
@@ -616,7 +635,10 @@ function buildQuestionDrafts(
       markSchemeNotes: markSchemeBlock.notes.join("\n"),
       pageStart,
       pageEnd,
-      primaryPdfBox: buildPrimaryPdfBox(relevantLines, pageStart),
+      primaryPdfBox: buildPageBandPdfBox(
+        relevantLines.filter((line) => line.pageNumber === pageStart),
+        nextStart?.line.pageNumber === pageStart ? nextStart.line : null,
+      ),
       supportingPdfBoxes,
       importDiagnostics: {
         adapterKey: aqaCombinedSciencePhysicsPaper1HigherAdapter.key,

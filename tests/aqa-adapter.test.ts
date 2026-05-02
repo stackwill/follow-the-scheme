@@ -153,4 +153,37 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
       }),
     ).toThrow("completeness validation failed");
   });
+
+  it("ignores footer-only continuation noise and keeps raster-answer crops on the primary page", () => {
+    const questionItems: TextItem[] = [
+      item(20, "0", 52.4, 687.8),
+      item(20, "5", 69.1, 687.8),
+      item(20, ".", 82.3, 687.0),
+      item(20, "2", 92.6, 687.8),
+      item(20, "Vanadium-52 (V) decays by emitting beta particles.", 114.8, 687.0, 280),
+      item(20, "What is the correct nuclear equation for this process?", 114.8, 661.8, 280),
+      item(20, "Tick one box.", 114.8, 635.8, 96),
+      item(21, "10", 553.8, 126.1, 16),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(15, "05.2", 67.3, 675.7, 24),
+      item(15, "beta particle emitted and chromium-52 formed", 113.2, 675.7, 240),
+      item(15, "1", 466.2, 675.7, 8),
+      item(16, "Total Question 5 1", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2024,
+      questionItems,
+      markSchemeItems,
+    });
+
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0]?.questionKey).toBe("05.2");
+    expect(drafts[0]?.pageStart).toBe(20);
+    expect(drafts[0]?.pageEnd).toBe(20);
+    expect(drafts[0]?.supportingPdfBoxes).toEqual([]);
+    expect((drafts[0]?.primaryPdfBox.right ?? 0) - (drafts[0]?.primaryPdfBox.left ?? 0)).toBeGreaterThan(500);
+    expect((drafts[0]?.primaryPdfBox.top ?? 0) - (drafts[0]?.primaryPdfBox.bottom ?? 0)).toBeGreaterThan(500);
+  });
 });
