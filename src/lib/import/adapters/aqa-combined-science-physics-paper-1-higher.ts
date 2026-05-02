@@ -23,6 +23,7 @@ const MIN_BOX_WIDTH = 280;
 const MIN_BOX_HEIGHT = 120;
 const BOX_PADDING_X = 18;
 const BOX_PADDING_Y = 18;
+const MARK_RANGE_PATTERN = /^(\d+)[-\u2010-\u2015](\d+)$/;
 
 type Line = {
   pageNumber: number;
@@ -319,6 +320,47 @@ function buildMarkSchemeText(lines: Line[]) {
     .join("\n");
 }
 
+function isLevelDescriptorPrelude(line: Line) {
+  if (parseMarkSchemeLabel(line) || parseTotalQuestionLine(line) || isMarkSchemeBoilerplate(line)) {
+    return false;
+  }
+
+  const hasMarkColumnValue = line.items.some((item) => {
+    if (item.x < MARK_COLUMN_MIN_X || item.x > MARK_COLUMN_MAX_X) {
+      return false;
+    }
+
+    return /^(\d+)$/.test(item.text.replace(/\s+/g, "")) || MARK_RANGE_PATTERN.test(item.text.replace(/\s+/g, ""));
+  });
+
+  return /\bLevel\s+\d+/i.test(line.rawText) || hasMarkColumnValue;
+}
+
+function collectMarkSchemePrelude(lines: Line[], labelIndex: number) {
+  const prelude: Line[] = [];
+
+  for (let cursor = labelIndex - 1; cursor >= 0; cursor -= 1) {
+    const candidate = lines[cursor];
+    const nextLine = lines[cursor + 1];
+
+    if (candidate.pageNumber !== nextLine.pageNumber) {
+      break;
+    }
+
+    if (candidate.y - nextLine.y > 12) {
+      break;
+    }
+
+    if (!isLevelDescriptorPrelude(candidate)) {
+      break;
+    }
+
+    prelude.unshift(candidate);
+  }
+
+  return prelude;
+}
+
 function computeBlockMaxMarks(lines: Line[]) {
   const rangeMarks: number[] = [];
   const singleMarks: number[] = [];
@@ -330,7 +372,7 @@ function computeBlockMaxMarks(lines: Line[]) {
       }
 
       const compactText = item.text.replace(/\s+/g, "");
-      const rangeMatch = compactText.match(/^(\d+)[-\u2013](\d+)$/);
+      const rangeMatch = compactText.match(MARK_RANGE_PATTERN);
 
       if (rangeMatch) {
         rangeMarks.push(Number(rangeMatch[2]));
@@ -357,66 +399,59 @@ function computeBlockMaxMarks(lines: Line[]) {
 function buildMarkSchemeBlocks(lines: Line[]) {
   const filteredLines = lines.filter((line) => !isMarkSchemeBoilerplate(line));
   const totalsByMainKey = new Map<string, number>();
-  const blocks: MarkSchemeBlock[] = [];
-  let currentBlockLabel: string | null = null;
-  let currentBlockLines: Line[] = [];
+  const blockStarts: Array<{ label: string; startIndex: number; labelIndex: number }> = [];
+  const totalLineIndices: number[] = [];
 
-  function flushCurrentBlock() {
-    if (!currentBlockLabel) {
-      return;
-    }
-
-    const mainKey = currentBlockLabel.split(".")[0];
-    const markSchemeText = buildMarkSchemeText(currentBlockLines);
-    const maxMarks = computeBlockMaxMarks(currentBlockLines);
-    const warnings: string[] = [];
-
-    if (!markSchemeText) {
-      warnings.push(`no mark scheme text extracted for ${currentBlockLabel}`);
-    }
-
-    if (maxMarks <= 0) {
-      warnings.push(`no positive max mark extracted for ${currentBlockLabel}`);
-    }
-
-    blocks.push({
-      label: currentBlockLabel,
-      mainKey,
-      lines: currentBlockLines,
-      markSchemeText,
-      maxMarks,
-      notes: [],
-      warnings,
-    });
-
-    currentBlockLabel = null;
-    currentBlockLines = [];
-  }
-
-  for (const line of filteredLines) {
+  filteredLines.forEach((line, index) => {
     const total = parseTotalQuestionLine(line);
 
     if (total) {
       totalsByMainKey.set(total.mainKey, total.totalMarks);
-      flushCurrentBlock();
-      continue;
+      totalLineIndices.push(index);
+      return;
     }
 
     const label = parseMarkSchemeLabel(line);
 
     if (label) {
-      flushCurrentBlock();
-      currentBlockLabel = label;
-      currentBlockLines = [line];
-      continue;
+      blockStarts.push({
+        label,
+        startIndex: index - collectMarkSchemePrelude(filteredLines, index).length,
+        labelIndex: index,
+      });
+    }
+  });
+  const blocks = blockStarts.map((blockStart, index) => {
+    const nextBlockStartIndex = blockStarts[index + 1]?.startIndex ?? filteredLines.length;
+    const nextTotalLineIndex =
+      totalLineIndices.find(
+        (candidateIndex) =>
+          candidateIndex > blockStart.labelIndex && candidateIndex < nextBlockStartIndex,
+      ) ?? nextBlockStartIndex;
+    const currentBlockLines = filteredLines.slice(blockStart.startIndex, nextTotalLineIndex);
+    const mainKey = blockStart.label.split(".")[0];
+    const markSchemeText = buildMarkSchemeText(currentBlockLines);
+    const maxMarks = computeBlockMaxMarks(currentBlockLines);
+    const warnings: string[] = [];
+
+    if (!markSchemeText) {
+      warnings.push(`no mark scheme text extracted for ${blockStart.label}`);
     }
 
-    if (currentBlockLabel) {
-      currentBlockLines.push(line);
+    if (maxMarks <= 0) {
+      warnings.push(`no positive max mark extracted for ${blockStart.label}`);
     }
-  }
 
-  flushCurrentBlock();
+    return {
+      label: blockStart.label,
+      mainKey,
+      lines: currentBlockLines,
+      markSchemeText,
+      maxMarks,
+      notes: [] as string[],
+      warnings,
+    } satisfies MarkSchemeBlock;
+  });
 
   for (const block of blocks) {
     const expectedTotal = totalsByMainKey.get(block.mainKey);
