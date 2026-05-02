@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import { access } from "node:fs/promises";
 
+import sharp from "sharp";
+
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { importAqaPhysicsPaper1HigherBenchmark } from "@/lib/import/core/import-paper";
@@ -16,6 +18,10 @@ const BENCHMARK_EXPECTATIONS = {
   },
 } as const;
 const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
+const MIN_SUPPORTING_CROP_WIDTH = 800;
+const MIN_SUPPORTING_CROP_HEIGHT = 180;
+const MIN_052_PRIMARY_CROP_WIDTH = 900;
+const MIN_052_PRIMARY_CROP_HEIGHT = 900;
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -87,11 +93,43 @@ async function assertPaperIntegrity(year: 2023 | 2024, paperId: string) {
 
     for (const assetPath of supportingAssetPaths) {
       await access(assetPath);
+      const metadata = await sharp(assetPath).metadata();
+
+      assert(metadata.width, `Missing crop width metadata for ${assetPath}`);
+      assert(metadata.height, `Missing crop height metadata for ${assetPath}`);
+      assert(
+        metadata.width >= MIN_SUPPORTING_CROP_WIDTH && metadata.height >= MIN_SUPPORTING_CROP_HEIGHT,
+        `${year}/${question.questionKey} supporting crop ${assetPath} is too small to preserve continuation content (${metadata.width}x${metadata.height})`,
+      );
     }
   }
 
   for (const question of paper.questions) {
     await access(question.primaryCropPath);
+    const metadata = await sharp(question.primaryCropPath).metadata();
+
+    assert(metadata.width, `Missing crop width metadata for ${question.primaryCropPath}`);
+    assert(metadata.height, `Missing crop height metadata for ${question.primaryCropPath}`);
+  }
+
+  if (year === 2024) {
+    const question052 = paper.questions.find((question) => question.questionKey === "05.2");
+
+    assert(question052, "Missing imported 2024/05.2 question");
+    assert(
+      question052.pageStart === question052.pageEnd,
+      `2024/05.2 should not create a footer-only continuation crop (pages ${question052.pageStart}-${question052.pageEnd})`,
+    );
+
+    const primaryMetadata = await sharp(question052.primaryCropPath).metadata();
+
+    assert(primaryMetadata.width, `Missing crop width metadata for ${question052.primaryCropPath}`);
+    assert(primaryMetadata.height, `Missing crop height metadata for ${question052.primaryCropPath}`);
+    assert(
+      primaryMetadata.width >= MIN_052_PRIMARY_CROP_WIDTH &&
+        primaryMetadata.height >= MIN_052_PRIMARY_CROP_HEIGHT,
+      `2024/05.2 primary crop is too small to preserve raster answer options (${primaryMetadata.width}x${primaryMetadata.height})`,
+    );
   }
 
   return paper;
