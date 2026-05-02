@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { aqaCombinedSciencePhysicsPaper1HigherAdapter } from "@/lib/import/adapters/aqa-combined-science-physics-paper-1-higher";
+import { ImportFailure } from "@/lib/import/core/diagnostics";
 import type { TextItem } from "@/lib/import/core/pdf-text";
 
 function item(
@@ -46,6 +47,7 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
       item(4, ".", 82.4, 763.6),
       item(4, "3", 92.6, 763.6),
       item(4, "Explain the changes in power output.", 114.8, 763.0, 220),
+      item(5, "You should include an explanation of the change in power output during a typical year.", 114.8, 727.0, 420),
     ];
 
     const markSchemeItems: TextItem[] = [
@@ -85,5 +87,36 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
     expect(drafts[2]?.maxMarks).toBe(6);
     expect(drafts[0]?.maxMarks).toBe(1);
     expect(drafts[1]?.maxMarks).toBe(1);
+    expect(drafts[2]?.pageEnd).toBe(5);
+    expect(drafts[2]?.supportingPdfBoxes).toEqual([
+      expect.objectContaining({
+        pageNumber: 5,
+      }),
+    ]);
+  });
+
+  it("fails fast when a detected subquestion has no paired mark scheme block", () => {
+    const questionItems: TextItem[] = [
+      item(3, "0", 52.7, 707.9),
+      item(3, "1", 69.4, 707.9),
+      item(3, ".", 82.4, 707.9),
+      item(3, "1", 92.6, 707.9),
+      item(3, "Which of the following is also a renewable energy resource?", 114.8, 707.0, 320),
+    ];
+
+    expect(() =>
+      aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+        year: 2023,
+        questionItems,
+        markSchemeItems: [],
+      }),
+    ).toThrow(ImportFailure);
+    expect(() =>
+      aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+        year: 2023,
+        questionItems,
+        markSchemeItems: [],
+      }),
+    ).toThrow("incomplete output");
   });
 });

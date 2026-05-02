@@ -21,11 +21,14 @@ const RENDER_SCALE = 2;
 const ADAPTER_KEY = "aqa-combined-science-physics-paper-1-higher";
 
 type BenchmarkYear = 2023 | 2024;
+type QuestionRecord = Awaited<ReturnType<typeof buildQuestionRecordData>>[number];
+type ImportTransaction = Parameters<Parameters<typeof db.$transaction>[0]>[0];
 
 export type ImportPaperResult = {
   paperId: string;
   questionCount: number;
   sourceId: string;
+  totalMarks: number;
 };
 
 async function fileExists(filePath: string) {
@@ -65,16 +68,31 @@ async function pdfBoxToCropBox(renderPath: string, pdfBox: QuestionPdfBox) {
     throw new ImportFailure("crop", `Unable to read rendered page metadata for ${renderPath}`);
   }
 
-  const left = Math.max(0, Math.floor(pdfBox.left * RENDER_SCALE));
-  const top = Math.max(0, Math.floor(imageHeight - pdfBox.top * RENDER_SCALE));
-  const width = Math.max(1, Math.ceil((pdfBox.right - pdfBox.left) * RENDER_SCALE));
-  const height = Math.max(1, Math.ceil((pdfBox.top - pdfBox.bottom) * RENDER_SCALE));
+  const unclampedLeft = Math.floor(pdfBox.left * RENDER_SCALE);
+  const unclampedRight = Math.ceil(pdfBox.right * RENDER_SCALE);
+  const unclampedTop = Math.floor(imageHeight - pdfBox.top * RENDER_SCALE);
+  const unclampedBottom = Math.ceil(imageHeight - pdfBox.bottom * RENDER_SCALE);
+  const left = Math.min(Math.max(0, unclampedLeft), imageWidth);
+  const right = Math.min(Math.max(0, unclampedRight), imageWidth);
+  const top = Math.min(Math.max(0, unclampedTop), imageHeight);
+  const bottom = Math.min(Math.max(0, unclampedBottom), imageHeight);
+  const width = right - left;
+  const height = bottom - top;
+
+  if (width <= 0 || height <= 0) {
+    throw new ImportFailure("crop", `Collapsed crop box for ${renderPath}`, {
+      renderPath,
+      pdfBox,
+      imageWidth,
+      imageHeight,
+    });
+  }
 
   return {
-    left: Math.min(left, imageWidth - 1),
-    top: Math.min(top, imageHeight - 1),
-    width: Math.min(width, imageWidth - left),
-    height: Math.min(height, imageHeight - top),
+    left,
+    top,
+    width,
+    height,
   };
 }
 
@@ -101,8 +119,40 @@ function buildQuestionRecordData(
         String(year),
         `${draft.questionKey.replace(/\./g, "-")}.png`,
       );
+      const supportingAssetPaths: string[] = [];
 
       await cropRegion(renderPath, cropPath, await pdfBoxToCropBox(renderPath, draft.primaryPdfBox));
+
+      for (const supportingPdfBox of draft.supportingPdfBoxes) {
+        const supportingRenderPath = renderPaths[supportingPdfBox.pageNumber - 1];
+
+        if (!supportingRenderPath) {
+          throw new ImportFailure(
+            "crop",
+            `Missing rendered continuation page ${supportingPdfBox.pageNumber} for ${draft.questionKey}`,
+            {
+              year,
+              questionKey: draft.questionKey,
+              pageNumber: supportingPdfBox.pageNumber,
+            },
+          );
+        }
+
+        const supportingCropPath = path.join(
+          cropsRoot,
+          "imports",
+          ADAPTER_KEY,
+          String(year),
+          `${draft.questionKey.replace(/\./g, "-")}-page-${supportingPdfBox.pageNumber}.png`,
+        );
+
+        await cropRegion(
+          supportingRenderPath,
+          supportingCropPath,
+          await pdfBoxToCropBox(supportingRenderPath, supportingPdfBox),
+        );
+        supportingAssetPaths.push(supportingCropPath);
+      }
 
       return {
         questionKey: draft.questionKey,
@@ -110,7 +160,7 @@ function buildQuestionRecordData(
         maxMarks: draft.maxMarks,
         extractedQuestionText: draft.extractedQuestionText,
         primaryCropPath: cropPath,
-        supportingAssetPaths: JSON.stringify([]),
+        supportingAssetPaths: JSON.stringify(supportingAssetPaths),
         pageStart: draft.pageStart,
         pageEnd: draft.pageEnd,
         boundingBoxes: JSON.stringify({
@@ -123,6 +173,66 @@ function buildQuestionRecordData(
       };
     }),
   );
+}
+
+async function syncPaperQuestions(
+  transaction: ImportTransaction,
+  paperId: string,
+  questionRecords: QuestionRecord[],
+  year: BenchmarkYear,
+) {
+  const existingQuestions = await transaction.question.findMany({
+    where: { paperId },
+    select: {
+      id: true,
+      questionKey: true,
+      _count: {
+        select: {
+          attempts: true,
+        },
+      },
+    },
+  });
+  const incomingKeys = new Set(questionRecords.map((record) => record.questionKey));
+  const staleQuestions = existingQuestions.filter((question) => !incomingKeys.has(question.questionKey));
+  const staleQuestionsWithAttempts = staleQuestions.filter((question) => question._count.attempts > 0);
+
+  if (staleQuestionsWithAttempts.length > 0) {
+    throw new ImportFailure(
+      "persist",
+      `Refusing to delete stale imported questions with attempts for benchmark ${year}`,
+      {
+        year,
+        staleQuestionKeys: staleQuestionsWithAttempts.map((question) => question.questionKey),
+      },
+    );
+  }
+
+  for (const record of questionRecords) {
+    await transaction.question.upsert({
+      where: {
+        paperId_questionKey: {
+          paperId,
+          questionKey: record.questionKey,
+        },
+      },
+      update: record,
+      create: {
+        paperId,
+        ...record,
+      },
+    });
+  }
+
+  if (staleQuestions.length > 0) {
+    await transaction.question.deleteMany({
+      where: {
+        id: {
+          in: staleQuestions.map((question) => question.id),
+        },
+      },
+    });
+  }
 }
 
 export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear): Promise<ImportPaperResult> {
@@ -239,16 +349,7 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
         },
       });
 
-      await transaction.question.deleteMany({
-        where: { paperId: paper.id },
-      });
-
-      await transaction.question.createMany({
-        data: questionRecords.map((record) => ({
-          paperId: paper.id,
-          ...record,
-        })),
-      });
+      await syncPaperQuestions(transaction, paper.id, questionRecords, year);
 
       await transaction.paperSource.update({
         where: { id: source.id },
@@ -262,6 +363,7 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
         paperId: paper.id,
         questionCount: questionRecords.length,
         sourceId: source.id,
+        totalMarks,
       } satisfies ImportPaperResult;
     });
 
