@@ -10,29 +10,36 @@ export type TextItem = {
 };
 
 export async function extractPdfTextItems(filePath: string) {
-  const pdf = await getDocument(filePath).promise;
-  const items: TextItem[] = [];
+  const loadingTask = getDocument(filePath);
 
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber);
-    const content = await page.getTextContent();
+  try {
+    const pdf = await loadingTask.promise;
+    const items: TextItem[] = [];
 
-    for (const item of content.items) {
-      if (!("str" in item) || !("transform" in item)) {
-        continue;
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const content = await page.getTextContent();
+
+      for (const item of content.items) {
+        if (!("str" in item) || !("transform" in item)) {
+          continue;
+        }
+
+        const [, , , , x, y] = item.transform;
+        items.push({
+          pageNumber,
+          text: item.str,
+          x,
+          y,
+          width: item.width ?? 0,
+          height: item.height ?? 0,
+        });
       }
-
-      const [, , , , x, y] = item.transform;
-      items.push({
-        pageNumber,
-        text: item.str,
-        x,
-        y,
-        width: item.width ?? 0,
-        height: item.height ?? 0,
-      });
     }
-  }
 
-  return items;
+    await pdf.cleanup();
+    return items;
+  } finally {
+    await loadingTask.destroy();
+  }
 }

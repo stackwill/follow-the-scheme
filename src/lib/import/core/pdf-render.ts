@@ -10,27 +10,34 @@ export async function renderPdfPages(filePath: string, slug: string) {
   const outputDir = path.join(rendersRoot, slug);
   await mkdir(outputDir, { recursive: true });
 
-  const pdf = await getDocument(filePath).promise;
-  const pagePaths: string[] = [];
+  const loadingTask = getDocument(filePath);
 
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber);
-    const viewport = page.getViewport({ scale: 2 });
-    const canvas = createCanvas(viewport.width, viewport.height);
-    const context = canvas.getContext("2d");
+  try {
+    const pdf = await loadingTask.promise;
+    const pagePaths: string[] = [];
 
-    await page
-      .render({
-        canvas: canvas as never,
-        canvasContext: context as never,
-        viewport,
-      })
-      .promise;
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const viewport = page.getViewport({ scale: 2 });
+      const canvas = createCanvas(viewport.width, viewport.height);
+      const context = canvas.getContext("2d");
 
-    const pagePath = path.join(outputDir, `page-${pageNumber}.png`);
-    await writeFile(pagePath, canvas.toBuffer("image/png"));
-    pagePaths.push(pagePath);
+      await page
+        .render({
+          canvas: canvas as never,
+          canvasContext: context as never,
+          viewport,
+        })
+        .promise;
+
+      const pagePath = path.join(outputDir, `page-${pageNumber}.png`);
+      await writeFile(pagePath, canvas.toBuffer("image/png"));
+      pagePaths.push(pagePath);
+    }
+
+    await pdf.cleanup();
+    return pagePaths;
+  } finally {
+    await loadingTask.destroy();
   }
-
-  return pagePaths;
 }
