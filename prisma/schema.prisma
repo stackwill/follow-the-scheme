@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model PaperSource {
+  id               String   @id @default(cuid())
+  provider         String
+  subjectIndexUrl  String
+  familyPageUrl    String
+  paperPageUrl     String
+  questionPaperUrl String
+  markSchemeUrl    String
+  examBoard        String
+  qualification    String
+  subject          String
+  paperNumber      Int
+  tier             String
+  sessionLabel     String
+  year             Int
+  status           String   @default("discovered")
+  lastDiscoveredAt DateTime @default(now())
+  paper            Paper?
+
+  @@unique([questionPaperUrl, markSchemeUrl])
+}
+
+model Paper {
+  id                     String      @id @default(cuid())
+  sourceId               String      @unique
+  title                  String
+  examBoard              String
+  qualification          String
+  subject                String
+  paperNumber            Int
+  tier                   String
+  specCode               String
+  sessionLabel           String
+  year                   Int
+  totalMarks             Int
+  questionPaperAssetPath String
+  markSchemeAssetPath    String
+  importVersion          String
+  adapterKey             String
+  status                 String      @default("ready")
+  importedAt             DateTime    @default(now())
+  source                 PaperSource @relation(fields: [sourceId], references: [id])
+  questions              Question[]
+  attempts               Attempt[]
+}
+
+model Question {
+  id                    String   @id @default(cuid())
+  paperId               String
+  questionKey           String
+  displayOrder          Int
+  maxMarks              Int
+  extractedQuestionText String
+  primaryCropPath       String
+  supportingAssetPaths  String
+  pageStart             Int
+  pageEnd               Int
+  boundingBoxes         String
+  markSchemeText        String
+  markSchemeNotes       String
+  importDiagnostics     String
+  paper                 Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  attempts              QuestionAttempt[]
+
+  @@unique([paperId, questionKey])
+}
+
+model Attempt {
+  id          String            @id @default(cuid())
+  paperId     String
+  mode        String
+  startedAt   DateTime          @default(now())
+  completedAt DateTime?
+  paper       Paper             @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  answers     QuestionAttempt[]
+}
+
+model QuestionAttempt {
+  id               String   @id @default(cuid())
+  attemptId        String
+  questionId       String
+  submittedAnswer  String
+  userNotes        String
+  awardedMarks     Int
+  maxMarks         Int
+  gradingReasoning String
+  feedback         String
+  rawModelResponse String
+  promptVersion    String
+  createdAt        DateTime @default(now())
+  attempt          Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question         Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
