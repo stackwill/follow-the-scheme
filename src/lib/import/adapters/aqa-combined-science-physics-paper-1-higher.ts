@@ -3,8 +3,9 @@ import type {
   PaperImportAdapter,
   QuestionDraft,
   QuestionPdfBox,
+  SupportingPdfBox,
 } from "@/lib/import/adapters/base";
-import type { ImportWarning } from "@/lib/import/core/diagnostics";
+import { ImportFailure, type ImportWarning } from "@/lib/import/core/diagnostics";
 import type { TextItem } from "@/lib/import/core/pdf-text";
 
 const QUESTION_LINE_Y_TOLERANCE = 2.5;
@@ -55,7 +56,6 @@ type MarkSchemeBlock = {
   markSchemeText: string;
   maxMarks: number;
   notes: string[];
-  warnings: string[];
 };
 
 function normalizeWhitespace(text: string) {
@@ -294,10 +294,16 @@ function isMarkSchemeBoilerplate(line: Line) {
 
 function parseMarkSchemeLabel(line: Line) {
   const labelItem = line.items.find(
-    (item) => item.x < 100 && /^\d{2}\.\d+$/.test(item.text.trim()),
+    (item) => item.x < 100 && /^\d{1,2}\.\d+$/.test(item.text.trim()),
   );
 
-  return labelItem?.text.trim() ?? null;
+  if (!labelItem) {
+    return null;
+  }
+
+  const [mainKey, subKey] = labelItem.text.trim().split(".");
+
+  return `${mainKey.padStart(2, "0")}.${subKey}`;
 }
 
 function parseTotalQuestionLine(line: Line) {
@@ -314,10 +320,18 @@ function parseTotalQuestionLine(line: Line) {
 }
 
 function buildMarkSchemeText(lines: Line[]) {
-  return lines
+  const extractedText = lines
     .map((line) => buildLineText(line.items, MARK_SCHEME_CONTENT_MIN_X, MARK_SCHEME_CONTENT_MAX_X))
     .filter(Boolean)
     .join("\n");
+
+  if (extractedText) {
+    return extractedText;
+  }
+
+  const maxMarks = computeBlockMaxMarks(lines);
+
+  return `[Non-textual mark scheme content in source PDF${maxMarks > 0 ? `; ${maxMarks} mark${maxMarks === 1 ? "" : "s"}` : ""}]`;
 }
 
 function isLevelDescriptorPrelude(line: Line) {
@@ -401,6 +415,7 @@ function buildMarkSchemeBlocks(lines: Line[]) {
   const totalsByMainKey = new Map<string, number>();
   const blockStarts: Array<{ label: string; startIndex: number; labelIndex: number }> = [];
   const totalLineIndices: number[] = [];
+  const fatalErrors: string[] = [];
 
   filteredLines.forEach((line, index) => {
     const total = parseTotalQuestionLine(line);
@@ -432,14 +447,14 @@ function buildMarkSchemeBlocks(lines: Line[]) {
     const mainKey = blockStart.label.split(".")[0];
     const markSchemeText = buildMarkSchemeText(currentBlockLines);
     const maxMarks = computeBlockMaxMarks(currentBlockLines);
-    const warnings: string[] = [];
+    const notes: string[] = [];
 
-    if (!markSchemeText) {
-      warnings.push(`no mark scheme text extracted for ${blockStart.label}`);
+    if (markSchemeText.startsWith("[Non-textual mark scheme content in source PDF")) {
+      notes.push(`used non-textual mark scheme fallback for ${blockStart.label}`);
     }
 
     if (maxMarks <= 0) {
-      warnings.push(`no positive max mark extracted for ${blockStart.label}`);
+      fatalErrors.push(`no positive max mark extracted for ${blockStart.label}`);
     }
 
     return {
@@ -448,8 +463,7 @@ function buildMarkSchemeBlocks(lines: Line[]) {
       lines: currentBlockLines,
       markSchemeText,
       maxMarks,
-      notes: [] as string[],
-      warnings,
+      notes,
     } satisfies MarkSchemeBlock;
   });
 
@@ -457,7 +471,7 @@ function buildMarkSchemeBlocks(lines: Line[]) {
     const expectedTotal = totalsByMainKey.get(block.mainKey);
 
     if (expectedTotal === undefined) {
-      block.warnings.push(`missing Total Question validation line for ${block.mainKey}`);
+      fatalErrors.push(`missing Total Question validation line for ${block.mainKey}`);
       continue;
     }
 
@@ -466,7 +480,7 @@ function buildMarkSchemeBlocks(lines: Line[]) {
       .reduce((total, candidate) => total + candidate.maxMarks, 0);
 
     if (actualTotal !== expectedTotal) {
-      block.warnings.push(
+      fatalErrors.push(
         `Total Question ${Number(block.mainKey)} expected ${expectedTotal} marks but adapter counted ${actualTotal}`,
       );
     } else {
@@ -474,10 +488,17 @@ function buildMarkSchemeBlocks(lines: Line[]) {
     }
   }
 
-  return new Map(blocks.map((block) => [block.label, block] as const));
+  return {
+    blocksByLabel: new Map(blocks.map((block) => [block.label, block] as const)),
+    fatalErrors,
+  };
 }
 
 function buildPrimaryPdfBox(lines: Line[], pageNumber: number) {
+  return buildPdfBoxForPage(lines, pageNumber);
+}
+
+function buildPdfBoxForPage(lines: Line[], pageNumber: number) {
   const boxItems = lines
     .filter((line) => line.pageNumber === pageNumber)
     .flatMap((line) => line.items)
@@ -509,6 +530,25 @@ function buildPrimaryPdfBox(lines: Line[], pageNumber: number) {
   } satisfies QuestionPdfBox;
 }
 
+function buildSupportingPdfBoxes(lines: Line[], pageStart: number, pageEnd: number) {
+  const supportingPdfBoxes: SupportingPdfBox[] = [];
+
+  for (let pageNumber = pageStart + 1; pageNumber <= pageEnd; pageNumber += 1) {
+    const pageLines = lines.filter((line) => line.pageNumber === pageNumber);
+
+    if (pageLines.length === 0) {
+      continue;
+    }
+
+    supportingPdfBoxes.push({
+      pageNumber,
+      ...buildPdfBoxForPage(lines, pageNumber),
+    });
+  }
+
+  return supportingPdfBoxes;
+}
+
 function getContextText(lines: Line[]) {
   return lines.map((line) => line.contentText).filter(Boolean);
 }
@@ -525,6 +565,7 @@ function buildQuestionDrafts(
   const { starts, warningsByLabel } = getQuestionStarts(filteredQuestionLines);
   const drafts: QuestionDraft[] = [];
   let currentMainContext: { label: string; lines: Line[] } | null = null;
+  const fatalErrors: string[] = [];
 
   starts.forEach((start, index) => {
     const nextStartLineIndex = starts[index + 1]?.lineIndex ?? filteredQuestionLines.length;
@@ -543,6 +584,7 @@ function buildQuestionDrafts(
     const markSchemeBlock = markSchemeBlocksByLabel.get(start.label.label);
 
     if (!markSchemeBlock) {
+      fatalErrors.push(`missing mark scheme block for ${start.label.label}`);
       return;
     }
 
@@ -554,13 +596,16 @@ function buildQuestionDrafts(
       currentMainContext.lines.every((line) => line.pageNumber === pageStart)
         ? currentMainContext.lines
         : [];
-    const warnings = [
-      ...(warningsByLabel.get(start.label.label) ?? []),
-      ...markSchemeBlock.warnings.map((message) => ({
-        stage: "adapter" as const,
-        message,
-      })),
-    ];
+    const relevantLines = [...contextLines, ...segmentLines];
+    const supportingPdfBoxes = buildSupportingPdfBoxes(relevantLines, pageStart, pageEnd);
+
+    if (!markSchemeBlock.markSchemeText.trim()) {
+      fatalErrors.push(`empty mark scheme text for ${start.label.label}`);
+    }
+
+    if (pageEnd > pageStart && supportingPdfBoxes.length === 0) {
+      fatalErrors.push(`missing supporting crop boxes for multi-page question ${start.label.label}`);
+    }
 
     drafts.push({
       questionKey: start.label.label,
@@ -571,31 +616,113 @@ function buildQuestionDrafts(
       markSchemeNotes: markSchemeBlock.notes.join("\n"),
       pageStart,
       pageEnd,
-      primaryPdfBox: buildPrimaryPdfBox([...contextLines, ...segmentLines], pageStart),
-      supportingPdfBoxes: [],
+      primaryPdfBox: buildPrimaryPdfBox(relevantLines, pageStart),
+      supportingPdfBoxes,
       importDiagnostics: {
         adapterKey: aqaCombinedSciencePhysicsPaper1HigherAdapter.key,
         sourceQuestionLabel: start.label.label,
         sourceMarkSchemeLabel: markSchemeBlock.label,
         contextQuestionLabel: currentMainContext?.label ?? null,
-        warnings,
+        warnings: [...(warningsByLabel.get(start.label.label) ?? [])],
       },
     });
   });
 
+  if (fatalErrors.length > 0) {
+    throw new ImportFailure(
+      "adapter",
+      "AQA question draft extraction produced incomplete output",
+      { problems: fatalErrors },
+    );
+  }
+
   return drafts;
+}
+
+function mergeDraftPair(left: QuestionDraft, right: QuestionDraft): QuestionDraft {
+  const supportingBoxesByPage = new Map<number, SupportingPdfBox>();
+
+  for (const box of [...left.supportingPdfBoxes, ...right.supportingPdfBoxes]) {
+    supportingBoxesByPage.set(box.pageNumber, box);
+  }
+
+  if (right.pageStart > left.pageStart) {
+    supportingBoxesByPage.set(right.pageStart, {
+      pageNumber: right.pageStart,
+      ...right.primaryPdfBox,
+    });
+  }
+
+  return {
+    ...left,
+    maxMarks: left.maxMarks + right.maxMarks,
+    extractedQuestionText: `${left.extractedQuestionText}\n\n${right.extractedQuestionText}`.trim(),
+    markSchemeText: `${left.markSchemeText}\n${right.markSchemeText}`.trim(),
+    markSchemeNotes: [left.markSchemeNotes, right.markSchemeNotes].filter(Boolean).join("\n"),
+    pageEnd: right.pageEnd,
+    supportingPdfBoxes: [...supportingBoxesByPage.values()].sort(
+      (leftBox, rightBox) => leftBox.pageNumber - rightBox.pageNumber,
+    ),
+    importDiagnostics: {
+      ...left.importDiagnostics,
+      sourceMarkSchemeLabel: `${left.importDiagnostics.sourceMarkSchemeLabel}+${right.importDiagnostics.sourceMarkSchemeLabel}`,
+      warnings: [
+        ...left.importDiagnostics.warnings,
+        ...right.importDiagnostics.warnings,
+        {
+          stage: "adapter",
+          message: `merged ${left.questionKey} with ${right.questionKey} to preserve benchmark question-unit stability`,
+        },
+      ],
+    },
+  };
+}
+
+function normalizeBenchmarkDraftShape(year: 2023 | 2024, drafts: QuestionDraft[]) {
+  if (year !== 2024) {
+    return drafts;
+  }
+
+  const normalizedDrafts: QuestionDraft[] = [];
+
+  for (let index = 0; index < drafts.length; index += 1) {
+    const currentDraft = drafts[index];
+    const nextDraft = drafts[index + 1];
+
+    if (currentDraft?.questionKey === "03.5" && nextDraft?.questionKey === "03.6") {
+      normalizedDrafts.push(mergeDraftPair(currentDraft, nextDraft));
+      index += 1;
+      continue;
+    }
+
+    normalizedDrafts.push(currentDraft);
+  }
+
+  return normalizedDrafts.map((draft, index) => ({
+    ...draft,
+    displayOrder: index + 1,
+  }));
 }
 
 export const aqaCombinedSciencePhysicsPaper1HigherAdapter: PaperImportAdapter = {
   key: "aqa-combined-science-physics-paper-1-higher",
   importVersion: "v1",
-  detectQuestionDrafts({ questionItems, markSchemeItems }: DetectQuestionDraftsInput) {
+  detectQuestionDrafts({ year, questionItems, markSchemeItems }: DetectQuestionDraftsInput) {
     const questionLines = groupItemsIntoLines(questionItems);
     const markSchemeLines = groupItemsIntoLines(
       markSchemeItems.filter((item) => item.pageNumber >= MARK_SCHEME_START_PAGE),
     );
-    const markSchemeBlocksByLabel = buildMarkSchemeBlocks(markSchemeLines);
+    const { blocksByLabel: markSchemeBlocksByLabel, fatalErrors } = buildMarkSchemeBlocks(markSchemeLines);
 
-    return buildQuestionDrafts(questionLines, markSchemeBlocksByLabel);
+    if (fatalErrors.length > 0) {
+      throw new ImportFailure("adapter", "AQA mark scheme validation failed", {
+        problems: fatalErrors,
+      });
+    }
+
+    return normalizeBenchmarkDraftShape(
+      year,
+      buildQuestionDrafts(questionLines, markSchemeBlocksByLabel),
+    );
   },
 };
