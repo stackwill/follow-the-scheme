@@ -2,7 +2,7 @@
 
 Single-user-first exam practice tool for deterministic PMT imports and AI-assisted marking.
 
-## Setup
+### Setup
 
 1. `cp .env.example .env`
 2. `bun install`
