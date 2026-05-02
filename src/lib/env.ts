@@ -5,6 +5,8 @@ const localDevEnvDefaults = {
   APP_DATA_DIR: "./data",
 } as const;
 
+const useLocalDevEnvDefaults = process.env.NODE_ENV !== "production";
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   APP_DATA_DIR: z.string().min(1),
@@ -17,8 +19,12 @@ const openRouterEnvSchema = z.object({
 });
 
 export const env = envSchema.parse({
-  DATABASE_URL: process.env.DATABASE_URL ?? localDevEnvDefaults.DATABASE_URL,
-  APP_DATA_DIR: process.env.APP_DATA_DIR ?? localDevEnvDefaults.APP_DATA_DIR,
+  DATABASE_URL:
+    process.env.DATABASE_URL ??
+    (useLocalDevEnvDefaults ? localDevEnvDefaults.DATABASE_URL : undefined),
+  APP_DATA_DIR:
+    process.env.APP_DATA_DIR ??
+    (useLocalDevEnvDefaults ? localDevEnvDefaults.APP_DATA_DIR : undefined),
 });
 
 export function getOpenRouterEnv() {
