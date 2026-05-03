@@ -1,6 +1,6 @@
 FROM oven/bun:1.2 AS base
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends poppler-utils \
+  && apt-get install -y --no-install-recommends poppler-utils tesseract-ocr \
   && rm -rf /var/lib/apt/lists/*
 
 FROM base AS deps
