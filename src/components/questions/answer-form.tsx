@@ -57,6 +57,10 @@ function scoreTone(awardedMarks: number, maxMarks: number) {
   return "low";
 }
 
+function shouldShowImprovement(awardedMarks: number, maxMarks: number) {
+  return maxMarks > 0 && awardedMarks < maxMarks;
+}
+
 export function AnswerForm(props: AnswerFormProps) {
   const [state, formAction, pending] = useActionState(props.action, { error: null });
   const totalMarks = props.questions.reduce((sum, question) => sum + question.maxMarks, 0);
@@ -186,10 +190,12 @@ export function AnswerForm(props: AnswerFormProps) {
                     <dt>Why this mark</dt>
                     <dd>{question.latestAttempt.reasoning}</dd>
                   </div>
-                  <div>
-                    <dt>How to improve</dt>
-                    <dd>{question.latestAttempt.feedback}</dd>
-                  </div>
+                  {shouldShowImprovement(question.latestAttempt.awardedMarks, question.latestAttempt.maxMarks) ? (
+                    <div>
+                      <dt>How to improve</dt>
+                      <dd>{question.latestAttempt.feedback}</dd>
+                    </div>
+                  ) : null}
                 </dl>
                 <p className="question-result__time">
                   Marked {new Date(question.latestAttempt.createdAt).toLocaleString("en-GB")}
