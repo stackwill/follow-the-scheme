@@ -186,4 +186,40 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
     expect((drafts[0]?.primaryPdfBox.right ?? 0) - (drafts[0]?.primaryPdfBox.left ?? 0)).toBeGreaterThan(500);
     expect((drafts[0]?.primaryPdfBox.top ?? 0) - (drafts[0]?.primaryPdfBox.bottom ?? 0)).toBeGreaterThan(500);
   });
+
+  it("bounds same-page supporting crops before the next question start", () => {
+    const questionItems: TextItem[] = [
+      item(2, "0", 52.7, 707.9),
+      item(2, "1", 69.4, 707.9),
+      item(2, ".", 82.4, 707.9),
+      item(2, "1", 92.6, 707.9),
+      item(2, "Describe the energy transfer shown in the diagram.", 114.8, 707.0, 300),
+      item(3, "Continuation of the answer space.", 114.8, 735.0, 220),
+      item(3, "0", 52.7, 690.0),
+      item(3, "1", 69.4, 690.0),
+      item(3, ".", 82.4, 690.0),
+      item(3, "2", 92.6, 690.0),
+      item(3, "Calculate the useful energy transferred.", 114.8, 689.2, 260),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(7, "01.1", 67.3, 675.7, 24),
+      item(7, "energy transferred mechanically", 113.2, 675.7, 180),
+      item(7, "1", 466.2, 675.7, 8),
+      item(7, "01.2", 67.3, 573.7, 24),
+      item(7, "correct substitution and answer", 113.2, 573.7, 180),
+      item(7, "1", 466.2, 573.7, 8),
+      item(8, "Total Question 1 2", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2024,
+      questionItems,
+      markSchemeItems,
+    });
+    const supportingBox = drafts[0]?.supportingPdfBoxes[0];
+
+    expect(supportingBox).toEqual(expect.objectContaining({ pageNumber: 3 }));
+    expect(supportingBox?.bottom).toBeGreaterThan(720);
+    expect((supportingBox?.top ?? 0) - (supportingBox?.bottom ?? 0)).toBeLessThan(120);
+  });
 });

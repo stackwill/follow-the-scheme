@@ -20,6 +20,8 @@ const BENCHMARK_EXPECTATIONS = {
 const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
 const MIN_SUPPORTING_CROP_WIDTH = 800;
 const MIN_SUPPORTING_CROP_HEIGHT = 180;
+const MIN_BOUNDED_SUPPORTING_CROP_HEIGHT = 40;
+const MIN_SUPPORTING_PDF_BOX_HEIGHT = 120;
 const MIN_052_PRIMARY_CROP_WIDTH = 900;
 const MIN_052_PRIMARY_CROP_HEIGHT = 900;
 
@@ -79,26 +81,34 @@ async function assertPaperIntegrity(year: 2023 | 2024, paperId: string) {
   for (const question of multiPageQuestions) {
     const supportingAssetPaths = JSON.parse(question.supportingAssetPaths) as string[];
     const boundingBoxes = JSON.parse(question.boundingBoxes) as {
-      supportingPdfBoxes?: Array<{ pageNumber: number }>;
+      supportingPdfBoxes?: Array<{ pageNumber: number; top: number; bottom: number }>;
     };
+    const supportingPdfBoxes = boundingBoxes.supportingPdfBoxes ?? [];
 
     assert(
       supportingAssetPaths.length > 0,
       `${year}/${question.questionKey} is multi-page but has no supporting crop assets`,
     );
     assert(
-      supportingAssetPaths.length === (boundingBoxes.supportingPdfBoxes?.length ?? 0),
+      supportingAssetPaths.length === supportingPdfBoxes.length,
       `${year}/${question.questionKey} supporting asset count does not match supporting crop boxes`,
     );
 
-    for (const assetPath of supportingAssetPaths) {
+    for (const [index, assetPath] of supportingAssetPaths.entries()) {
+      const supportingPdfBox = supportingPdfBoxes[index];
+      const supportingPdfBoxHeight =
+        supportingPdfBox === undefined ? MIN_SUPPORTING_PDF_BOX_HEIGHT : supportingPdfBox.top - supportingPdfBox.bottom;
+
       await access(assetPath);
       const metadata = await sharp(assetPath).metadata();
 
       assert(metadata.width, `Missing crop width metadata for ${assetPath}`);
       assert(metadata.height, `Missing crop height metadata for ${assetPath}`);
       assert(
-        metadata.width >= MIN_SUPPORTING_CROP_WIDTH && metadata.height >= MIN_SUPPORTING_CROP_HEIGHT,
+        metadata.width >= MIN_SUPPORTING_CROP_WIDTH &&
+          (metadata.height >= MIN_SUPPORTING_CROP_HEIGHT ||
+            (supportingPdfBoxHeight < MIN_SUPPORTING_PDF_BOX_HEIGHT &&
+              metadata.height >= MIN_BOUNDED_SUPPORTING_CROP_HEIGHT)),
         `${year}/${question.questionKey} supporting crop ${assetPath} is too small to preserve continuation content (${metadata.width}x${metadata.height})`,
       );
     }
@@ -113,7 +123,20 @@ async function assertPaperIntegrity(year: 2023 | 2024, paperId: string) {
   }
 
   if (year === 2024) {
+    const question011 = paper.questions.find((question) => question.questionKey === "01.1");
     const question052 = paper.questions.find((question) => question.questionKey === "05.2");
+
+    assert(question011, "Missing imported 2024/01.1 question");
+    const question011Boxes = JSON.parse(question011.boundingBoxes) as {
+      supportingPdfBoxes?: Array<{ pageNumber: number; top: number; bottom: number }>;
+    };
+    const question011Page3Box = question011Boxes.supportingPdfBoxes?.find((box) => box.pageNumber === 3);
+
+    assert(question011Page3Box, "Missing imported 2024/01.1 page 3 supporting crop box");
+    assert(
+      question011Page3Box.top - question011Page3Box.bottom < MIN_SUPPORTING_PDF_BOX_HEIGHT,
+      `2024/01.1 page 3 supporting crop should stay bounded before the next question (${question011Page3Box.top}-${question011Page3Box.bottom})`,
+    );
 
     assert(question052, "Missing imported 2024/05.2 question");
     assert(

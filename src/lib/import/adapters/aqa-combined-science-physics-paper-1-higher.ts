@@ -31,6 +31,7 @@ const MARK_SCHEME_CONTENT_MAX_X = 450;
 const MARK_COLUMN_MIN_X = 440;
 const MARK_COLUMN_MAX_X = 480;
 const MIN_BOX_HEIGHT = 120;
+const MIN_EFFECTIVE_BOX_HEIGHT = 1;
 const BOX_PADDING_Y = 18;
 const MARK_RANGE_PATTERN = /^(\d+)[-\u2010-\u2015](\d+)$/;
 
@@ -519,26 +520,37 @@ function buildMarkSchemeBlocks(lines: Line[]) {
 }
 
 function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null = null) {
+  const nextQuestionBottom =
+    nextQuestionStartLine === null
+      ? null
+      : nextQuestionStartLine.y +
+        Math.max(...nextQuestionStartLine.items.map((item) => item.height), 0) +
+        QUESTION_START_BOTTOM_PADDING;
+
   const boxItems = lines
     .flatMap((line) => line.items)
     .filter((item) => item.x <= QUESTION_CROP_MAX_X);
 
   if (boxItems.length === 0) {
+    const bottom = nextQuestionBottom ?? 760 - MIN_BOX_HEIGHT;
+
     return {
       left: QUESTION_CROP_LEFT,
       right: QUESTION_CROP_RIGHT,
-      top: 760,
-      bottom: 760 - MIN_BOX_HEIGHT,
+      top: Math.min(QUESTION_PAGE_TOP_LIMIT, bottom + MIN_BOX_HEIGHT),
+      bottom,
     } satisfies QuestionPdfBox;
   }
 
   const maxY = Math.max(...boxItems.map((item) => item.y + item.height));
-  const nextQuestionBottom =
-    nextQuestionStartLine === null
-      ? QUESTION_FOOTER_CUTOFF_Y
-      : nextQuestionStartLine.y + Math.max(...nextQuestionStartLine.items.map((item) => item.height), 0) + QUESTION_START_BOTTOM_PADDING;
-  const paddedTop = Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, nextQuestionBottom + MIN_BOX_HEIGHT));
-  const paddedBottom = Math.max(0, Math.min(nextQuestionBottom, paddedTop - MIN_BOX_HEIGHT));
+  const paddedTop =
+    nextQuestionBottom === null
+      ? Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, QUESTION_FOOTER_CUTOFF_Y + MIN_BOX_HEIGHT))
+      : Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, nextQuestionBottom));
+  const paddedBottom =
+    nextQuestionBottom === null
+      ? Math.max(0, Math.min(QUESTION_FOOTER_CUTOFF_Y, paddedTop - MIN_BOX_HEIGHT))
+      : Math.max(0, Math.min(nextQuestionBottom, paddedTop));
 
   return {
     left: QUESTION_CROP_LEFT,
@@ -558,9 +570,15 @@ function buildSupportingPdfBoxes(lines: Line[], pageStart: number, pageEnd: numb
       continue;
     }
 
+    const pdfBox = buildPageBandPdfBox(pageLines, nextStart?.line.pageNumber === pageNumber ? nextStart.line : null);
+
+    if (pdfBox.top - pdfBox.bottom < MIN_EFFECTIVE_BOX_HEIGHT) {
+      continue;
+    }
+
     supportingPdfBoxes.push({
       pageNumber,
-      ...buildPageBandPdfBox(pageLines, nextStart?.line.pageNumber === pageNumber ? nextStart.line : null),
+      ...pdfBox,
     });
   }
 
@@ -617,12 +635,13 @@ function buildQuestionDrafts(
         : [];
     const relevantLines = [...contextLines, ...segmentLines];
     const supportingPdfBoxes = buildSupportingPdfBoxes(relevantLines, pageStart, pageEnd, nextStart);
+    const effectivePageEnd = supportingPdfBoxes.at(-1)?.pageNumber ?? pageStart;
 
     if (!markSchemeBlock.markSchemeText.trim()) {
       fatalErrors.push(`empty mark scheme text for ${start.label.label}`);
     }
 
-    if (pageEnd > pageStart && supportingPdfBoxes.length === 0) {
+    if (pageEnd > pageStart && supportingPdfBoxes.length === 0 && nextStart?.line.pageNumber !== pageEnd) {
       fatalErrors.push(`missing supporting crop boxes for multi-page question ${start.label.label}`);
     }
 
@@ -634,7 +653,7 @@ function buildQuestionDrafts(
       markSchemeText: markSchemeBlock.markSchemeText,
       markSchemeNotes: markSchemeBlock.notes.join("\n"),
       pageStart,
-      pageEnd,
+      pageEnd: effectivePageEnd,
       primaryPdfBox: buildPageBandPdfBox(
         relevantLines.filter((line) => line.pageNumber === pageStart),
         nextStart?.line.pageNumber === pageStart ? nextStart.line : null,
