@@ -28,6 +28,10 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
               attempts: true,
             },
           },
+          attempts: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
         },
       },
     },
@@ -86,6 +90,13 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
             {groupedQuestions.map((group) => {
               const groupMarks = group.questions.reduce((sum, question) => sum + question.maxMarks, 0);
               const groupAttempts = group.questions.reduce((sum, question) => sum + question._count.attempts, 0);
+              const latestAttempts = group.questions.flatMap((question) => question.attempts);
+              const awardedMarks = latestAttempts.reduce((sum, attempt) => sum + attempt.awardedMarks, 0);
+              const attemptedMarks = latestAttempts.reduce((sum, attempt) => sum + attempt.maxMarks, 0);
+              const scoreLabel =
+                latestAttempts.length > 0
+                  ? `Latest: ${awardedMarks}/${attemptedMarks} marked`
+                  : "Not marked yet";
 
               return (
                 <li key={group.key}>
@@ -95,7 +106,8 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
                       <strong>{group.questions.map((question) => question.questionKey).join(", ")}</strong>
                       <span>{group.questions.length} parts | {groupMarks} marks | {groupAttempts} attempts</span>
                     </span>
-                    <span className="question-group-list__action">Start</span>
+                    <span className="question-group-list__score">{scoreLabel}</span>
+                    <span className="question-group-list__action">Open</span>
                   </Link>
                 </li>
               );
