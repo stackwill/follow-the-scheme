@@ -39,6 +39,7 @@ export async function requestStructuredGrade(prompt: GradingPromptMessages) {
       },
       body: JSON.stringify({
         model: openRouterEnv.OPENROUTER_MODEL,
+        max_tokens: 700,
         temperature: 0,
         response_format: { type: "json_object" },
         messages: [
