@@ -8,6 +8,7 @@ import type { SelectionOption } from "@/lib/grading/schema";
 
 type AnswerFormState = {
   error: string | null;
+  answers?: Record<string, string>;
 };
 
 type AnswerFormProps = {
@@ -142,11 +143,16 @@ export function AnswerForm(props: AnswerFormProps) {
                 <p>{question.paperOnlyReason} This part is not sent for AI marking yet.</p>
               </div>
             ) : question.selectionQuestion ? (
-              <fieldset className="option-fieldset">
+              <fieldset className="option-fieldset" key={state.answers?.[question.id] ?? "empty"}>
                 <legend>Your answer</legend>
                 {question.selectionQuestion.options.map((option) => (
                   <label className="option-choice" key={option.id}>
-                    <input name={`answer-${question.id}`} type="radio" value={option.id} />
+                    <input
+                      name={`answer-${question.id}`}
+                      type="radio"
+                      value={option.id}
+                      defaultChecked={state.answers?.[question.id] === option.id}
+                    />
                     <span>{option.label}</span>
                   </label>
                 ))}
@@ -154,7 +160,12 @@ export function AnswerForm(props: AnswerFormProps) {
             ) : (
               <label className="field-stack answer-under-question">
                 <span>Your answer</span>
-                <textarea name={`answer-${question.id}`} rows={6} />
+                <textarea
+                  key={state.answers?.[question.id] ?? "empty"}
+                  name={`answer-${question.id}`}
+                  rows={6}
+                  defaultValue={state.answers?.[question.id] ?? ""}
+                />
               </label>
             )}
 

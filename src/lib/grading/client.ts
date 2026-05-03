@@ -12,13 +12,92 @@ type OpenRouterChatCompletion = {
 
 const OPENROUTER_TIMEOUT_MS = 45_000;
 
+function stripMarkdownJsonFence(content: string) {
+  const trimmed = content.trim();
+  const fenceMatch = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(trimmed);
+
+  return fenceMatch?.[1] ?? trimmed;
+}
+
+function extractFirstBalancedJsonObject(content: string) {
+  const start = content.indexOf("{");
+
+  if (start === -1) {
+    return null;
+  }
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = start; index < content.length; index += 1) {
+    const character = content[index];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (character === "\\") {
+      escaped = inString;
+      continue;
+    }
+
+    if (character === "\"") {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) {
+      continue;
+    }
+
+    if (character === "{") {
+      depth += 1;
+    } else if (character === "}") {
+      depth -= 1;
+
+      if (depth === 0) {
+        return content.slice(start, index + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
+function invalidJsonError(content: string, cause?: unknown) {
+  const preview = content.replace(/\s+/g, " ").trim().slice(0, 220);
+
+  return new Error(
+    `OpenRouter grading returned invalid JSON content${preview ? `: ${preview}` : "."}`,
+    cause ? { cause } : undefined,
+  );
+}
+
+export function parseStructuredGradeContent(content: string) {
+  const candidates = [content.trim(), stripMarkdownJsonFence(content), extractFirstBalancedJsonObject(content)].filter(
+    (candidate): candidate is string => Boolean(candidate),
+  );
+
+  let lastError: unknown;
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw invalidJsonError(content, lastError);
+}
+
 function parseJsonContent(content: string) {
   try {
-    return JSON.parse(content);
+    return parseStructuredGradeContent(content);
   } catch (error) {
-    throw new Error("OpenRouter grading returned invalid JSON content.", {
-      cause: error,
-    });
+    throw error instanceof Error ? error : invalidJsonError(content, error);
   }
 }
 
@@ -39,7 +118,7 @@ export async function requestStructuredGrade(prompt: GradingPromptMessages) {
       },
       body: JSON.stringify({
         model: openRouterEnv.OPENROUTER_MODEL,
-        max_tokens: 700,
+        max_tokens: 1400,
         temperature: 0,
         response_format: { type: "json_object" },
         messages: [
