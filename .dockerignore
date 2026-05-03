@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+.git
+.worktrees
+.next
+data
+node_modules
+coverage
+*.log
+*.sqlite
+*.sqlite-journal
+*.db
+tsconfig.tsbuildinfo
