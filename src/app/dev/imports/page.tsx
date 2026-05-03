@@ -32,7 +32,7 @@ export default async function DevImportsPage() {
   return (
     <main className="page-shell">
       <header className="page-header">
-        <p>Internal tool</p>
+        <p className="eyebrow">Internal tool</p>
         <h1>Developer Imports</h1>
         <p className="page-description">
           Import or refresh the supported AQA Combined Science Trilogy Physics Paper 1 Higher benchmark papers.

@@ -30,7 +30,7 @@ export function ImportStatusTable({ sources }: { sources: ImportStatusSource[] }
             <th scope="col">Year</th>
             <th scope="col">Source status</th>
             <th scope="col">Paper status</th>
-            <th scope="col">Last updated</th>
+            <th scope="col">Timestamps</th>
             <th scope="col">Link</th>
           </tr>
         </thead>
@@ -57,7 +57,12 @@ export function ImportStatusTable({ sources }: { sources: ImportStatusSource[] }
                   <span className="status-pill">Not imported</span>
                 )}
               </td>
-              <td>{formatDate(source.paper?.importedAt ?? source.lastDiscoveredAt)}</td>
+              <td>
+                <span className="status-time">
+                  <span>Source: {formatDate(source.lastDiscoveredAt)}</span>
+                  {source.paper ? <span>Imported: {formatDate(source.paper.importedAt)}</span> : null}
+                </span>
+              </td>
               <td>{source.paper ? <span>Ready for Task 7 viewer</span> : <span>Pending</span>}</td>
             </tr>
           ))}
