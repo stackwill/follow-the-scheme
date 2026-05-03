@@ -151,6 +151,18 @@ h1 {
   transform: translateY(-1px);
 }
 
+.paper-card__link--disabled {
+  border-color: var(--line);
+  background: #f0f0eb;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.paper-card__link--disabled:hover {
+  box-shadow: none;
+  transform: none;
+}
+
 .empty-state,
 .dev-panel {
   border: 1px solid var(--line);

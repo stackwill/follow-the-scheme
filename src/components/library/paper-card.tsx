@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Paper } from "@prisma/client";
 
 export function PaperCard({ paper }: { paper: Paper }) {
@@ -15,9 +14,9 @@ export function PaperCard({ paper }: { paper: Paper }) {
       <p className="paper-card__details">
         {paper.sessionLabel} | Paper {paper.paperNumber} | {paper.totalMarks} marks
       </p>
-      <Link className="paper-card__link" href={`/papers/${paper.id}`}>
-        Open paper
-      </Link>
+      <span className="paper-card__link paper-card__link--disabled" aria-disabled="true">
+        Paper view arrives in Task 7
+      </span>
     </article>
   );
 }
