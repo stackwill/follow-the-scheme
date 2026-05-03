@@ -1,5 +1,6 @@
 import { getOpenRouterEnv } from "@/lib/env";
 import { gradingResponseSchema } from "@/lib/grading/schema";
+import type { GradingPromptMessages } from "@/lib/grading/prompt";
 
 type OpenRouterChatCompletion = {
   choices?: Array<{
@@ -8,6 +9,8 @@ type OpenRouterChatCompletion = {
     };
   }>;
 };
+
+const OPENROUTER_TIMEOUT_MS = 45_000;
 
 function parseJsonContent(content: string) {
   try {
@@ -19,25 +22,46 @@ function parseJsonContent(content: string) {
   }
 }
 
-export async function requestStructuredGrade(prompt: string) {
+export async function requestStructuredGrade(prompt: GradingPromptMessages) {
   const openRouterEnv = getOpenRouterEnv();
-  const response = await fetch(`${openRouterEnv.OPENROUTER_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${openRouterEnv.OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: openRouterEnv.OPENROUTER_MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), OPENROUTER_TIMEOUT_MS);
+
+  let response: Response;
+
+  try {
+    response = await fetch(`${openRouterEnv.OPENROUTER_BASE_URL}/chat/completions`, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${openRouterEnv.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: openRouterEnv.OPENROUTER_MODEL,
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: prompt.system,
+          },
+          {
+            role: "user",
+            content: prompt.user,
+          },
+        ],
+      }),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`OpenRouter grading timed out after ${OPENROUTER_TIMEOUT_MS / 1000} seconds.`);
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const responseText = await response.text();

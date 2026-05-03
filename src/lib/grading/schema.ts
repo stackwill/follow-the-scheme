@@ -29,6 +29,8 @@ function normalizeAnswerText(text: string) {
     .replace(/\u00a0/g, " ")
     .replace(/[^\p{L}\p{N}×+\-=/().\s]/gu, "")
     .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.]+$/g, "")
     .trim();
 }
 
@@ -57,7 +59,8 @@ function getOptionLines(questionText: string) {
   return optionsText
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .slice(0, 6);
 }
 
 function looksLikeTextOption(line: string) {
