@@ -323,4 +323,48 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
 
     expect(drafts[0]?.primaryPdfBox.bottom).toBe(140);
   });
+
+  it("keeps adjacent 2024 tick-box questions as separate answerable parts", () => {
+    const questionItems: TextItem[] = [
+      item(12, "0", 52.7, 620.0),
+      item(12, "3", 69.4, 620.0),
+      item(12, ".", 82.4, 620.0),
+      item(12, "5", 92.6, 620.0),
+      item(12, "What conclusion can be made about the investigation?", 114.8, 584.0, 300),
+      item(12, "Tick () one box.", 114.8, 562.0, 100),
+      item(12, "The investigation is repeatable.", 114.8, 520.0, 180),
+      item(12, "The investigation is reproducible.", 114.8, 480.0, 190),
+      item(12, "The results were accurate.", 114.8, 440.0, 160),
+      item(12, "0", 52.7, 380.0),
+      item(12, "3", 69.4, 380.0),
+      item(12, ".", 82.4, 380.0),
+      item(12, "6", 92.6, 380.0),
+      item(12, "Which of the following always shows a linear relationship?", 114.8, 344.0, 320),
+      item(12, "Tick () one box.", 114.8, 322.0, 100),
+      item(12, "Filament lamp", 114.8, 280.0, 100),
+      item(12, "LDR", 114.8, 240.0, 40),
+      item(12, "Resistor at constant temperature", 114.8, 200.0, 190),
+      item(12, "Thermistor", 114.8, 160.0, 80),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(18, "03.5", 67.3, 675.7, 24),
+      item(18, "reproducible", 113.2, 675.7, 80),
+      item(18, "1", 466.2, 675.7, 8),
+      item(18, "03.6", 67.3, 573.7, 24),
+      item(18, "resistor at constant temperature", 113.2, 573.7, 180),
+      item(18, "1", 466.2, 573.7, 8),
+      item(18, "Total Question 3 2", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2024,
+      questionItems,
+      markSchemeItems,
+    });
+
+    expect(drafts.map((draft) => draft.questionKey)).toEqual(["03.5", "03.6"]);
+    expect(drafts.map((draft) => draft.maxMarks)).toEqual([1, 1]);
+    expect(drafts[0]?.markSchemeText).toContain("reproducible");
+    expect(drafts[1]?.markSchemeText).toContain("resistor at constant temperature");
+  });
 });

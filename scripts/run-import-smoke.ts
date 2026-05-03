@@ -13,7 +13,7 @@ const BENCHMARK_EXPECTATIONS = {
     totalMarks: 70,
   },
   2024: {
-    questionCount: 27,
+    questionCount: 28,
     totalMarks: 70,
   },
 } as const;
