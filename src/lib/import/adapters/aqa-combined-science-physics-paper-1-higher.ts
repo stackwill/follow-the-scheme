@@ -702,66 +702,12 @@ function buildQuestionDrafts(
   return drafts;
 }
 
-function mergeDraftPair(left: QuestionDraft, right: QuestionDraft): QuestionDraft {
-  const supportingBoxesByPage = new Map<number, SupportingPdfBox>();
-
-  for (const box of [...left.supportingPdfBoxes, ...right.supportingPdfBoxes]) {
-    supportingBoxesByPage.set(box.pageNumber, box);
-  }
-
-  if (right.pageStart > left.pageStart) {
-    supportingBoxesByPage.set(right.pageStart, {
-      pageNumber: right.pageStart,
-      ...right.primaryPdfBox,
-    });
-  }
-
-  return {
-    ...left,
-    maxMarks: left.maxMarks + right.maxMarks,
-    extractedQuestionText: `${left.extractedQuestionText}\n\n${right.extractedQuestionText}`.trim(),
-    markSchemeText: `${left.markSchemeText}\n${right.markSchemeText}`.trim(),
-    markSchemeNotes: [left.markSchemeNotes, right.markSchemeNotes].filter(Boolean).join("\n"),
-    pageEnd: right.pageEnd,
-    supportingPdfBoxes: [...supportingBoxesByPage.values()].sort(
-      (leftBox, rightBox) => leftBox.pageNumber - rightBox.pageNumber,
-    ),
-    importDiagnostics: {
-      ...left.importDiagnostics,
-      sourceMarkSchemeLabel: `${left.importDiagnostics.sourceMarkSchemeLabel}+${right.importDiagnostics.sourceMarkSchemeLabel}`,
-      warnings: [
-        ...left.importDiagnostics.warnings,
-        ...right.importDiagnostics.warnings,
-        {
-          stage: "adapter",
-          message: `merged ${left.questionKey} with ${right.questionKey} to preserve benchmark question-unit stability`,
-        },
-      ],
-    },
-  };
-}
-
 function normalizeBenchmarkDraftShape(year: 2023 | 2024, drafts: QuestionDraft[]) {
   if (year !== 2024) {
     return drafts;
   }
 
-  const normalizedDrafts: QuestionDraft[] = [];
-
-  for (let index = 0; index < drafts.length; index += 1) {
-    const currentDraft = drafts[index];
-    const nextDraft = drafts[index + 1];
-
-    if (currentDraft?.questionKey === "03.5" && nextDraft?.questionKey === "03.6") {
-      normalizedDrafts.push(mergeDraftPair(currentDraft, nextDraft));
-      index += 1;
-      continue;
-    }
-
-    normalizedDrafts.push(currentDraft);
-  }
-
-  return normalizedDrafts.map((draft, index) => ({
+  return drafts.map((draft, index) => ({
     ...draft,
     displayOrder: index + 1,
   }));
