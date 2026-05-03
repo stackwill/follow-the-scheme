@@ -17,8 +17,6 @@ type AnswerFormProps = {
     questionKey: string;
     maxMarks: number;
     imagePath: string;
-    supportingImagePaths: string[];
-    text: string;
     paperOnlyReason: string | null;
     selectionQuestion: {
       type: "single";
@@ -43,7 +41,7 @@ export function AnswerForm(props: AnswerFormProps) {
       </div>
 
       <div className="question-group-stack">
-        {props.questions.map((question, questionIndex) => (
+        {props.questions.map((question) => (
           <section className="answer-part question-part-view" key={question.id}>
             <div className="question-part-view__heading">
               <h3>Question {question.questionKey}</h3>
@@ -61,23 +59,6 @@ export function AnswerForm(props: AnswerFormProps) {
                 sizes="(max-width: 900px) 100vw, 980px"
               />
             </figure>
-
-            {question.supportingImagePaths.length > 0 ? (
-              <details className="supporting-crops">
-                <summary>Additional source material</summary>
-                {question.supportingImagePaths.map((imagePath, index) => (
-                  <figure className="question-image-frame" key={imagePath}>
-                    <Image
-                      src={assetUrl(imagePath)}
-                      alt={`Question ${question.questionKey} additional crop ${index + 1}`}
-                      width={1400}
-                      height={900}
-                      sizes="(max-width: 900px) 100vw, 980px"
-                    />
-                  </figure>
-                ))}
-              </details>
-            ) : null}
 
             {question.paperOnlyReason ? (
               <div className="paper-only-callout">
@@ -100,11 +81,6 @@ export function AnswerForm(props: AnswerFormProps) {
                 <textarea name={`answer-${question.id}`} rows={6} required />
               </label>
             )}
-
-            <details className="extracted-text">
-              <summary>{questionIndex === 0 ? "Extracted text" : `Extracted text for ${question.questionKey}`}</summary>
-              <p>{question.text}</p>
-            </details>
           </section>
         ))}
       </div>
