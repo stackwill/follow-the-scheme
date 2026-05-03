@@ -3,13 +3,6 @@ import path from "node:path";
 
 import type { NextRequest } from "next/server";
 
-const contentTypes: Record<string, string> = {
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".pdf": "application/pdf",
-};
-
 function isPathInside(childPath: string, parentPath: string) {
   const relativePath = path.relative(parentPath, childPath);
 
@@ -24,12 +17,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { dataRoot } = await import("@/lib/paths");
+    const { cropsRoot } = await import("@/lib/paths");
     const resolvedPath = path.resolve(assetPath);
-    const [realDataRoot, realAssetPath] = await Promise.all([realpath(dataRoot), realpath(resolvedPath)]);
+    const [realCropsRoot, realAssetPath] = await Promise.all([realpath(cropsRoot), realpath(resolvedPath)]);
 
-    if (!isPathInside(realAssetPath, realDataRoot)) {
-      return new Response("Asset path is outside the app data directory", { status: 403 });
+    if (!isPathInside(realAssetPath, realCropsRoot)) {
+      return new Response("Asset path is outside the crop asset directory", { status: 403 });
+    }
+
+    if (path.extname(realAssetPath).toLowerCase() !== ".png") {
+      return new Response("Only PNG crop assets can be served", { status: 403 });
     }
 
     const fileStat = await stat(realAssetPath);
@@ -42,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     return new Response(file, {
       headers: {
-        "content-type": contentTypes[path.extname(realAssetPath).toLowerCase()] ?? "application/octet-stream",
+        "content-type": "image/png",
         "cache-control": "private, max-age=300",
       },
     });
