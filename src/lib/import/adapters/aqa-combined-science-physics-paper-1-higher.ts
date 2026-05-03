@@ -17,7 +17,7 @@ const QUESTION_CONTENT_MIN_X = 110;
 const QUESTION_CONTENT_MAX_X = 490;
 const QUESTION_CROP_MAX_X = 535;
 const QUESTION_CROP_LEFT = 40;
-const QUESTION_CROP_RIGHT = 555;
+const QUESTION_CROP_RIGHT = 535;
 const QUESTION_FOOTER_CUTOFF_Y = 140;
 const QUESTION_PAGE_TOP_LIMIT = 804;
 const QUESTION_PAGE_NUMBER_MIN_Y = 790;
@@ -33,6 +33,7 @@ const MARK_COLUMN_MAX_X = 480;
 const MIN_BOX_HEIGHT = 120;
 const MIN_EFFECTIVE_BOX_HEIGHT = 1;
 const BOX_PADDING_Y = 18;
+const BOX_BOTTOM_PADDING_Y = 30;
 const MARK_RANGE_PATTERN = /^(\d+)[-\u2010-\u2015](\d+)$/;
 
 type Line = {
@@ -543,13 +544,14 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
   }
 
   const maxY = Math.max(...boxItems.map((item) => item.y + item.height));
+  const minY = Math.min(...boxItems.map((item) => item.y));
   const paddedTop =
     nextQuestionBottom === null
       ? Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, QUESTION_FOOTER_CUTOFF_Y + MIN_BOX_HEIGHT))
       : Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, nextQuestionBottom));
   const paddedBottom =
     nextQuestionBottom === null
-      ? Math.max(0, Math.min(QUESTION_FOOTER_CUTOFF_Y, paddedTop - MIN_BOX_HEIGHT))
+      ? Math.max(0, Math.min(QUESTION_FOOTER_CUTOFF_Y, minY - BOX_BOTTOM_PADDING_Y, paddedTop - MIN_BOX_HEIGHT))
       : Math.max(0, Math.min(nextQuestionBottom, paddedTop));
 
   return {

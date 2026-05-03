@@ -183,7 +183,7 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
     expect(drafts[0]?.pageStart).toBe(20);
     expect(drafts[0]?.pageEnd).toBe(20);
     expect(drafts[0]?.supportingPdfBoxes).toEqual([]);
-    expect((drafts[0]?.primaryPdfBox.right ?? 0) - (drafts[0]?.primaryPdfBox.left ?? 0)).toBeGreaterThan(500);
+    expect((drafts[0]?.primaryPdfBox.right ?? 0) - (drafts[0]?.primaryPdfBox.left ?? 0)).toBeGreaterThan(490);
     expect((drafts[0]?.primaryPdfBox.top ?? 0) - (drafts[0]?.primaryPdfBox.bottom ?? 0)).toBeGreaterThan(500);
   });
 
@@ -221,5 +221,33 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
     expect(supportingBox).toEqual(expect.objectContaining({ pageNumber: 3 }));
     expect(supportingBox?.bottom).toBeGreaterThan(720);
     expect((supportingBox?.top ?? 0) - (supportingBox?.bottom ?? 0)).toBeLessThan(120);
+  });
+
+  it("extends terminal question crops to the lowest detected answer option", () => {
+    const questionItems: TextItem[] = [
+      item(9, "0", 52.7, 330.0),
+      item(9, "2", 69.4, 330.0),
+      item(9, ".", 82.4, 330.0),
+      item(9, "4", 92.6, 330.0),
+      item(9, "Which scientist provided evidence that neutrons exist?", 114.8, 329.2, 300),
+      item(9, "Tick one box.", 114.8, 300.0, 90),
+      item(9, "Isaac Newton", 170.0, 240.0, 100),
+      item(9, "James Chadwick", 170.0, 195.0, 120),
+      item(9, "Niels Bohr", 170.0, 150.0, 90),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(12, "02.4", 67.3, 675.7, 24),
+      item(12, "James Chadwick", 113.2, 675.7, 100),
+      item(12, "1", 466.2, 675.7, 8),
+      item(13, "Total Question 2 1", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2024,
+      questionItems,
+      markSchemeItems,
+    });
+
+    expect(drafts[0]?.primaryPdfBox.bottom).toBeLessThan(130);
   });
 });

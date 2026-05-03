@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import type { CSSProperties } from "react";
 import { useActionState } from "react";
 
 import type { SelectionOption } from "@/lib/grading/schema";
@@ -17,6 +18,7 @@ type AnswerFormProps = {
     questionKey: string;
     maxMarks: number;
     imagePath: string;
+    continuationImagePaths: string[];
     paperOnlyReason: string | null;
     latestAttempt: {
       awardedMarks: number;
@@ -37,6 +39,24 @@ function assetUrl(assetPath: string) {
   return `/api/assets?path=${encodeURIComponent(assetPath)}`;
 }
 
+function scoreTone(awardedMarks: number, maxMarks: number) {
+  if (maxMarks <= 0) {
+    return "empty";
+  }
+
+  const ratio = awardedMarks / maxMarks;
+
+  if (ratio >= 0.75) {
+    return "good";
+  }
+
+  if (ratio >= 0.45) {
+    return "partial";
+  }
+
+  return "low";
+}
+
 export function AnswerForm(props: AnswerFormProps) {
   const [state, formAction, pending] = useActionState(props.action, { error: null });
   const totalMarks = props.questions.reduce((sum, question) => sum + question.maxMarks, 0);
@@ -52,12 +72,26 @@ export function AnswerForm(props: AnswerFormProps) {
       </div>
 
       {markedQuestions.length > 0 ? (
-        <section className="mark-summary" id="marks" aria-label="Latest marking summary">
+        <section
+          className="mark-summary"
+          data-score={scoreTone(awardedMarks, markedMaxMarks)}
+          id="marks"
+          aria-label="Latest marking summary"
+        >
           <div>
             <p className="eyebrow">Latest mark</p>
             <h3>
               {awardedMarks} / {markedMaxMarks} marks
             </h3>
+            <div
+              aria-hidden="true"
+              className="score-meter"
+              style={{
+                "--score": `${Math.round((awardedMarks / Math.max(markedMaxMarks, 1)) * 100)}%`,
+              } as CSSProperties}
+            >
+              <span />
+            </div>
           </div>
           <p>
             {markedQuestions.length} of {props.questions.length} question parts marked. Detailed examiner-style feedback is
@@ -86,6 +120,18 @@ export function AnswerForm(props: AnswerFormProps) {
               />
             </figure>
 
+            {question.continuationImagePaths.map((imagePath, index) => (
+              <figure className="question-image-frame question-image-frame--continuation" key={imagePath}>
+                <Image
+                  src={assetUrl(imagePath)}
+                  alt={`Question ${question.questionKey} continuation crop ${index + 1}`}
+                  width={1400}
+                  height={900}
+                  sizes="(max-width: 900px) 100vw, 980px"
+                />
+              </figure>
+            ))}
+
             {question.paperOnlyReason ? (
               <div className="paper-only-callout">
                 <strong>Write or draw this one on paper.</strong>
@@ -96,7 +142,7 @@ export function AnswerForm(props: AnswerFormProps) {
                 <legend>Your answer</legend>
                 {question.selectionQuestion.options.map((option) => (
                   <label className="option-choice" key={option.id}>
-                    <input name={`answer-${question.id}`} type="radio" value={option.id} required />
+                    <input name={`answer-${question.id}`} type="radio" value={option.id} />
                     <span>{option.label}</span>
                   </label>
                 ))}
@@ -104,17 +150,32 @@ export function AnswerForm(props: AnswerFormProps) {
             ) : (
               <label className="field-stack answer-under-question">
                 <span>Your answer</span>
-                <textarea name={`answer-${question.id}`} rows={6} required />
+                <textarea name={`answer-${question.id}`} rows={6} />
               </label>
             )}
 
             {question.latestAttempt ? (
-              <section className="question-result" aria-label={`Latest mark for question ${question.questionKey}`}>
+              <section
+                className="question-result"
+                data-score={scoreTone(question.latestAttempt.awardedMarks, question.latestAttempt.maxMarks)}
+                aria-label={`Latest mark for question ${question.questionKey}`}
+              >
                 <div className="question-result__top">
                   <p className="eyebrow">Marked answer</p>
                   <strong>
                     {question.latestAttempt.awardedMarks} / {question.latestAttempt.maxMarks} marks
                   </strong>
+                </div>
+                <div
+                  aria-hidden="true"
+                  className="score-meter"
+                  style={{
+                    "--score": `${Math.round(
+                      (question.latestAttempt.awardedMarks / Math.max(question.latestAttempt.maxMarks, 1)) * 100,
+                    )}%`,
+                  } as CSSProperties}
+                >
+                  <span />
                 </div>
                 <dl className="question-result__details">
                   <div>
