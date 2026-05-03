@@ -3,8 +3,6 @@ import { redirect, notFound } from "next/navigation";
 
 import { AnswerForm } from "@/components/questions/answer-form";
 import { ProgressHeader } from "@/components/questions/progress-header";
-import { QuestionViewer } from "@/components/questions/question-viewer";
-import { ResultPanel } from "@/components/questions/result-panel";
 import { detectPaperOnlyQuestion, detectSelectionQuestion } from "@/lib/grading/schema";
 
 export const dynamic = "force-dynamic";
@@ -92,23 +90,7 @@ export default async function QuestionPage({
     notFound();
   }
 
-  const latestAttempts = await db.questionAttempt.findMany({
-    where: {
-      questionId: {
-        in: currentGroup.questions.map((entry) => entry.id),
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-  const latestAttemptByQuestionId = new Map<string, (typeof latestAttempts)[number]>();
-
-  for (const attempt of latestAttempts) {
-    if (!latestAttemptByQuestionId.has(attempt.questionId)) {
-      latestAttemptByQuestionId.set(attempt.questionId, attempt);
-    }
-  }
-
-  const answerableQuestions = currentGroup.questions.map((groupQuestion) => {
+  const formQuestions = currentGroup.questions.map((groupQuestion) => {
     const paperOnlyQuestion = detectPaperOnlyQuestion({
       questionText: groupQuestion.extractedQuestionText,
     });
@@ -124,6 +106,9 @@ export default async function QuestionPage({
       id: groupQuestion.id,
       questionKey: groupQuestion.questionKey,
       maxMarks: groupQuestion.maxMarks,
+      imagePath: groupQuestion.primaryCropPath,
+      supportingImagePaths: parseSupportingAssetPaths(groupQuestion.supportingAssetPaths),
+      text: groupQuestion.extractedQuestionText,
       paperOnlyReason: paperOnlyQuestion?.reason ?? null,
       selectionQuestion: selectionQuestion
         ? {
@@ -191,44 +176,12 @@ export default async function QuestionPage({
         previousHref={previousGroup ? questionHref(paper.id, previousGroup.firstQuestion.id) : null}
         nextHref={nextGroup ? questionHref(paper.id, nextGroup.firstQuestion.id) : null}
       />
-      <div className="question-layout">
-        <QuestionViewer
+      <div className="question-flow">
+        <AnswerForm
+          action={submit}
           groupKey={currentGroup.key}
-          questions={currentGroup.questions.map((groupQuestion) => {
-            const paperOnlyQuestion = detectPaperOnlyQuestion({
-              questionText: groupQuestion.extractedQuestionText,
-            });
-
-            return {
-              id: groupQuestion.id,
-              questionKey: groupQuestion.questionKey,
-              maxMarks: groupQuestion.maxMarks,
-              imagePath: groupQuestion.primaryCropPath,
-              supportingImagePaths: parseSupportingAssetPaths(groupQuestion.supportingAssetPaths),
-              text: groupQuestion.extractedQuestionText,
-              paperOnlyReason: paperOnlyQuestion?.reason ?? null,
-            };
-          })}
+          questions={formQuestions}
         />
-        <aside className="answer-stack">
-          {[...latestAttemptByQuestionId.entries()].map(([attemptQuestionId, latestAttempt]) => {
-            const attemptQuestion = currentGroup.questions.find((entry) => entry.id === attemptQuestionId);
-
-            return (
-              <ResultPanel
-                key={latestAttempt.id}
-                questionKey={attemptQuestion?.questionKey ?? "Unknown"}
-                awardedMarks={latestAttempt.awardedMarks}
-                maxMarks={latestAttempt.maxMarks}
-                reasoning={latestAttempt.gradingReasoning}
-                feedback={latestAttempt.feedback}
-                submittedAnswer={latestAttempt.submittedAnswer}
-                createdAt={latestAttempt.createdAt}
-              />
-            );
-          })}
-          <AnswerForm action={submit} questions={answerableQuestions} />
-        </aside>
       </div>
     </main>
   );
