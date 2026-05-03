@@ -34,7 +34,7 @@ export default async function DevImportsPage() {
     db.paperSource.findMany({
       where: {
         examBoard: "AQA",
-        subject: "Combined Science Trilogy Physics",
+        subject: "Physics",
         paperNumber: 1,
         tier: "Higher",
         year: {
