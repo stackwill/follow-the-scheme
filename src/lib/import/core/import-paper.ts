@@ -1,4 +1,4 @@
-import { access, mkdtemp, rm } from "node:fs/promises";
+import { access, mkdir, mkdtemp, rm, unlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -14,7 +14,7 @@ import { renderPdfPages } from "@/lib/import/core/pdf-render";
 import { downloadPdf, getPaperDir } from "@/lib/import/core/storage";
 import { discoverAqaPhysicsPaper1Higher } from "@/lib/import/pmt/discovery";
 import { db } from "@/lib/db";
-import { cropsRoot, ensureDataDirs } from "@/lib/paths";
+import { cropsRoot, ensureDataDirs, logsRoot } from "@/lib/paths";
 
 const PAPER_SOURCE_PROVIDER = "PMT";
 const SUBJECT_INDEX_URL = "https://www.physicsandmathstutor.com/past-papers/";
@@ -30,6 +30,7 @@ const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
 type BenchmarkYear = 2023 | 2024;
 type QuestionRecord = Awaited<ReturnType<typeof buildQuestionRecordData>>[number];
 type ImportTransaction = Parameters<Parameters<typeof db.$transaction>[0]>[0];
+type BenchmarkCandidate = Awaited<ReturnType<typeof discoverAqaPhysicsPaper1Higher>>[number];
 
 export type ImportPaperResult = {
   paperId: string;
@@ -45,6 +46,62 @@ async function fileExists(filePath: string) {
   } catch {
     return false;
   }
+}
+
+function getFailureDiagnosticsPath(year: BenchmarkYear) {
+  return path.join(logsRoot, "imports", `${ADAPTER_KEY}-${year}-failure.json`);
+}
+
+async function clearFailureDiagnostics(year: BenchmarkYear) {
+  try {
+    await unlink(getFailureDiagnosticsPath(year));
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return;
+    }
+
+    throw error;
+  }
+}
+
+async function writeFailureDiagnostics(
+  year: BenchmarkYear,
+  candidate: BenchmarkCandidate,
+  error: unknown,
+) {
+  const failure =
+    error instanceof ImportFailure
+      ? {
+          stage: error.stage,
+          message: error.message,
+          details: error.details,
+        }
+      : {
+          stage: "persist",
+          message: error instanceof Error ? error.message : String(error),
+          details: {
+            errorName: error instanceof Error ? error.name : typeof error,
+          },
+        };
+
+  const diagnosticsPath = getFailureDiagnosticsPath(year);
+
+  await mkdir(path.dirname(diagnosticsPath), { recursive: true });
+  await writeFile(
+    diagnosticsPath,
+    `${JSON.stringify(
+      {
+        adapterKey: ADAPTER_KEY,
+        year,
+        sessionLabel: candidate.sessionLabel,
+        failedAt: new Date().toISOString(),
+        ...failure,
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
 }
 
 async function runCommand(command: string, args: string[], stage: "adapter" | "render") {
@@ -479,8 +536,12 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
       } satisfies ImportPaperResult;
     });
 
+    await clearFailureDiagnostics(year);
+
     return result;
   } catch (error) {
+    await writeFailureDiagnostics(year, candidate, error);
+
     await db.paperSource.update({
       where: { id: source.id },
       data: {
