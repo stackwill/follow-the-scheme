@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function importBenchmarkPaper(formData: FormData) {
   const year = Number(formData.get("year"));
@@ -11,7 +12,13 @@ export async function importBenchmarkPaper(formData: FormData) {
 
   const { importAqaPhysicsPaper1HigherBenchmark } = await import("@/lib/import/core/import-paper");
 
-  await importAqaPhysicsPaper1HigherBenchmark(year);
-  revalidatePath("/");
-  revalidatePath("/dev/imports");
+  try {
+    await importAqaPhysicsPaper1HigherBenchmark(year);
+    revalidatePath("/");
+    revalidatePath("/dev/imports");
+  } catch {
+    revalidatePath("/dev/imports");
+  }
+
+  redirect("/dev/imports");
 }

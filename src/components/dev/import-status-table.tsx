@@ -73,10 +73,29 @@ export function ImportStatusTable({
   failureDiagnostics: Record<number, FailureDiagnostics | null>;
 }) {
   if (sources.length === 0) {
+    const standaloneFailures = Object.entries(failureDiagnostics).filter((entry): entry is [string, FailureDiagnostics] => {
+      return entry[1] !== null;
+    });
+
     return (
       <div className="empty-state">
         <h2>No import records yet</h2>
         <p>Import June 2023 or June 2024 to create the first benchmark source record.</p>
+        {standaloneFailures.length > 0 ? (
+          <div className="diagnostics-stack">
+            {standaloneFailures.map(([year, failure]) => (
+              <details className="diagnostics-details" key={year}>
+                <summary>
+                  <span className="status-pill" data-status="failed">
+                    {year} failure
+                  </span>
+                  <span>{formatFailureSummary(failure)}</span>
+                </summary>
+                <pre>{formatFailureDetails(failure)}</pre>
+              </details>
+            ))}
+          </div>
+        ) : null}
       </div>
     );
   }

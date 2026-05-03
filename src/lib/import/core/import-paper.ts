@@ -31,6 +31,9 @@ type BenchmarkYear = 2023 | 2024;
 type QuestionRecord = Awaited<ReturnType<typeof buildQuestionRecordData>>[number];
 type ImportTransaction = Parameters<Parameters<typeof db.$transaction>[0]>[0];
 type BenchmarkCandidate = Awaited<ReturnType<typeof discoverAqaPhysicsPaper1Higher>>[number];
+type FailureCandidateContext = Partial<BenchmarkCandidate> & {
+  sessionLabel?: string;
+};
 
 export type ImportPaperResult = {
   paperId: string;
@@ -66,7 +69,7 @@ async function clearFailureDiagnostics(year: BenchmarkYear) {
 
 async function writeFailureDiagnostics(
   year: BenchmarkYear,
-  candidate: BenchmarkCandidate,
+  candidate: FailureCandidateContext,
   error: unknown,
 ) {
   const failure =
@@ -93,7 +96,10 @@ async function writeFailureDiagnostics(
       {
         adapterKey: ADAPTER_KEY,
         year,
-        sessionLabel: candidate.sessionLabel,
+        sessionLabel: candidate.sessionLabel ?? `June ${year}`,
+        paperPageUrl: candidate.paperPageUrl ?? null,
+        questionPaperUrl: candidate.questionPaperUrl ?? null,
+        markSchemeUrl: candidate.markSchemeUrl ?? null,
         failedAt: new Date().toISOString(),
         ...failure,
       },
@@ -405,57 +411,64 @@ async function syncPaperQuestions(
 
 export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear): Promise<ImportPaperResult> {
   await ensureDataDirs();
-
-  const adapter = getAdapter(ADAPTER_KEY);
-
-  if (!adapter) {
-    throw new ImportFailure("adapter", `Missing import adapter ${ADAPTER_KEY}`);
-  }
-
-  const candidates = await discoverAqaPhysicsPaper1Higher();
-  const candidate = candidates.find((entry) => entry.year === year);
-
-  if (!candidate) {
-    throw new ImportFailure("discovery", `Missing PMT candidate for benchmark year ${year}`, {
-      year,
-    });
-  }
-
-  const { questionPaperPath, markSchemePath } = await ensureBenchmarkFixtures(year, {
-    questionPaperUrl: candidate.questionPaperUrl,
-    markSchemeUrl: candidate.markSchemeUrl,
-  });
-
-  const source = await db.paperSource.upsert({
-    where: {
-      questionPaperUrl_markSchemeUrl: {
-        questionPaperUrl: candidate.questionPaperUrl,
-        markSchemeUrl: candidate.markSchemeUrl,
-      },
-    },
-    update: {
-      status: "importing",
-      lastDiscoveredAt: new Date(),
-    },
-    create: {
-      provider: PAPER_SOURCE_PROVIDER,
-      subjectIndexUrl: SUBJECT_INDEX_URL,
-      familyPageUrl: FAMILY_PAGE_URL,
-      paperPageUrl: candidate.paperPageUrl,
-      questionPaperUrl: candidate.questionPaperUrl,
-      markSchemeUrl: candidate.markSchemeUrl,
-      examBoard: candidate.examBoard,
-      qualification: candidate.qualification,
-      subject: candidate.subject,
-      paperNumber: candidate.paperNumber,
-      tier: candidate.tier,
-      sessionLabel: candidate.sessionLabel,
-      year,
-      status: "importing",
-    },
-  });
+  let sourceId: string | null = null;
+  let candidateContext: FailureCandidateContext = {
+    sessionLabel: `June ${year}`,
+  };
 
   try {
+    const adapter = getAdapter(ADAPTER_KEY);
+
+    if (!adapter) {
+      throw new ImportFailure("adapter", `Missing import adapter ${ADAPTER_KEY}`);
+    }
+
+    const candidates = await discoverAqaPhysicsPaper1Higher();
+    const candidate = candidates.find((entry) => entry.year === year);
+
+    if (!candidate) {
+      throw new ImportFailure("discovery", `Missing PMT candidate for benchmark year ${year}`, {
+        year,
+      });
+    }
+
+    candidateContext = candidate;
+
+    const { questionPaperPath, markSchemePath } = await ensureBenchmarkFixtures(year, {
+      questionPaperUrl: candidate.questionPaperUrl,
+      markSchemeUrl: candidate.markSchemeUrl,
+    });
+
+    const source = await db.paperSource.upsert({
+      where: {
+        questionPaperUrl_markSchemeUrl: {
+          questionPaperUrl: candidate.questionPaperUrl,
+          markSchemeUrl: candidate.markSchemeUrl,
+        },
+      },
+      update: {
+        status: "importing",
+        lastDiscoveredAt: new Date(),
+      },
+      create: {
+        provider: PAPER_SOURCE_PROVIDER,
+        subjectIndexUrl: SUBJECT_INDEX_URL,
+        familyPageUrl: FAMILY_PAGE_URL,
+        paperPageUrl: candidate.paperPageUrl,
+        questionPaperUrl: candidate.questionPaperUrl,
+        markSchemeUrl: candidate.markSchemeUrl,
+        examBoard: candidate.examBoard,
+        qualification: candidate.qualification,
+        subject: candidate.subject,
+        paperNumber: candidate.paperNumber,
+        tier: candidate.tier,
+        sessionLabel: candidate.sessionLabel,
+        year,
+        status: "importing",
+      },
+    });
+    sourceId = source.id;
+
     const questionItems = await extractPdfTextItems(questionPaperPath);
     const markSchemeItems = await extractPdfTextItems(markSchemePath);
     const detectedDrafts = adapter.detectQuestionDrafts({
@@ -540,21 +553,23 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
 
     return result;
   } catch (error) {
-    await writeFailureDiagnostics(year, candidate, error);
+    await writeFailureDiagnostics(year, candidateContext, error);
 
-    await db.paperSource.update({
-      where: { id: source.id },
-      data: {
-        status: "failed",
-        lastDiscoveredAt: new Date(),
-      },
-    });
+    if (sourceId) {
+      await db.paperSource.update({
+        where: { id: sourceId },
+        data: {
+          status: "failed",
+          lastDiscoveredAt: new Date(),
+        },
+      });
+    }
 
     if (error instanceof ImportFailure) {
       throw error;
     }
 
-    throw new ImportFailure("persist", `Import failed for ${candidate.sessionLabel}`, {
+    throw new ImportFailure("persist", `Import failed for ${candidateContext.sessionLabel ?? `June ${year}`}`, {
       year,
     }, {
       cause: error,
