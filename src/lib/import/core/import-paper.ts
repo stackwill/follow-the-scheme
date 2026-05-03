@@ -11,8 +11,11 @@ import { ImportFailure, serializeImportDiagnostics } from "@/lib/import/core/dia
 import { cropRegion } from "@/lib/import/core/crop";
 import { extractPdfTextItems } from "@/lib/import/core/pdf-text";
 import { renderPdfPages } from "@/lib/import/core/pdf-render";
-import { downloadPdf, getPaperDir } from "@/lib/import/core/storage";
-import { discoverAqaPhysicsPaper1Higher } from "@/lib/import/pmt/discovery";
+import { downloadPdf, getPaperDir, getPaperDirForAdapter } from "@/lib/import/core/storage";
+import {
+  discoverAqaGcseComputerSciencePaper1BPython,
+  discoverAqaPhysicsPaper1Higher,
+} from "@/lib/import/pmt/discovery";
 import { db } from "@/lib/db";
 import { cropsRoot, ensureDataDirs, logsRoot } from "@/lib/paths";
 
@@ -21,18 +24,35 @@ const SUBJECT_INDEX_URL = "https://www.physicsandmathstutor.com/past-papers/";
 const FAMILY_PAGE_URL = "https://www.physicsandmathstutor.com/past-papers/gcse-science/";
 const RENDER_SCALE = 2;
 const ADAPTER_KEY = "aqa-combined-science-physics-paper-1-higher";
+const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY =
+  "aqa-gcse-computer-science-paper-1b-python";
 const BENCHMARK_TOTAL_MARKS: Record<BenchmarkYear, number> = {
   2023: 70,
   2024: 70,
 };
+const COMPUTER_SCIENCE_TOTAL_MARKS: Record<2024, number> = {
+  2024: 90,
+};
 const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
 
 type BenchmarkYear = 2023 | 2024;
+type ComputerScienceBenchmarkYear = 2024;
 type QuestionRecord = Awaited<ReturnType<typeof buildQuestionRecordData>>[number];
 type ImportTransaction = Parameters<Parameters<typeof db.$transaction>[0]>[0];
-type BenchmarkCandidate = Awaited<ReturnType<typeof discoverAqaPhysicsPaper1Higher>>[number];
+type BenchmarkCandidate =
+  | Awaited<ReturnType<typeof discoverAqaPhysicsPaper1Higher>>[number]
+  | Awaited<ReturnType<typeof discoverAqaGcseComputerSciencePaper1BPython>>[number];
 type FailureCandidateContext = Partial<BenchmarkCandidate> & {
   sessionLabel?: string;
+};
+type ImportBenchmarkDefinition<Year extends BenchmarkYear = BenchmarkYear> = {
+  adapterKey: string;
+  familyPageUrl: string;
+  specCode: string;
+  title: (candidate: BenchmarkCandidate) => string;
+  totalMarks: Record<Year, number>;
+  discover: () => Promise<BenchmarkCandidate[]>;
+  paperDir: (year: Year) => string;
 };
 
 export type ImportPaperResult = {
@@ -51,13 +71,13 @@ async function fileExists(filePath: string) {
   }
 }
 
-function getFailureDiagnosticsPath(year: BenchmarkYear) {
-  return path.join(logsRoot, "imports", `${ADAPTER_KEY}-${year}-failure.json`);
+function getFailureDiagnosticsPath(adapterKey: string, year: number) {
+  return path.join(logsRoot, "imports", `${adapterKey}-${year}-failure.json`);
 }
 
-async function clearFailureDiagnostics(year: BenchmarkYear) {
+async function clearFailureDiagnostics(adapterKey: string, year: number) {
   try {
-    await unlink(getFailureDiagnosticsPath(year));
+    await unlink(getFailureDiagnosticsPath(adapterKey, year));
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       return;
@@ -68,7 +88,8 @@ async function clearFailureDiagnostics(year: BenchmarkYear) {
 }
 
 async function writeFailureDiagnostics(
-  year: BenchmarkYear,
+  adapterKey: string,
+  year: number,
   candidate: FailureCandidateContext,
   error: unknown,
 ) {
@@ -87,14 +108,14 @@ async function writeFailureDiagnostics(
           },
         };
 
-  const diagnosticsPath = getFailureDiagnosticsPath(year);
+  const diagnosticsPath = getFailureDiagnosticsPath(adapterKey, year);
 
   await mkdir(path.dirname(diagnosticsPath), { recursive: true });
   await writeFile(
     diagnosticsPath,
     `${JSON.stringify(
       {
-        adapterKey: ADAPTER_KEY,
+        adapterKey,
         year,
         sessionLabel: candidate.sessionLabel ?? `June ${year}`,
         paperPageUrl: candidate.paperPageUrl ?? null,
@@ -145,8 +166,11 @@ async function runCommand(command: string, args: string[], stage: "adapter" | "r
   return Buffer.concat(stdoutChunks).toString("utf8");
 }
 
-async function ensureBenchmarkFixtures(year: BenchmarkYear, urls: { questionPaperUrl: string; markSchemeUrl: string }) {
-  const paperDir = getPaperDir(year);
+async function ensureBenchmarkFixtures(
+  year: number,
+  paperDir: string,
+  urls: { questionPaperUrl: string; markSchemeUrl: string },
+) {
   const questionPaperPath = path.join(paperDir, "question-paper.pdf");
   const markSchemePath = path.join(paperDir, "mark-scheme.pdf");
 
@@ -250,6 +274,7 @@ async function finalizeDrafts(
   year: BenchmarkYear,
   drafts: QuestionDraft[],
   questionPaperPath: string,
+  expectedTotalMarks: number,
 ) {
   const finalizedDrafts = await Promise.all(
     drafts.map(async (draft) => ({
@@ -259,11 +284,11 @@ async function finalizeDrafts(
   );
   const totalMarks = finalizedDrafts.reduce((sum, draft) => sum + draft.maxMarks, 0);
 
-  if (totalMarks !== BENCHMARK_TOTAL_MARKS[year]) {
+  if (totalMarks !== expectedTotalMarks) {
     throw new ImportFailure("adapter", `Benchmark total marks mismatch for ${year}`, {
       year,
       totalMarks,
-      expectedTotalMarks: BENCHMARK_TOTAL_MARKS[year],
+      expectedTotalMarks,
     });
   }
 
@@ -272,6 +297,7 @@ async function finalizeDrafts(
 
 function buildQuestionRecordData(
   year: BenchmarkYear,
+  adapterKey: string,
   drafts: QuestionDraft[],
   renderPaths: string[],
 ) {
@@ -289,7 +315,7 @@ function buildQuestionRecordData(
       const cropPath = path.join(
         cropsRoot,
         "imports",
-        ADAPTER_KEY,
+        adapterKey,
         String(year),
         `${draft.questionKey.replace(/\./g, "-")}.png`,
       );
@@ -315,7 +341,7 @@ function buildQuestionRecordData(
         const supportingCropPath = path.join(
           cropsRoot,
           "imports",
-          ADAPTER_KEY,
+          adapterKey,
           String(year),
           `${draft.questionKey.replace(/\./g, "-")}-page-${supportingPdfBox.pageNumber}.png`,
         );
@@ -409,7 +435,30 @@ async function syncPaperQuestions(
   }
 }
 
-export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear): Promise<ImportPaperResult> {
+const AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION: ImportBenchmarkDefinition = {
+  adapterKey: ADAPTER_KEY,
+  familyPageUrl: FAMILY_PAGE_URL,
+  specCode: "8464",
+  title: (candidate) => `AQA Combined Science Trilogy Physics Paper 1 Higher ${candidate.sessionLabel}`,
+  totalMarks: BENCHMARK_TOTAL_MARKS,
+  discover: discoverAqaPhysicsPaper1Higher,
+  paperDir: getPaperDir,
+};
+
+const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION: ImportBenchmarkDefinition<ComputerScienceBenchmarkYear> = {
+  adapterKey: AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1",
+  specCode: "8525",
+  title: (candidate) => `AQA GCSE Computer Science Paper 1B Python ${candidate.sessionLabel}`,
+  totalMarks: COMPUTER_SCIENCE_TOTAL_MARKS,
+  discover: discoverAqaGcseComputerSciencePaper1BPython,
+  paperDir: (year) => getPaperDirForAdapter(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY, year),
+};
+
+async function importBenchmarkPaper<Year extends BenchmarkYear>(
+  definition: ImportBenchmarkDefinition<Year>,
+  year: Year,
+): Promise<ImportPaperResult> {
   await ensureDataDirs();
   let sourceId: string | null = null;
   let candidateContext: FailureCandidateContext = {
@@ -417,13 +466,13 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
   };
 
   try {
-    const adapter = getAdapter(ADAPTER_KEY);
+    const adapter = getAdapter(definition.adapterKey);
 
     if (!adapter) {
-      throw new ImportFailure("adapter", `Missing import adapter ${ADAPTER_KEY}`);
+      throw new ImportFailure("adapter", `Missing import adapter ${definition.adapterKey}`);
     }
 
-    const candidates = await discoverAqaPhysicsPaper1Higher();
+    const candidates = await definition.discover();
     const candidate = candidates.find((entry) => entry.year === year);
 
     if (!candidate) {
@@ -434,10 +483,14 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
 
     candidateContext = candidate;
 
-    const { questionPaperPath, markSchemePath } = await ensureBenchmarkFixtures(year, {
-      questionPaperUrl: candidate.questionPaperUrl,
-      markSchemeUrl: candidate.markSchemeUrl,
-    });
+    const { questionPaperPath, markSchemePath } = await ensureBenchmarkFixtures(
+      year,
+      definition.paperDir(year),
+      {
+        questionPaperUrl: candidate.questionPaperUrl,
+        markSchemeUrl: candidate.markSchemeUrl,
+      },
+    );
 
     const source = await db.paperSource.upsert({
       where: {
@@ -453,7 +506,7 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
       create: {
         provider: PAPER_SOURCE_PROVIDER,
         subjectIndexUrl: SUBJECT_INDEX_URL,
-        familyPageUrl: FAMILY_PAGE_URL,
+        familyPageUrl: definition.familyPageUrl,
         paperPageUrl: candidate.paperPageUrl,
         questionPaperUrl: candidate.questionPaperUrl,
         markSchemeUrl: candidate.markSchemeUrl,
@@ -483,11 +536,11 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
       });
     }
 
-    const drafts = await finalizeDrafts(year, detectedDrafts, questionPaperPath);
+    const drafts = await finalizeDrafts(year, detectedDrafts, questionPaperPath, definition.totalMarks[year]);
     const renderPaths = await renderPdfPages(questionPaperPath, `${adapter.key}-${year}`);
-    const questionRecords = await buildQuestionRecordData(year, drafts, renderPaths);
+    const questionRecords = await buildQuestionRecordData(year, adapter.key, drafts, renderPaths);
     const totalMarks = drafts.reduce((sum, draft) => sum + draft.maxMarks, 0);
-    const title = `AQA Combined Science Trilogy Physics Paper 1 Higher ${candidate.sessionLabel}`;
+    const title = definition.title(candidate);
 
     const result = await db.$transaction(async (transaction) => {
       const paper = await transaction.paper.upsert({
@@ -499,7 +552,7 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
           subject: candidate.subject,
           paperNumber: candidate.paperNumber,
           tier: candidate.tier,
-          specCode: "8464",
+          specCode: definition.specCode,
           sessionLabel: candidate.sessionLabel,
           year,
           totalMarks,
@@ -518,7 +571,7 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
           subject: candidate.subject,
           paperNumber: candidate.paperNumber,
           tier: candidate.tier,
-          specCode: "8464",
+          specCode: definition.specCode,
           sessionLabel: candidate.sessionLabel,
           year,
           totalMarks,
@@ -549,11 +602,11 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
       } satisfies ImportPaperResult;
     });
 
-    await clearFailureDiagnostics(year);
+    await clearFailureDiagnostics(definition.adapterKey, year);
 
     return result;
   } catch (error) {
-    await writeFailureDiagnostics(year, candidateContext, error);
+    await writeFailureDiagnostics(definition.adapterKey, year, candidateContext, error);
 
     if (sourceId) {
       await db.paperSource.update({
@@ -575,4 +628,14 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear)
       cause: error,
     });
   }
+}
+
+export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear): Promise<ImportPaperResult> {
+  return importBenchmarkPaper(AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION, year);
+}
+
+export async function importAqaGcseComputerSciencePaper1BPythonBenchmark(
+  year: ComputerScienceBenchmarkYear,
+): Promise<ImportPaperResult> {
+  return importBenchmarkPaper(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION, year);
 }

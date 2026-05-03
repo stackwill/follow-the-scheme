@@ -6,7 +6,10 @@ import type { PmtPaperCandidate } from "@/lib/import/types";
 
 const FAMILY_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-1/";
+const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1";
 const BENCHMARK_YEARS = [2023, 2024] as const;
+const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2024] as const;
 
 type SessionLinks = {
   questionPaperUrl?: string;
@@ -15,6 +18,10 @@ type SessionLinks = {
 
 function normalizeLinkUrl(href: string) {
   return new URL(href, FAMILY_URL).toString();
+}
+
+function normalizeLinkUrlForBase(href: string, baseUrl: string) {
+  return new URL(href, baseUrl).toString();
 }
 
 function readSessionLabel(label: string) {
@@ -138,4 +145,46 @@ export function discoverAqaPhysicsPaper1HigherFromHtml(html: string) {
 export async function discoverAqaPhysicsPaper1Higher() {
   const html = await fetchHtml(FAMILY_URL);
   return discoverAqaPhysicsPaper1HigherFromHtml(html);
+}
+
+export function discoverAqaGcseComputerSciencePaper1BPythonFromHtml(html: string) {
+  const $ = cheerio.load(html);
+  const candidates: PmtPaperCandidate[] = [];
+
+  for (const year of COMPUTER_SCIENCE_BENCHMARK_YEARS) {
+    const markScheme = $(`a[href*='June ${year} MS - Paper 1 AQA Computer Science GCSE.pdf']`).first();
+    const questionPaper = $(`a[href*='June ${year} QP - Paper 1B AQA Computer Science GCSE.pdf']`).first();
+    const markSchemeHref = markScheme.attr("href");
+    const questionPaperHref = questionPaper.attr("href");
+
+    if (!markSchemeHref || !questionPaperHref) {
+      continue;
+    }
+
+    candidates.push({
+      paperPageUrl: AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL,
+      questionPaperUrl: normalizeLinkUrlForBase(questionPaperHref, AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL),
+      markSchemeUrl: normalizeLinkUrlForBase(markSchemeHref, AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL),
+      examBoard: "AQA",
+      qualification: "GCSE Computer Science",
+      subject: "Computer Science",
+      paperNumber: 1,
+      tier: "Python",
+      sessionLabel: `June ${year}`,
+      year,
+    });
+  }
+
+  if (candidates.length !== COMPUTER_SCIENCE_BENCHMARK_YEARS.length) {
+    throw new Error(
+      `PMT benchmark discovery contract failed for ${AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL}: expected ${COMPUTER_SCIENCE_BENCHMARK_YEARS.length} Paper 1B candidate, found ${candidates.length}`,
+    );
+  }
+
+  return candidates;
+}
+
+export async function discoverAqaGcseComputerSciencePaper1BPython() {
+  const html = await fetchHtml(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL);
+  return discoverAqaGcseComputerSciencePaper1BPythonFromHtml(html);
 }

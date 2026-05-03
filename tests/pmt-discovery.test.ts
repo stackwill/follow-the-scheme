@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { discoverAqaPhysicsPaper1HigherFromHtml } from "@/lib/import/pmt/discovery";
+import {
+  discoverAqaGcseComputerSciencePaper1BPythonFromHtml,
+  discoverAqaPhysicsPaper1HigherFromHtml,
+} from "@/lib/import/pmt/discovery";
 import { parseSessionLabel } from "@/lib/import/pmt/normalize";
 
 function buildFixtureHtml() {
@@ -23,6 +26,38 @@ describe("parseSessionLabel", () => {
       sessionLabel: "June 2024",
       year: 2024,
     });
+  });
+});
+
+describe("discoverAqaGcseComputerSciencePaper1BPythonFromHtml", () => {
+  it("selects the current-spec June 2024 Paper 1B Python QP and shared Paper 1 mark scheme", () => {
+    const html = `
+      <main>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June 2024 MS - Paper 1 AQA Computer Science GCSE.pdf">June 2024 MS - Paper 1 AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June 2024 QP - Paper 1A AQA Computer Science GCSE.pdf">June 2024 QP - Paper 1A AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June 2024 QP - Paper 1B AQA Computer Science GCSE.pdf">June 2024 QP - Paper 1B AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June 2024 QP - Paper 1C AQA Computer Science GCSE.pdf">June 2024 QP - Paper 1C AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/Paper-1/June 2020 QP - Paper 1 AQA Computer Science GCSE.pdf">June 2020 QP - Paper 1 AQA Computer Science GCSE</a>
+      </main>
+    `;
+
+    expect(discoverAqaGcseComputerSciencePaper1BPythonFromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June%202024%20QP%20-%20Paper%201B%20AQA%20Computer%20Science%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June%202024%20MS%20-%20Paper%201%20AQA%20Computer%20Science%20GCSE.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Computer Science",
+        subject: "Computer Science",
+        paperNumber: 1,
+        tier: "Python",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
   });
 });
 
