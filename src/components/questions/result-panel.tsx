@@ -1,4 +1,5 @@
 export function ResultPanel(props: {
+  questionKey: string;
   awardedMarks: number;
   maxMarks: number;
   reasoning: string;
@@ -6,10 +7,12 @@ export function ResultPanel(props: {
   submittedAnswer: string;
   createdAt: Date;
 }) {
+  const headingId = `latest-result-${props.questionKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+
   return (
-    <section className="result-panel" aria-labelledby="latest-result-heading">
-      <p className="eyebrow">Latest attempt</p>
-      <h2 id="latest-result-heading">
+    <section className="result-panel" aria-labelledby={headingId}>
+      <p className="eyebrow">Latest attempt | Question {props.questionKey}</p>
+      <h2 id={headingId}>
         {props.awardedMarks} / {props.maxMarks} marks
       </h2>
       <dl className="result-panel__details">
