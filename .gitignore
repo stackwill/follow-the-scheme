@@ -14,3 +14,4 @@ tmp/
 *.sqlite
 *.sqlite-journal
 *.db
+tsconfig.tsbuildinfo
