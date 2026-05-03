@@ -250,4 +250,51 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
 
     expect(drafts[0]?.primaryPdfBox.bottom).toBeLessThan(130);
   });
+
+  it("keeps later subquestion crops bounded to their own visual segment", () => {
+    const questionItems: TextItem[] = [
+      item(8, "0", 52.7, 760.0),
+      item(8, "2", 69.4, 760.0),
+      item(8, "Shared context for this question.", 114.8, 759.2, 240),
+      item(8, "0", 52.7, 705.0),
+      item(8, "2", 69.4, 705.0),
+      item(8, ".", 82.4, 705.0),
+      item(8, "1", 92.6, 705.0),
+      item(8, "What does an alpha particle consist of?", 114.8, 704.2, 220),
+      item(8, "0", 52.7, 500.0),
+      item(8, "2", 69.4, 500.0),
+      item(8, ".", 82.4, 500.0),
+      item(8, "2", 92.6, 500.0),
+      item(8, "How many neutrons are there?", 114.8, 499.2, 200),
+      item(8, "Number of neutrons =", 300.0, 430.0, 140),
+      item(9, "0", 52.7, 760.0),
+      item(9, "2", 69.4, 760.0),
+      item(9, ".", 82.4, 760.0),
+      item(9, "3", 92.6, 760.0),
+      item(9, "Describe the model.", 114.8, 759.2, 160),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(12, "02.1", 67.3, 675.7, 24),
+      item(12, "2 protons and 2 neutrons", 113.2, 675.7, 160),
+      item(12, "1", 466.2, 675.7, 8),
+      item(12, "02.2", 67.3, 573.7, 24),
+      item(12, "118", 113.2, 573.7, 30),
+      item(12, "1", 466.2, 573.7, 8),
+      item(12, "02.3", 67.3, 473.7, 24),
+      item(12, "clear description", 113.2, 473.7, 120),
+      item(12, "1", 466.2, 473.7, 8),
+      item(13, "Total Question 2 3", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2024,
+      questionItems,
+      markSchemeItems,
+    });
+    const question022 = drafts.find((draft) => draft.questionKey === "02.2");
+
+    expect(question022?.primaryPdfBox.top).toBeLessThan(560);
+    expect(question022?.primaryPdfBox.bottom).toBeLessThan(410);
+    expect(question022?.extractedQuestionText).toContain("Shared context for this question.");
+  });
 });
