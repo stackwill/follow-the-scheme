@@ -226,7 +226,7 @@ h1 {
 
 .status-table {
   width: 100%;
-  min-width: 720px;
+  min-width: 960px;
   border-collapse: collapse;
 }
 
@@ -269,6 +269,55 @@ h1 {
 .status-pill[data-status="importing"] {
   background: #fff3d8;
   color: var(--warning);
+}
+
+.diagnostics-stack {
+  display: grid;
+  min-width: 260px;
+  gap: 8px;
+}
+
+.diagnostics-muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.diagnostics-details {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fafaf7;
+  padding: 10px;
+}
+
+.diagnostics-details summary {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.diagnostics-details pre {
+  overflow-x: auto;
+  margin: 10px 0 0;
+  border-radius: 10px;
+  background: #1f2421;
+  color: #f7f7f2;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  padding: 12px;
+}
+
+.diagnostics-list {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .section-heading {
