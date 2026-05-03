@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { buildGradingPrompt } from "@/lib/grading/prompt";
-import { detectSelectionQuestion, gradeSelectionAnswer, gradingResponseSchema } from "@/lib/grading/schema";
+import {
+  detectPaperOnlyQuestion,
+  detectSelectionQuestion,
+  gradeSelectionAnswer,
+  gradingResponseSchema,
+} from "@/lib/grading/schema";
 
 describe("gradingResponseSchema", () => {
   it("accepts a valid grading payload", () => {
@@ -104,6 +109,36 @@ describe("gradeSelectionAnswer", () => {
         maxMarks: 1,
       }).awardedMarks,
     ).toBe(0);
+  });
+});
+
+describe("detectPaperOnlyQuestion", () => {
+  it("flags graph, circuit, and figure construction prompts as paper-only", () => {
+    expect(
+      detectPaperOnlyQuestion({
+        questionText: "Complete Figure 3 to show how the student should connect a voltmeter.",
+      }),
+    ).toEqual({ reason: "Complete this on the paper." });
+
+    expect(
+      detectPaperOnlyQuestion({
+        questionText: "Plot the points and draw a line of best fit on the graph.",
+      }),
+    ).not.toBeNull();
+
+    expect(
+      detectPaperOnlyQuestion({
+        questionText: "Use the correct circuit symbols.",
+      }),
+    ).toEqual({ reason: "Draw the circuit symbols on paper." });
+  });
+
+  it("does not flag normal written-answer questions", () => {
+    expect(
+      detectPaperOnlyQuestion({
+        questionText: "Explain why the current increases when the resistance decreases.",
+      }),
+    ).toBeNull();
   });
 });
 

@@ -5,7 +5,7 @@ import { AnswerForm } from "@/components/questions/answer-form";
 import { ProgressHeader } from "@/components/questions/progress-header";
 import { QuestionViewer } from "@/components/questions/question-viewer";
 import { ResultPanel } from "@/components/questions/result-panel";
-import { detectSelectionQuestion } from "@/lib/grading/schema";
+import { detectPaperOnlyQuestion, detectSelectionQuestion } from "@/lib/grading/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +35,27 @@ function parseSupportingAssetPaths(value: string) {
   return [];
 }
 
+function questionGroupKey(questionKey: string) {
+  return questionKey.split(".")[0] ?? questionKey;
+}
+
+function uniqueQuestionGroups<T extends { questionKey: string }>(questions: T[]) {
+  const groups: Array<{ key: string; firstQuestion: T; questions: T[] }> = [];
+
+  for (const question of questions) {
+    const key = questionGroupKey(question.questionKey);
+    const existingGroup = groups.at(-1);
+
+    if (existingGroup?.key === key) {
+      existingGroup.questions.push(question);
+    } else {
+      groups.push({ key, firstQuestion: question, questions: [question] });
+    }
+  }
+
+  return groups;
+}
+
 export default async function QuestionPage({
   params,
 }: {
@@ -62,36 +83,95 @@ export default async function QuestionPage({
     notFound();
   }
 
-  const latestAttempt = await db.questionAttempt.findFirst({
-    where: { questionId },
+  const groups = uniqueQuestionGroups(paper.questions);
+  const groupKey = questionGroupKey(question.questionKey);
+  const currentGroupIndex = groups.findIndex((entry) => entry.key === groupKey);
+  const currentGroup = groups[currentGroupIndex];
+
+  if (!currentGroup) {
+    notFound();
+  }
+
+  const latestAttempts = await db.questionAttempt.findMany({
+    where: {
+      questionId: {
+        in: currentGroup.questions.map((entry) => entry.id),
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
-  const selectionQuestion = detectSelectionQuestion({
-    maxMarks: question.maxMarks,
-    questionText: question.extractedQuestionText,
-    markSchemeText: question.markSchemeText,
+  const latestAttemptByQuestionId = new Map<string, (typeof latestAttempts)[number]>();
+
+  for (const attempt of latestAttempts) {
+    if (!latestAttemptByQuestionId.has(attempt.questionId)) {
+      latestAttemptByQuestionId.set(attempt.questionId, attempt);
+    }
+  }
+
+  const answerableQuestions = currentGroup.questions.map((groupQuestion) => {
+    const paperOnlyQuestion = detectPaperOnlyQuestion({
+      questionText: groupQuestion.extractedQuestionText,
+    });
+    const selectionQuestion = paperOnlyQuestion
+      ? null
+      : detectSelectionQuestion({
+          maxMarks: groupQuestion.maxMarks,
+          questionText: groupQuestion.extractedQuestionText,
+          markSchemeText: groupQuestion.markSchemeText,
+        });
+
+    return {
+      id: groupQuestion.id,
+      questionKey: groupQuestion.questionKey,
+      maxMarks: groupQuestion.maxMarks,
+      paperOnlyReason: paperOnlyQuestion?.reason ?? null,
+      selectionQuestion: selectionQuestion
+        ? {
+            type: selectionQuestion.type,
+            options: selectionQuestion.options,
+          }
+        : null,
+    };
   });
-  const publicSelectionQuestion = selectionQuestion
-    ? {
-        type: selectionQuestion.type,
-        options: selectionQuestion.options,
-      }
-    : null;
-  const previousQuestion = paper.questions[currentIndex - 1] ?? null;
-  const nextQuestion = paper.questions[currentIndex + 1] ?? null;
+  const previousGroup = groups[currentGroupIndex - 1] ?? null;
+  const nextGroup = groups[currentGroupIndex + 1] ?? null;
 
   async function submit(_state: FormState, formData: FormData): Promise<FormState> {
     "use server";
 
     try {
       const { gradeQuestionAttempt } = await import("@/lib/grading/grade-question");
+      let gradedCount = 0;
 
-      await gradeQuestionAttempt({
-        paperId,
-        questionId,
-        answer: String(formData.get("answer") ?? ""),
-        notes: String(formData.get("notes") ?? ""),
-      });
+      for (const groupQuestion of currentGroup.questions) {
+        const paperOnlyQuestion = detectPaperOnlyQuestion({
+          questionText: groupQuestion.extractedQuestionText,
+        });
+
+        if (paperOnlyQuestion) {
+          continue;
+        }
+
+        const answer = String(formData.get(`answer-${groupQuestion.id}`) ?? "");
+
+        if (!answer.trim()) {
+          continue;
+        }
+
+        await gradeQuestionAttempt({
+          paperId,
+          questionId: groupQuestion.id,
+          answer,
+          notes: "",
+        });
+        gradedCount += 1;
+      }
+
+      if (gradedCount === 0) {
+        return {
+          error: "Enter an answer for at least one answerable part before submitting.",
+        };
+      }
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : "Unknown grading error",
@@ -106,31 +186,48 @@ export default async function QuestionPage({
       <ProgressHeader
         paperTitle={paper.title}
         paperHref={paperHref(paper.id)}
-        current={currentIndex + 1}
-        total={paper.questions.length}
-        previousHref={previousQuestion ? questionHref(paper.id, previousQuestion.id) : null}
-        nextHref={nextQuestion ? questionHref(paper.id, nextQuestion.id) : null}
+        current={currentGroupIndex + 1}
+        total={groups.length}
+        previousHref={previousGroup ? questionHref(paper.id, previousGroup.firstQuestion.id) : null}
+        nextHref={nextGroup ? questionHref(paper.id, nextGroup.firstQuestion.id) : null}
       />
       <div className="question-layout">
         <QuestionViewer
-          questionKey={question.questionKey}
-          maxMarks={question.maxMarks}
-          imagePath={question.primaryCropPath}
-          supportingImagePaths={parseSupportingAssetPaths(question.supportingAssetPaths)}
-          text={question.extractedQuestionText}
+          groupKey={currentGroup.key}
+          questions={currentGroup.questions.map((groupQuestion) => {
+            const paperOnlyQuestion = detectPaperOnlyQuestion({
+              questionText: groupQuestion.extractedQuestionText,
+            });
+
+            return {
+              id: groupQuestion.id,
+              questionKey: groupQuestion.questionKey,
+              maxMarks: groupQuestion.maxMarks,
+              imagePath: groupQuestion.primaryCropPath,
+              supportingImagePaths: parseSupportingAssetPaths(groupQuestion.supportingAssetPaths),
+              text: groupQuestion.extractedQuestionText,
+              paperOnlyReason: paperOnlyQuestion?.reason ?? null,
+            };
+          })}
         />
         <aside className="answer-stack">
-          {latestAttempt ? (
-            <ResultPanel
-              awardedMarks={latestAttempt.awardedMarks}
-              maxMarks={latestAttempt.maxMarks}
-              reasoning={latestAttempt.gradingReasoning}
-              feedback={latestAttempt.feedback}
-              submittedAnswer={latestAttempt.submittedAnswer}
-              createdAt={latestAttempt.createdAt}
-            />
-          ) : null}
-          <AnswerForm action={submit} selectionQuestion={publicSelectionQuestion} />
+          {[...latestAttemptByQuestionId.entries()].map(([attemptQuestionId, latestAttempt]) => {
+            const attemptQuestion = currentGroup.questions.find((entry) => entry.id === attemptQuestionId);
+
+            return (
+              <ResultPanel
+                key={latestAttempt.id}
+                questionKey={attemptQuestion?.questionKey ?? "Unknown"}
+                awardedMarks={latestAttempt.awardedMarks}
+                maxMarks={latestAttempt.maxMarks}
+                reasoning={latestAttempt.gradingReasoning}
+                feedback={latestAttempt.feedback}
+                submittedAnswer={latestAttempt.submittedAnswer}
+                createdAt={latestAttempt.createdAt}
+              />
+            );
+          })}
+          <AnswerForm action={submit} questions={answerableQuestions} />
         </aside>
       </div>
     </main>

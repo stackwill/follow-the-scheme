@@ -20,8 +20,21 @@ export type SelectionQuestion = {
   correctOptionId: string;
 };
 
+export type PaperOnlyQuestion = {
+  reason: string;
+};
+
 const TICK_ONE_BOX_PATTERN = /tick\s*\([^)]*\)\s*one\s+box\.?/gi;
 const SIMPLE_NOISE_LINES = new Set(["answers"]);
+const PAPER_ONLY_PATTERNS: Array<[RegExp, string]> = [
+  [/\bcomplete\s+(figure|fig\.|the\s+diagram|the\s+circuit|the\s+graph|the\s+table)\b/i, "Complete this on the paper."],
+  [/\bdraw\s+(a\s+)?(line|curve|graph|diagram|circuit|ray|arrow|bar|best\s+fit)\b/i, "Draw this on the paper."],
+  [/\bplot\s+(the\s+)?(points?|graph|line|curve)\b/i, "Plot this on the paper."],
+  [/\bsketch\s+(a\s+)?(graph|diagram|curve|line)\b/i, "Sketch this on the paper."],
+  [/\b(on|onto)\s+(figure|fig\.|the\s+graph|the\s+grid|the\s+diagram)\b/i, "Use the source image and write/draw on paper."],
+  [/\buse\s+the\s+correct\s+circuit\s+symbols?\b/i, "Draw the circuit symbols on paper."],
+  [/\bshow\s+.*\b(on|in)\s+(figure|fig\.|the\s+diagram|the\s+graph|the\s+grid)\b/i, "Show this on the paper."],
+];
 
 function normalizeAnswerText(text: string) {
   return text
@@ -111,6 +124,18 @@ export function detectSelectionQuestion(input: {
     options,
     correctOptionId: matches[0].id,
   };
+}
+
+export function detectPaperOnlyQuestion(input: { questionText: string }): PaperOnlyQuestion | null {
+  const normalizedQuestion = input.questionText.replace(/\s+/g, " ").trim();
+
+  for (const [pattern, reason] of PAPER_ONLY_PATTERNS) {
+    if (pattern.test(normalizedQuestion)) {
+      return { reason };
+    }
+  }
+
+  return null;
 }
 
 export function gradeSelectionAnswer(input: {

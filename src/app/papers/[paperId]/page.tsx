@@ -8,6 +8,10 @@ function questionHref(paperId: string, questionId: string) {
   return `/papers/${paperId}/questions/${questionId}` as Route;
 }
 
+function questionGroupKey(questionKey: string) {
+  return questionKey.split(".")[0] ?? questionKey;
+}
+
 export default async function PaperOverviewPage({ params }: { params: Promise<{ paperId: string }> }) {
   const { paperId } = await params;
   const { db } = await import("@/lib/db");
@@ -32,6 +36,21 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
   }
 
   const firstQuestion = paper.questions[0];
+  const groupedQuestions = paper.questions.reduce<Array<{ key: string; questions: typeof paper.questions }>>(
+    (groups, question) => {
+      const key = questionGroupKey(question.questionKey);
+      const existingGroup = groups.at(-1);
+
+      if (existingGroup?.key === key) {
+        existingGroup.questions.push(question);
+      } else {
+        groups.push({ key, questions: [question] });
+      }
+
+      return groups;
+    },
+    [],
+  );
 
   return (
     <main className="page-shell">
@@ -47,28 +66,35 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
         </p>
         {firstQuestion ? (
           <Link className="button-link" href={questionHref(paper.id, firstQuestion.id)}>
-            Start first question
+            Start paper
           </Link>
         ) : null}
       </header>
 
-      <section className="dev-panel">
+      <section className="question-map-panel">
         <div className="section-heading">
-          <h2>Questions</h2>
-          <p>{paper.questions.length} imported question parts</p>
+          <h2>Question map</h2>
+          <p>{groupedQuestions.length} groups | {paper.questions.length} imported parts</p>
         </div>
-        {paper.questions.length > 0 ? (
-          <ol className="question-list">
-            {paper.questions.map((question) => (
-              <li key={question.id}>
-                <Link href={questionHref(paper.id, question.id)}>
-                  <span>Question {question.questionKey}</span>
-                  <span>
-                    {question.maxMarks} marks | {question._count.attempts} attempts
-                  </span>
-                </Link>
-              </li>
-            ))}
+        {groupedQuestions.length > 0 ? (
+          <ol className="question-group-list">
+            {groupedQuestions.map((group) => {
+              const groupMarks = group.questions.reduce((sum, question) => sum + question.maxMarks, 0);
+              const groupAttempts = group.questions.reduce((sum, question) => sum + question._count.attempts, 0);
+
+              return (
+                <li key={group.key}>
+                  <Link href={questionHref(paper.id, group.questions[0].id)}>
+                    <span className="question-group-list__number">{group.key}</span>
+                    <span className="question-group-list__body">
+                      <strong>{group.questions.map((question) => question.questionKey).join(", ")}</strong>
+                      <span>{group.questions.length} parts | {groupMarks} marks | {groupAttempts} attempts</span>
+                    </span>
+                    <span className="question-group-list__action">Start</span>
+                  </Link>
+                </li>
+              );
+            })}
           </ol>
         ) : (
           <p>No questions were imported for this paper.</p>

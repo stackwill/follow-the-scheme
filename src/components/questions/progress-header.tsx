@@ -19,7 +19,7 @@ export function ProgressHeader(props: {
         </Link>
         <p className="eyebrow">{props.paperTitle}</p>
         <h1>
-          Question {props.current} of {props.total}
+          Group {props.current} of {props.total}
         </h1>
       </div>
       <div className="progress-header__nav" aria-label="Question navigation">

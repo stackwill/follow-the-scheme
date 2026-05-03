@@ -10,10 +10,16 @@ type AnswerFormState = {
 
 type AnswerFormProps = {
   action: (state: AnswerFormState, formData: FormData) => Promise<AnswerFormState>;
-  selectionQuestion: {
-    type: "single";
-    options: SelectionOption[];
-  } | null;
+  questions: Array<{
+    id: string;
+    questionKey: string;
+    maxMarks: number;
+    paperOnlyReason: string | null;
+    selectionQuestion: {
+      type: "single";
+      options: SelectionOption[];
+    } | null;
+  }>;
 };
 
 export function AnswerForm(props: AnswerFormProps) {
@@ -21,28 +27,41 @@ export function AnswerForm(props: AnswerFormProps) {
 
   return (
     <form action={formAction} className="answer-form">
-      {props.selectionQuestion ? (
-        <fieldset className="option-fieldset">
-          <legend>Your answer</legend>
-          <p>Choose the option you would tick on the paper.</p>
-          {props.selectionQuestion.options.map((option) => (
-            <label className="option-choice" key={option.id}>
-              <input name="answer" type="radio" value={option.id} required />
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </fieldset>
-      ) : (
-        <label className="field-stack">
-          <span>Your answer</span>
-          <textarea name="answer" rows={8} required />
-        </label>
-      )}
+      <div className="answer-form__header">
+        <p className="eyebrow">Answer</p>
+        <h2>{props.questions.length === 1 ? "Your answer" : "Answer this question group"}</h2>
+      </div>
 
-      <label className="field-stack">
-        <span>Your notes (optional)</span>
-        <textarea name="notes" rows={4} />
-      </label>
+      {props.questions.map((question) => (
+        <section className="answer-part" key={question.id}>
+          <div className="answer-part__heading">
+            <h3>Question {question.questionKey}</h3>
+            <span>{question.maxMarks} marks</span>
+          </div>
+
+          {question.paperOnlyReason ? (
+            <div className="paper-only-callout">
+              <strong>Write or draw this one on paper.</strong>
+              <p>{question.paperOnlyReason} This part is not sent for AI marking yet.</p>
+            </div>
+          ) : question.selectionQuestion ? (
+            <fieldset className="option-fieldset">
+              <legend>Choose the option you would tick.</legend>
+              {question.selectionQuestion.options.map((option) => (
+                <label className="option-choice" key={option.id}>
+                  <input name={`answer-${question.id}`} type="radio" value={option.id} required />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </fieldset>
+          ) : (
+            <label className="field-stack">
+              <span>Typed answer</span>
+              <textarea name={`answer-${question.id}`} rows={6} required />
+            </label>
+          )}
+        </section>
+      ))}
 
       {state.error ? (
         <p className="form-error" role="alert">
@@ -50,7 +69,7 @@ export function AnswerForm(props: AnswerFormProps) {
         </p>
       ) : null}
       <button type="submit" disabled={pending}>
-        {pending ? "Marking..." : "Submit answer"}
+        {pending ? "Marking..." : "Submit and mark"}
       </button>
     </form>
   );
