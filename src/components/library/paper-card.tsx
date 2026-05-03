@@ -1,4 +1,10 @@
+import Link from "next/link";
+import type { Route } from "next";
 import type { Paper } from "@prisma/client";
+
+function paperHref(paperId: string) {
+  return `/papers/${paperId}` as Route;
+}
 
 export function PaperCard({ paper }: { paper: Paper }) {
   return (
@@ -14,9 +20,9 @@ export function PaperCard({ paper }: { paper: Paper }) {
       <p className="paper-card__details">
         {paper.sessionLabel} | Paper {paper.paperNumber} | {paper.totalMarks} marks
       </p>
-      <span className="paper-card__link paper-card__link--disabled" aria-disabled="true">
-        Paper view arrives in Task 7
-      </span>
+      <Link className="paper-card__link" href={paperHref(paper.id)}>
+        Open paper
+      </Link>
     </article>
   );
 }
