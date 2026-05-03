@@ -3,6 +3,9 @@ import { requestStructuredGrade } from "@/lib/grading/client";
 import { buildGradingPrompt } from "@/lib/grading/prompt";
 import { detectSelectionQuestion, gradeSelectionAnswer } from "@/lib/grading/schema";
 
+const MAX_ANSWER_CHARACTERS = 4_000;
+const MAX_NOTES_CHARACTERS = 1_000;
+
 export async function gradeQuestionAttempt(input: {
   paperId: string;
   questionId: string;
@@ -21,6 +24,16 @@ export async function gradeQuestionAttempt(input: {
 
   if (!trimmedAnswer) {
     throw new Error("Enter an answer before submitting.");
+  }
+
+  if (trimmedAnswer.length > MAX_ANSWER_CHARACTERS) {
+    throw new Error(`Answer is too long. Keep it under ${MAX_ANSWER_CHARACTERS} characters.`);
+  }
+
+  const trimmedNotes = input.notes.trim();
+
+  if (trimmedNotes.length > MAX_NOTES_CHARACTERS) {
+    throw new Error(`Notes are too long. Keep them under ${MAX_NOTES_CHARACTERS} characters.`);
   }
 
   let attempt = await db.attempt.findFirst({
@@ -72,7 +85,7 @@ export async function gradeQuestionAttempt(input: {
       attemptId: attempt.id,
       questionId: input.questionId,
       submittedAnswer,
-      userNotes: input.notes.trim(),
+      userNotes: trimmedNotes,
       awardedMarks: boundedMarks,
       maxMarks: question.maxMarks,
       gradingReasoning: result.reasoning,
