@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 type FormState = {
   error: string | null;
+  answers?: Record<string, string>;
 };
 
 function paperHref(paperId: string) {
@@ -139,6 +140,13 @@ export default async function QuestionPage({
   async function submit(_state: FormState, formData: FormData): Promise<FormState> {
     "use server";
 
+    const submittedAnswers = Object.fromEntries(
+      currentGroup.questions.map((groupQuestion) => [
+        groupQuestion.id,
+        String(formData.get(`answer-${groupQuestion.id}`) ?? ""),
+      ]),
+    );
+
     try {
       const { gradeQuestionAttempt } = await import("@/lib/grading/grade-question");
       let gradedCount = 0;
@@ -170,11 +178,13 @@ export default async function QuestionPage({
       if (gradedCount === 0) {
         return {
           error: "Enter an answer for at least one answerable part before submitting.",
+          answers: submittedAnswers,
         };
       }
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : "Unknown grading error",
+        answers: submittedAnswers,
       };
     }
 
