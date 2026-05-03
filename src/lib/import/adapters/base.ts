@@ -37,3 +37,21 @@ export type PaperImportAdapter = {
   importVersion: string;
   detectQuestionDrafts(input: DetectQuestionDraftsInput): QuestionDraft[];
 };
+
+/**
+ * Notes for future Codex adapter work:
+ * - Keep adapters deterministic. Do not use AI during import; AI belongs in marking after a
+ *   question has been imported and answered.
+ * - Start from real PDF text extraction output for the target paper/mark scheme. AQA, OCR,
+ *   Edexcel, and subject families all place labels, marks, tables, and continuation text
+ *   differently.
+ * - Treat an adapter as three separate contracts: question-start detection, mark-scheme block
+ *   pairing, and crop-box construction. Add tests for each contract before trusting a new paper.
+ * - Preserve visual context generously for code grids, figures, tables, circuits, graphs, and
+ *   source material. It is better for the UI to show extra official paper context than to omit a
+ *   line needed to answer.
+ * - Validate total marks and fail fast on missing/unused mark-scheme blocks. Silent partial
+ *   imports make marking untrustworthy.
+ * - Keep board/subject-specific heuristics inside the adapter file unless two adapters genuinely
+ *   share the same PDF format.
+ */

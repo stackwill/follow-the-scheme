@@ -18,6 +18,10 @@ export function getPaperDir(year: number) {
   );
 }
 
+export function getPaperDirForAdapter(adapterKey: string, year: number) {
+  return path.join(sourcesRoot, "pmt", adapterKey, String(year));
+}
+
 export async function downloadPdf(url: string, destination: string) {
   const response = await fetch(url);
 

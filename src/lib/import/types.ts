@@ -5,10 +5,10 @@ export type PmtPaperCandidate = {
   questionPaperUrl: string;
   markSchemeUrl: string;
   examBoard: "AQA";
-  qualification: "GCSE Combined Science Trilogy";
-  subject: "Physics";
+  qualification: string;
+  subject: string;
   paperNumber: 1;
-  tier: "Higher";
+  tier: string;
   sessionLabel: string;
   year: number;
 };
