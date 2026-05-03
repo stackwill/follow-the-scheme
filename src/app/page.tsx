@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { PaperCard } from "@/components/library/paper-card";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +13,7 @@ export default async function HomePage() {
   return (
     <main className="page-shell">
       <header className="page-header">
-        <p>FollowTheScheme</p>
+        <p className="eyebrow">FollowTheScheme</p>
         <h1>Imported Papers</h1>
         <p className="page-description">
           A plain working library of imported benchmark papers, ready for internal review and practice flows.
@@ -28,9 +30,9 @@ export default async function HomePage() {
         <section className="empty-state">
           <h2>No imported papers yet</h2>
           <p>Use the developer import screen to import one of the supported AQA benchmark papers.</p>
-          <a className="button-link" href="/dev/imports">
+          <Link className="button-link" href="/dev/imports">
             Open developer imports
-          </a>
+          </Link>
         </section>
       )}
     </main>
