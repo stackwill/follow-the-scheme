@@ -247,15 +247,11 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
 
   const maxY = Math.max(...visibleItems.map((item) => item.y + item.height));
   const minY = Math.min(...visibleItems.map((item) => item.y));
-  const shouldPreserveAnswerGrid = lines.some((line) =>
-    /answer grid below|write a python program|write a subroutine|write an algorithm/i.test(line.rawText),
-  );
+  const hasAnswerGridInstruction = lines.some((line) => /answer grid below/i.test(line.rawText));
   const top = Math.min(QUESTION_PAGE_TOP_LIMIT, maxY + QUESTION_TOP_PADDING);
   const bottom = Math.max(
     QUESTION_PAGE_BOTTOM_LIMIT,
-    shouldPreserveAnswerGrid && nextQuestionBottom === null
-      ? QUESTION_PAGE_BOTTOM_LIMIT
-      : Math.min(nextQuestionBottom ?? minY - QUESTION_BOTTOM_PADDING, top - MIN_BOX_HEIGHT),
+    Math.min(nextQuestionBottom ?? minY - (hasAnswerGridInstruction ? 4 : QUESTION_BOTTOM_PADDING), top - MIN_BOX_HEIGHT),
   );
 
   return {
@@ -296,7 +292,7 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
       .slice(0, displayIndex)
       .some((draftStart) => draftStart.mainKey === start.mainKey);
     const visualStartIndex = start.partKey && previousMainContext && !previousDraftSameMain ? previousMainContext.index : start.index;
-    const textStartIndex = previousMainContext?.index ?? start.index;
+    const textStartIndex = start.partKey && previousMainContext && !previousDraftSameMain ? previousMainContext.index : start.index;
     const textLines = questionLines.slice(textStartIndex, nextBoundary?.index ?? questionLines.length);
     const visualLines = questionLines
       .slice(visualStartIndex, nextBoundary?.index ?? questionLines.length)

@@ -24,7 +24,7 @@ export type PaperOnlyQuestion = {
   reason: string;
 };
 
-const TICK_ONE_BOX_PATTERN = /tick\s*\([^)]*\)\s*one\s+box\.?/gi;
+const SINGLE_SELECTION_PATTERN = /(?:tick|shade)\s*(?:\([^)]*\)\s*)?one\s+(?:box|lozenge)\.?/gi;
 const SIMPLE_NOISE_LINES = new Set(["answers"]);
 const PAPER_ONLY_PATTERNS: Array<[RegExp, string]> = [
   [/\bcomplete\s+(figure|fig\.|the\s+diagram|the\s+circuit|the\s+graph|the\s+table)\b/i, "Complete this on the paper."],
@@ -60,7 +60,7 @@ function optionId(index: number) {
 }
 
 function getOptionLines(questionText: string) {
-  const matches = [...questionText.matchAll(TICK_ONE_BOX_PATTERN)];
+  const matches = [...questionText.matchAll(SINGLE_SELECTION_PATTERN)];
 
   if (matches.length !== 1) {
     return [];
@@ -73,19 +73,26 @@ function getOptionLines(questionText: string) {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
+    .filter((line) => !/^\[\d+\s*marks?\]$/i.test(line))
     .slice(0, 6);
 }
 
 function looksLikeTextOption(line: string) {
-  if (line.length < 2 || line.length > 120) {
+  const normalizedLine = normalizeOptionLabel(line);
+
+  if (normalizedLine.length < 1 || normalizedLine.length > 120) {
     return false;
   }
 
-  if (/^\d+$/.test(line)) {
+  if (/^\d+$/.test(normalizedLine)) {
     return false;
   }
 
-  return /[A-Za-z]/.test(line);
+  return /[A-Za-z]/.test(normalizedLine);
+}
+
+function normalizeOptionLabel(line: string) {
+  return line.replace(/^[A-D]\s+/, "").trim();
 }
 
 export function detectSelectionQuestion(input: {
@@ -103,17 +110,23 @@ export function detectSelectionQuestion(input: {
     return null;
   }
 
-  const normalizedCorrectAnswer = normalizeAnswerText(normalizeMarkSchemeText(input.markSchemeText));
+  const normalizedCorrectAnswer = normalizeAnswerText(
+    normalizeOptionLabel(normalizeMarkSchemeText(input.markSchemeText)),
+  );
 
   if (!normalizedCorrectAnswer) {
     return null;
   }
 
-  const options = lines.map((label, index) => ({
+  const options = lines.map((line, index) => ({
     id: optionId(index),
-    label,
+    label: normalizeOptionLabel(line),
   }));
-  const matches = options.filter((option) => normalizeAnswerText(option.label) === normalizedCorrectAnswer);
+  const matches = options.filter((option) => {
+    const normalizedOption = normalizeAnswerText(option.label);
+
+    return normalizedOption === normalizedCorrectAnswer || normalizedCorrectAnswer.includes(normalizedOption);
+  });
 
   if (matches.length !== 1) {
     return null;
