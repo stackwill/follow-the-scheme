@@ -18,6 +18,14 @@ type AnswerFormProps = {
     maxMarks: number;
     imagePath: string;
     paperOnlyReason: string | null;
+    latestAttempt: {
+      awardedMarks: number;
+      maxMarks: number;
+      submittedAnswer: string;
+      reasoning: string;
+      feedback: string;
+      createdAt: string;
+    } | null;
     selectionQuestion: {
       type: "single";
       options: SelectionOption[];
@@ -32,6 +40,9 @@ function assetUrl(assetPath: string) {
 export function AnswerForm(props: AnswerFormProps) {
   const [state, formAction, pending] = useActionState(props.action, { error: null });
   const totalMarks = props.questions.reduce((sum, question) => sum + question.maxMarks, 0);
+  const markedQuestions = props.questions.filter((question) => question.latestAttempt);
+  const awardedMarks = markedQuestions.reduce((sum, question) => sum + (question.latestAttempt?.awardedMarks ?? 0), 0);
+  const markedMaxMarks = markedQuestions.reduce((sum, question) => sum + (question.latestAttempt?.maxMarks ?? 0), 0);
 
   return (
     <form action={formAction} className="answer-form">
@@ -39,6 +50,21 @@ export function AnswerForm(props: AnswerFormProps) {
         <p className="eyebrow">Question group {props.groupKey}</p>
         <h2>{totalMarks} marks</h2>
       </div>
+
+      {markedQuestions.length > 0 ? (
+        <section className="mark-summary" id="marks" aria-label="Latest marking summary">
+          <div>
+            <p className="eyebrow">Latest mark</p>
+            <h3>
+              {awardedMarks} / {markedMaxMarks} marks
+            </h3>
+          </div>
+          <p>
+            {markedQuestions.length} of {props.questions.length} question parts marked. Detailed examiner-style feedback is
+            shown under each marked part below.
+          </p>
+        </section>
+      ) : null}
 
       <div className="question-group-stack">
         {props.questions.map((question) => (
@@ -81,6 +107,34 @@ export function AnswerForm(props: AnswerFormProps) {
                 <textarea name={`answer-${question.id}`} rows={6} required />
               </label>
             )}
+
+            {question.latestAttempt ? (
+              <section className="question-result" aria-label={`Latest mark for question ${question.questionKey}`}>
+                <div className="question-result__top">
+                  <p className="eyebrow">Marked answer</p>
+                  <strong>
+                    {question.latestAttempt.awardedMarks} / {question.latestAttempt.maxMarks} marks
+                  </strong>
+                </div>
+                <dl className="question-result__details">
+                  <div>
+                    <dt>Your answer</dt>
+                    <dd>{question.latestAttempt.submittedAnswer}</dd>
+                  </div>
+                  <div>
+                    <dt>Why this mark</dt>
+                    <dd>{question.latestAttempt.reasoning}</dd>
+                  </div>
+                  <div>
+                    <dt>How to improve</dt>
+                    <dd>{question.latestAttempt.feedback}</dd>
+                  </div>
+                </dl>
+                <p className="question-result__time">
+                  Marked {new Date(question.latestAttempt.createdAt).toLocaleString("en-GB")}
+                </p>
+              </section>
+            ) : null}
           </section>
         ))}
       </div>

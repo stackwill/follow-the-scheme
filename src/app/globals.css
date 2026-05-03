@@ -1474,7 +1474,7 @@ h1 {
 }
 
 .question-group-list a {
-  grid-template-columns: 58px 1fr auto;
+  grid-template-columns: 58px minmax(0, 1fr) auto auto;
   gap: 18px;
   padding: 18px 24px;
 }
@@ -1492,6 +1492,13 @@ h1 {
 
 .question-group-list__action {
   color: var(--accent);
+}
+
+.question-group-list__score {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .progress-header {
@@ -1542,6 +1549,32 @@ h1 {
 .question-flow .answer-form__header h2 {
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+.mark-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: end;
+  border-top: 1px solid var(--line);
+  background: var(--panel-subtle);
+  padding: 20px 24px;
+}
+
+.mark-summary h3,
+.mark-summary p {
+  margin: 0;
+}
+
+.mark-summary h3 {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  letter-spacing: -0.05em;
+}
+
+.mark-summary > p {
+  max-width: 58ch;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .question-flow .question-part-view {
@@ -1628,6 +1661,60 @@ h1 {
   color: var(--text);
 }
 
+.question-result {
+  display: grid;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+  padding-top: 18px;
+}
+
+.question-result__top {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.question-result__top p,
+.question-result__time {
+  margin: 0;
+}
+
+.question-result__top strong {
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+}
+
+.question-result__details {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.question-result__details div {
+  display: grid;
+  gap: 4px;
+}
+
+.question-result__details dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.question-result__details dd {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.question-result__time {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .submit-row {
   border-top: 1px solid var(--line);
   background: var(--panel-subtle);
@@ -1677,5 +1764,18 @@ h1 {
   .progress-header__actions {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .mark-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .question-group-list a {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .question-group-list__score,
+  .question-group-list__action {
+    grid-column: 2;
   }
 }

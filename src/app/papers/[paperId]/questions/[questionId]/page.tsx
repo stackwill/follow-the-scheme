@@ -52,6 +52,12 @@ export default async function QuestionPage({
     include: {
       questions: {
         orderBy: { displayOrder: "asc" },
+        include: {
+          attempts: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
       },
     },
   });
@@ -94,6 +100,16 @@ export default async function QuestionPage({
       maxMarks: groupQuestion.maxMarks,
       imagePath: groupQuestion.primaryCropPath,
       paperOnlyReason: paperOnlyQuestion?.reason ?? null,
+      latestAttempt: groupQuestion.attempts[0]
+        ? {
+            awardedMarks: groupQuestion.attempts[0].awardedMarks,
+            maxMarks: groupQuestion.attempts[0].maxMarks,
+            submittedAnswer: groupQuestion.attempts[0].submittedAnswer,
+            reasoning: groupQuestion.attempts[0].gradingReasoning,
+            feedback: groupQuestion.attempts[0].feedback,
+            createdAt: groupQuestion.attempts[0].createdAt.toISOString(),
+          }
+        : null,
       selectionQuestion: selectionQuestion
         ? {
             type: selectionQuestion.type,
@@ -147,7 +163,7 @@ export default async function QuestionPage({
       };
     }
 
-    redirect(questionHref(paperId, questionId));
+    redirect(`${questionHref(paperId, questionId)}#marks`);
   }
 
   return (
