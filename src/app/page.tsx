@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ThemeToggle } from "@/components/theme-toggle";
+
 export const dynamic = "force-dynamic";
 
 function paperHref(paperId: string) {
@@ -23,7 +25,10 @@ export default async function HomePage() {
   return (
     <main className="page-shell">
       <header className="page-header">
-        <p className="eyebrow">FollowTheScheme</p>
+        <div className="page-header__top">
+          <p className="eyebrow">FollowTheScheme</p>
+          <ThemeToggle />
+        </div>
         <h1>Paper library</h1>
         <p className="page-description">
           Imported PMT papers with deterministic question crops, mark schemes, and a one-group-at-a-time practice flow.
