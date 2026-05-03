@@ -5,7 +5,8 @@ const localDevEnvDefaults = {
   APP_DATA_DIR: "./data",
 } as const;
 
-const useLocalDevEnvDefaults = process.env.NODE_ENV !== "production";
+const useLocalDevEnvDefaults =
+  process.env.NODE_ENV !== "production" || process.env.NEXT_PHASE === "phase-production-build";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
