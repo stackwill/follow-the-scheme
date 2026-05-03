@@ -34,6 +34,7 @@ const MIN_BOX_HEIGHT = 120;
 const MIN_EFFECTIVE_BOX_HEIGHT = 1;
 const BOX_PADDING_Y = 18;
 const BOX_BOTTOM_PADDING_Y = 30;
+const RASTER_MULTIPLE_CHOICE_MIN_HEIGHT = 520;
 const MARK_RANGE_PATTERN = /^(\d+)[-\u2010-\u2015](\d+)$/;
 
 type Line = {
@@ -545,13 +546,18 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
 
   const maxY = Math.max(...boxItems.map((item) => item.y + item.height));
   const minY = Math.min(...boxItems.map((item) => item.y));
+  const tickOneBoxLine = lines.find((line) => /tick\s*(?:\([^)]*\)\s*)?one\s+box/i.test(line.rawText));
+  const hasExtractedOptionsBelowTick = tickOneBoxLine
+    ? lines.some((line) => line.y < tickOneBoxLine.y - 20 && line.contentText.length > 0)
+    : true;
+  const minHeight = tickOneBoxLine && !hasExtractedOptionsBelowTick ? RASTER_MULTIPLE_CHOICE_MIN_HEIGHT : MIN_BOX_HEIGHT;
   const paddedTop =
     nextQuestionBottom === null
-      ? Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, QUESTION_FOOTER_CUTOFF_Y + MIN_BOX_HEIGHT))
+      ? Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, QUESTION_FOOTER_CUTOFF_Y + minHeight))
       : Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, nextQuestionBottom));
   const paddedBottom =
     nextQuestionBottom === null
-      ? Math.max(0, Math.min(QUESTION_FOOTER_CUTOFF_Y, minY - BOX_BOTTOM_PADDING_Y, paddedTop - MIN_BOX_HEIGHT))
+      ? Math.max(0, Math.min(minY - BOX_BOTTOM_PADDING_Y, paddedTop - minHeight))
       : Math.max(0, Math.min(nextQuestionBottom, paddedTop));
 
   return {
@@ -595,6 +601,10 @@ function getQuestionText(contextLines: Line[], segmentLines: Line[]) {
   return [...getContextText(contextLines), ...getContextText(segmentLines)].join("\n");
 }
 
+function shouldAttachMainContextToCrop(start: QuestionStart) {
+  return start.label.subKey === 1;
+}
+
 function buildQuestionDrafts(
   questionLines: Line[],
   markSchemeBlocksByLabel: Map<string, MarkSchemeBlock>,
@@ -635,8 +645,8 @@ function buildQuestionDrafts(
       currentMainContext.lines.every((line) => line.pageNumber === pageStart)
         ? currentMainContext.lines
         : [];
-    const relevantLines = [...contextLines, ...segmentLines];
-    const supportingPdfBoxes = buildSupportingPdfBoxes(relevantLines, pageStart, pageEnd, nextStart);
+    const cropLines = shouldAttachMainContextToCrop(start) ? [...contextLines, ...segmentLines] : segmentLines;
+    const supportingPdfBoxes = buildSupportingPdfBoxes(cropLines, pageStart, pageEnd, nextStart);
     const effectivePageEnd = supportingPdfBoxes.at(-1)?.pageNumber ?? pageStart;
 
     if (!markSchemeBlock.markSchemeText.trim()) {
@@ -657,7 +667,7 @@ function buildQuestionDrafts(
       pageStart,
       pageEnd: effectivePageEnd,
       primaryPdfBox: buildPageBandPdfBox(
-        relevantLines.filter((line) => line.pageNumber === pageStart),
+        cropLines.filter((line) => line.pageNumber === pageStart),
         nextStart?.line.pageNumber === pageStart ? nextStart.line : null,
       ),
       supportingPdfBoxes,
