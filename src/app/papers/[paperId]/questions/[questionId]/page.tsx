@@ -19,6 +19,20 @@ function questionHref(paperId: string, questionId: string) {
   return `/papers/${paperId}/questions/${questionId}` as Route;
 }
 
+function parseSupportingAssetPaths(value: string) {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+
+    if (Array.isArray(parsed) && parsed.every((entry) => typeof entry === "string")) {
+      return parsed;
+    }
+  } catch {
+    return [];
+  }
+
+  return [];
+}
+
 function questionGroupKey(questionKey: string) {
   return questionKey.split(".")[0] ?? questionKey;
 }
@@ -99,6 +113,7 @@ export default async function QuestionPage({
       questionKey: groupQuestion.questionKey,
       maxMarks: groupQuestion.maxMarks,
       imagePath: groupQuestion.primaryCropPath,
+      continuationImagePaths: parseSupportingAssetPaths(groupQuestion.supportingAssetPaths),
       paperOnlyReason: paperOnlyQuestion?.reason ?? null,
       latestAttempt: groupQuestion.attempts[0]
         ? {
