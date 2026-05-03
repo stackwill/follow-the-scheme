@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Route } from "next";
 import { notFound } from "next/navigation";
 
+import { ThemeToggle } from "@/components/theme-toggle";
+
 export const dynamic = "force-dynamic";
 
 function questionHref(paperId: string, questionId: string) {
@@ -55,9 +57,12 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
   return (
     <main className="page-shell">
       <header className="page-header">
-        <Link className="subtle-link" href="/">
-          Back to library
-        </Link>
+        <div className="page-header__top">
+          <Link className="subtle-link" href="/">
+            Back to library
+          </Link>
+          <ThemeToggle />
+        </div>
         <p className="eyebrow">{paper.sessionLabel}</p>
         <h1>{paper.title}</h1>
         <p className="page-description">
