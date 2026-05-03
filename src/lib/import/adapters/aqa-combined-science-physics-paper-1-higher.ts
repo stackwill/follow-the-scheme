@@ -35,6 +35,7 @@ const MIN_EFFECTIVE_BOX_HEIGHT = 1;
 const BOX_PADDING_Y = 18;
 const BOX_BOTTOM_PADDING_Y = 30;
 const RASTER_MULTIPLE_CHOICE_MIN_HEIGHT = 520;
+const FIGURE_SOURCE_BOTTOM_Y = 140;
 const MARK_RANGE_PATTERN = /^(\d+)[-\u2010-\u2015](\d+)$/;
 
 type Line = {
@@ -550,6 +551,10 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
   const hasExtractedOptionsBelowTick = tickOneBoxLine
     ? lines.some((line) => line.y < tickOneBoxLine.y - 20 && line.contentText.length > 0)
     : true;
+  const hasLikelyFigureSource =
+    nextQuestionBottom === null &&
+    lines.some((line) => /\bFigure\s+\d+\b/i.test(line.rawText)) &&
+    !lines.some((line) => /\[\d+\s*marks?\]/i.test(line.rawText));
   const minHeight = tickOneBoxLine && !hasExtractedOptionsBelowTick ? RASTER_MULTIPLE_CHOICE_MIN_HEIGHT : MIN_BOX_HEIGHT;
   const paddedTop =
     nextQuestionBottom === null
@@ -557,7 +562,12 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
       : Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, nextQuestionBottom));
   const paddedBottom =
     nextQuestionBottom === null
-      ? Math.max(0, Math.min(minY - BOX_BOTTOM_PADDING_Y, paddedTop - minHeight))
+      ? Math.max(
+          0,
+          hasLikelyFigureSource
+            ? Math.min(FIGURE_SOURCE_BOTTOM_Y, paddedTop - minHeight)
+            : Math.min(minY - BOX_BOTTOM_PADDING_Y, paddedTop - minHeight),
+        )
       : Math.max(0, Math.min(nextQuestionBottom, paddedTop));
 
   return {

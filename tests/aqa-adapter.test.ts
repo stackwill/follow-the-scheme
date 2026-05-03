@@ -297,4 +297,30 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
     expect(question022?.primaryPdfBox.bottom).toBeLessThan(410);
     expect(question022?.extractedQuestionText).toContain("Shared context for this question.");
   });
+
+  it("preserves figure-only source space that PDF text extraction cannot see", () => {
+    const questionItems: TextItem[] = [
+      item(8, "0", 52.7, 763.7),
+      item(8, "2", 69.4, 763.7),
+      item(8, ".", 82.4, 763.2),
+      item(8, "3", 92.6, 763.6),
+      item(8, "Figure 2 shows the results predicted by the model.", 114.8, 712.3, 310),
+      item(8, "Figure 2", 269.2, 674.4, 43),
+      item(9, "Describe how the actual results led to the new model.", 114.8, 740.0, 320),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(12, "02.3", 67.3, 675.7, 24),
+      item(12, "clear comparison of results and models", 113.2, 675.7, 220),
+      item(12, "6", 466.2, 675.7, 8),
+      item(13, "Total Question 2 6", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2024,
+      questionItems,
+      markSchemeItems,
+    });
+
+    expect(drafts[0]?.primaryPdfBox.bottom).toBe(140);
+  });
 });
