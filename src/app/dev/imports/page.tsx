@@ -1,8 +1,10 @@
 import { ImportStatusTable } from "@/components/dev/import-status-table";
 import { importBenchmarkPaper } from "@/app/dev/imports/actions";
-import { db } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
 
 export default async function DevImportsPage() {
+  const { db } = await import("@/lib/db");
   const sources = await db.paperSource.findMany({
     where: {
       examBoard: "AQA",

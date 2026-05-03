@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Paper, PaperSource } from "@prisma/client";
 
 type ImportStatusSource = PaperSource & {
@@ -59,9 +58,7 @@ export function ImportStatusTable({ sources }: { sources: ImportStatusSource[] }
                 )}
               </td>
               <td>{formatDate(source.paper?.importedAt ?? source.lastDiscoveredAt)}</td>
-              <td>
-                {source.paper ? <Link href={`/papers/${source.paper.id}`}>Open paper</Link> : <span>Pending</span>}
-              </td>
+              <td>{source.paper ? <span>Ready for Task 7 viewer</span> : <span>Pending</span>}</td>
             </tr>
           ))}
         </tbody>

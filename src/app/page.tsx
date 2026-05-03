@@ -1,7 +1,9 @@
 import { PaperCard } from "@/components/library/paper-card";
-import { db } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const { db } = await import("@/lib/db");
   const papers = await db.paper.findMany({
     orderBy: [{ year: "desc" }, { sessionLabel: "desc" }],
   });
