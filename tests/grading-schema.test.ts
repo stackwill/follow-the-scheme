@@ -78,6 +78,32 @@ describe("detectSelectionQuestion", () => {
 
     expect(result?.correctOptionId).toBe("option-1");
   });
+
+  it("detects AQA lozenge questions and strips extracted option letters", () => {
+    const result = detectSelectionQuestion({
+      maxMarks: 1,
+      questionText: [
+        "Which pseudo-code statement assigns the length of the string film to a variable called value?",
+        "Shade one lozenge.",
+        "A film <- LEN(value)",
+        "B film <- film + value",
+        "C value <- film",
+        "D value <- LEN(film)",
+      ].join("\n"),
+      markSchemeText: "D value <- LEN(film); R. If more than one lozenge shaded",
+    });
+
+    expect(result).toEqual({
+      type: "single",
+      options: [
+        { id: "option-1", label: "film <- LEN(value)" },
+        { id: "option-2", label: "film <- film + value" },
+        { id: "option-3", label: "value <- film" },
+        { id: "option-4", label: "value <- LEN(film)" },
+      ],
+      correctOptionId: "option-4",
+    });
+  });
 });
 
 describe("gradeSelectionAnswer", () => {
