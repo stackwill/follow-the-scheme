@@ -52,7 +52,7 @@ The workflow in [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml)
 2. Pushes `latest` and `sha-<commit>` tags to GHCR.
 3. SSHes to `will@192.168.1.51` by default.
 4. Copies `docker-compose.yml` to `/opt/follow-the-scheme` by default.
-5. Preserves the server's existing `.env`.
+5. Requires and preserves the server's existing `.env`.
 6. Writes `.deploy.env` with the image tag, bind address, port, and container name.
 7. Runs Prisma migrations.
 8. Imports fixtures once if `data/app.db` does not exist.
@@ -65,11 +65,6 @@ The app binds to `127.0.0.1:33200` by default, which is intended for Cloudflared
 Set these in `Settings -> Secrets and variables -> Actions -> Secrets`:
 
 - `DEPLOY_SSH_KEY`: private SSH key that can log in as `will` on the server.
-- `AUTH_PASSWORD`: first-run password for the app, only used if `/opt/follow-the-scheme/.env` does not already exist.
-- `AUTH_SESSION_SECRET`: first-run random signing secret, only used if `/opt/follow-the-scheme/.env` does not already exist.
-- `OPENROUTER_API_KEY`: optional, enables written-answer AI marking.
-- `OPENROUTER_MODEL`: optional, required when `OPENROUTER_API_KEY` is set.
-- `OPENROUTER_BASE_URL`: optional, defaults to `https://openrouter.ai/api/v1` when an OpenRouter key is provided.
 - `GHCR_PULL_USERNAME`: optional if the GHCR image is public.
 - `GHCR_PULL_TOKEN`: optional if the GHCR image is public; otherwise use a token with `read:packages`.
 
@@ -95,7 +90,7 @@ scp .env will@192.168.1.51:/opt/follow-the-scheme/.env
 ssh will@192.168.1.51 'chmod 600 /opt/follow-the-scheme/.env'
 ```
 
-If you do not copy `.env`, the first deploy creates one from `AUTH_PASSWORD`, `AUTH_SESSION_SECRET`, and optional OpenRouter GitHub Secrets.
+The deploy workflow never writes app secrets. It fails if `/opt/follow-the-scheme/.env` is missing.
 
 ### Public release notes
 
