@@ -259,9 +259,8 @@ async function recoverQuestion052MarkSchemeText(questionPaperPath: string, pageN
 
     const imagePath = `${outputPrefix}-${pageNumber}.png`;
     const ocrOutput = await runCommand("tesseract", [imagePath, "stdout", "--psm", "6"], "adapter");
-    const normalizedOcrOutput = ocrOutput.toLowerCase().replace(/\s+/g, " ");
 
-    if (!/24\s*cr/.test(normalizedOcrOutput) || !/-1\s*b/.test(normalizedOcrOutput)) {
+    if (!isUsefulQuestion052OcrOutput(ocrOutput)) {
       throw new ImportFailure("adapter", "Unable to recover useful mark scheme text for 2024/05.2", {
         pageNumber,
         ocrOutput,
@@ -272,6 +271,18 @@ async function recoverQuestion052MarkSchemeText(questionPaperPath: string, pageN
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
+}
+
+export function isUsefulQuestion052OcrOutput(ocrOutput: string) {
+  const normalizedOcrOutput = ocrOutput
+    .toLowerCase()
+    .replace(/[“”]/g, "\"")
+    .replace(/\s+/g, " ");
+  const mentionsVanadium52 = /vanadium-?52|\b52\s*[,;:]?\s*(?:2|23|24)?\s*v\b/.test(normalizedOcrOutput);
+  const mentionsChromiumProduct = /\bcr\b|\d+\s*cr|chromium/.test(normalizedOcrOutput);
+  const mentionsBetaEmission = /beta|\b-?\s*1\s*b\b|β/.test(normalizedOcrOutput);
+
+  return mentionsVanadium52 && mentionsChromiumProduct && mentionsBetaEmission;
 }
 
 async function resolveBenchmarkMarkSchemeText(

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { aqaCombinedSciencePhysicsPaper1HigherAdapter } from "@/lib/import/adapters/aqa-combined-science-physics-paper-1-higher";
 import { ImportFailure } from "@/lib/import/core/diagnostics";
+import { isUsefulQuestion052OcrOutput } from "@/lib/import/core/import-paper";
 import type { TextItem } from "@/lib/import/core/pdf-text";
 
 function item(
@@ -22,6 +23,30 @@ function item(
 }
 
 describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
+  it("accepts production OCR output for the 2024 question 05.2 mark scheme recovery", () => {
+    const deployOcrOutput = `PMT
+20
+Do not write
+yutside the
+A scientist tested some water that had been left in a revigator. “ox
+The water contained radon-222 and vanadium-52.
+[0[5|.[2] Vanadium-52 (V) decays by emitting beta particles.
+Whatis the correct nuclear equation for this process?
+[1 mark]
+Tick (“) one box.
+52 0 52—-.
+2V ~ ~B > »Ti ai
+52 0 52
+2V ~ 4B > 2Cr
+52 52—-. 0
+aaV + ofl + 8B [|
+52 52 0
+ag E: oC = -1 B
+| Ii ll IB/M/} un24/8464/P /1H`;
+
+    expect(isUsefulQuestion052OcrOutput(deployOcrOutput)).toBe(true);
+  });
+
   it("normalizes left-margin numbering and joins benchmark-style mark scheme blocks", () => {
     const questionItems: TextItem[] = [
       item(3, "0", 52.7, 763.6),
