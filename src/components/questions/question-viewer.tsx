@@ -45,6 +45,7 @@ export function QuestionViewer(props: QuestionViewerProps) {
                 width={1400}
                 height={900}
                 sizes="(max-width: 900px) 100vw, 840px"
+                unoptimized
               />
             </figure>
             {question.supportingImagePaths.length > 0 ? (
@@ -58,6 +59,7 @@ export function QuestionViewer(props: QuestionViewerProps) {
                       width={1400}
                       height={900}
                       sizes="(max-width: 900px) 100vw, 840px"
+                      unoptimized
                     />
                   </figure>
                 ))}

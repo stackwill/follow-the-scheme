@@ -1,7 +1,9 @@
-import { db } from "@/lib/db";
+import { randomUUID } from "node:crypto";
+
 import { requestStructuredGrade } from "@/lib/grading/client";
 import { buildGradingPrompt } from "@/lib/grading/prompt";
 import { detectSelectionQuestion, gradeSelectionAnswer } from "@/lib/grading/schema";
+import { db } from "@/lib/db";
 
 const MAX_ANSWER_CHARACTERS = 4_000;
 const MAX_NOTES_CHARACTERS = 1_000;
@@ -36,25 +38,6 @@ export async function gradeQuestionAttempt(input: {
     throw new Error(`Notes are too long. Keep them under ${MAX_NOTES_CHARACTERS} characters.`);
   }
 
-  let attempt = await db.attempt.findFirst({
-    where: {
-      paperId: input.paperId,
-      completedAt: null,
-    },
-    orderBy: {
-      startedAt: "desc",
-    },
-  });
-
-  if (!attempt) {
-    attempt = await db.attempt.create({
-      data: {
-        paperId: input.paperId,
-        mode: "question-by-question",
-      },
-    });
-  }
-
   const selectionQuestion = detectSelectionQuestion({
     maxMarks: question.maxMarks,
     questionText: question.extractedQuestionText,
@@ -80,22 +63,15 @@ export async function gradeQuestionAttempt(input: {
     ? (selectionQuestion.options.find((option) => option.id === trimmedAnswer)?.label ?? trimmedAnswer)
     : trimmedAnswer;
 
-  return db.questionAttempt.create({
-    data: {
-      attemptId: attempt.id,
-      questionId: input.questionId,
-      submittedAnswer,
-      userNotes: trimmedNotes,
-      awardedMarks: boundedMarks,
-      maxMarks: question.maxMarks,
-      gradingReasoning: result.reasoning,
-      feedback: result.feedback,
-      rawModelResponse: JSON.stringify({
-        ...result,
-        awardedMarks: boundedMarks,
-        gradingMode: selectionQuestion ? "deterministic-selection" : "openrouter",
-      }),
-      promptVersion: selectionQuestion ? "selection-v1" : "grading-v1",
-    },
-  });
+  return {
+    id: randomUUID(),
+    questionId: input.questionId,
+    questionKey: question.questionKey,
+    submittedAnswer,
+    awardedMarks: boundedMarks,
+    maxMarks: question.maxMarks,
+    reasoning: result.reasoning,
+    feedback: result.feedback,
+    createdAt: new Date().toISOString(),
+  };
 }

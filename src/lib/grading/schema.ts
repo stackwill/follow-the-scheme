@@ -33,7 +33,7 @@ const PAPER_ONLY_PATTERNS: Array<[RegExp, string]> = [
   [/\bsketch\s+(a\s+)?(graph|diagram|curve|line)\b/i, "Sketch this on the paper."],
   [/\b(on|onto)\s+(figure|fig\.|the\s+graph|the\s+grid|the\s+diagram)\b/i, "Use the source image and write/draw on paper."],
   [/\buse\s+the\s+correct\s+circuit\s+symbols?\b/i, "Draw the circuit symbols on paper."],
-  [/\bshow\s+.*\b(on|in)\s+(figure|fig\.|the\s+diagram|the\s+graph|the\s+grid)\b/i, "Show this on the paper."],
+  [/\bshow\s+(?:your\s+)?(?:answer|working|work|line|curve|diagram|circuit|graph|plot|points?|arrow|method)\b.*\b(on|in)\s+(figure|fig\.|the\s+diagram|the\s+graph|the\s+grid)\b/i, "Show this on the paper."],
 ];
 
 function normalizeAnswerText(text: string) {
@@ -62,19 +62,42 @@ function optionId(index: number) {
 function getOptionLines(questionText: string) {
   const matches = [...questionText.matchAll(SINGLE_SELECTION_PATTERN)];
 
-  if (matches.length !== 1) {
-    return [];
+  if (matches.length === 1) {
+    const match = matches[0];
+    const optionsText = questionText.slice((match.index ?? 0) + match[0].length);
+
+    return optionsText
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .filter((line) => !/^\[\d+\s*marks?\]$/i.test(line))
+      .slice(0, 6);
   }
 
-  const match = matches[0];
-  const optionsText = questionText.slice((match.index ?? 0) + match[0].length);
+  const letteredOptions: string[] = [];
 
-  return optionsText
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .filter((line) => !/^\[\d+\s*marks?\]$/i.test(line))
-    .slice(0, 6);
+  for (const line of questionText.split(/\r?\n/)) {
+    const trimmedLine = line.trim();
+    const optionMatch = trimmedLine.match(/^([A-D])\s+(.+)$/);
+
+    if (!optionMatch) {
+      continue;
+    }
+
+    const expectedLetter = String.fromCharCode(65 + letteredOptions.length);
+
+    if (optionMatch[1] !== expectedLetter) {
+      return [];
+    }
+
+    letteredOptions.push(trimmedLine);
+
+    if (letteredOptions.length === 4) {
+      return letteredOptions;
+    }
+  }
+
+  return [];
 }
 
 function looksLikeTextOption(line: string) {
@@ -95,6 +118,13 @@ function normalizeOptionLabel(line: string) {
   return line.replace(/^[A-D]\s+/, "").trim();
 }
 
+function markSchemeSingleLetter(text: string) {
+  const normalizedMarkSchemeText = normalizeMarkSchemeText(text).trim();
+  const match = normalizedMarkSchemeText.match(/^[A-D]\b/);
+
+  return match?.[0] ?? null;
+}
+
 export function detectSelectionQuestion(input: {
   maxMarks: number;
   questionText: string;
@@ -113,8 +143,9 @@ export function detectSelectionQuestion(input: {
   const normalizedCorrectAnswer = normalizeAnswerText(
     normalizeOptionLabel(normalizeMarkSchemeText(input.markSchemeText)),
   );
+  const correctLetter = markSchemeSingleLetter(input.markSchemeText);
 
-  if (!normalizedCorrectAnswer) {
+  if (!normalizedCorrectAnswer && !correctLetter) {
     return null;
   }
 
@@ -122,6 +153,18 @@ export function detectSelectionQuestion(input: {
     id: optionId(index),
     label: normalizeOptionLabel(line),
   }));
+  const letterMatch = correctLetter
+    ? options[correctLetter.charCodeAt(0) - 65]
+    : null;
+
+  if (letterMatch) {
+    return {
+      type: "single",
+      options,
+      correctOptionId: letterMatch.id,
+    };
+  }
+
   const matches = options.filter((option) => {
     const normalizedOption = normalizeAnswerText(option.label);
 

@@ -1,9 +1,17 @@
 services:
   app:
-    build: .
+    image: ${IMAGE_REPOSITORY:-followthescheme}:${IMAGE_TAG:-latest}
+    container_name: ${CONTAINER_NAME:-followthescheme}
+    restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-33200}:3000"
     env_file:
       - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      APP_DATA_DIR: /app/data
+      DATABASE_URL: file:../data/app.db
     volumes:
       - ./data:/app/data

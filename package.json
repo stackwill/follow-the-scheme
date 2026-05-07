@@ -13,6 +13,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "fixtures:fetch": "bun run scripts/fetch-benchmark-fixtures.ts",
+    "release:check": "bun run scripts/release-check.ts",
     "import:smoke": "bun run scripts/run-import-smoke.ts"
   },
   "dependencies": {

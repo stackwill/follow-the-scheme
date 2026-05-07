@@ -43,6 +43,11 @@ type MarkSchemeBlock = {
   markSchemeText: string;
 };
 
+type QuestionDraftStart = QuestionLabel & {
+  textStartIndex: number;
+  visualStartIndex: number;
+};
+
 function normalizeText(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
@@ -251,7 +256,10 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
   const top = Math.min(QUESTION_PAGE_TOP_LIMIT, maxY + QUESTION_TOP_PADDING);
   const bottom = Math.max(
     QUESTION_PAGE_BOTTOM_LIMIT,
-    Math.min(nextQuestionBottom ?? minY - (hasAnswerGridInstruction ? 4 : QUESTION_BOTTOM_PADDING), top - MIN_BOX_HEIGHT),
+    Math.min(
+      nextQuestionBottom ?? (hasAnswerGridInstruction ? QUESTION_PAGE_BOTTOM_LIMIT : minY - QUESTION_BOTTOM_PADDING),
+      top - MIN_BOX_HEIGHT,
+    ),
   );
 
   return {
@@ -262,15 +270,32 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
   };
 }
 
-function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string, MarkSchemeBlock>) {
-  const labels = questionLines
-    .map((line, index) => {
-      const label = parseQuestionLabel(line);
+function findPreLabelContextStartIndex(questionLines: Line[], start: QuestionLabel, previousLabel: QuestionLabel | null) {
+  if (!previousLabel || start.partKey === null || previousLabel.mainKey !== start.mainKey) {
+    return start.index;
+  }
 
-      return label ? { ...label, line, index } : null;
-    })
-    .filter((entry): entry is QuestionLabel => entry !== null);
-  const draftStarts = labels.filter((label, index) => {
+  if (previousLabel.line.pageNumber === start.line.pageNumber) {
+    return start.index;
+  }
+
+  const samePagePreludeLines = questionLines
+    .slice(previousLabel.index + 1, start.index)
+    .filter(
+      (line) =>
+        line.pageNumber === start.line.pageNumber &&
+        line.y > start.line.y &&
+        line.contentText.length > 0 &&
+        !isQuestionPaperBoilerplate(line),
+    );
+
+  return samePagePreludeLines[0]
+    ? questionLines.indexOf(samePagePreludeLines[0])
+    : start.index;
+}
+
+function buildDraftStarts(labels: QuestionLabel[], questionLines: Line[]) {
+  const rawDraftStarts = labels.filter((label, index) => {
     if (label.partKey !== null) {
       return true;
     }
@@ -279,23 +304,53 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
 
     return nextLabel?.mainKey !== label.mainKey || nextLabel.partKey === null;
   });
+
+  return rawDraftStarts.map((start, index) => {
+    const previousLabel = [...labels]
+      .reverse()
+      .find((label) => label.index < start.index) ?? null;
+    const previousMainContext = [...labels]
+      .reverse()
+      .find((label) => label.mainKey === start.mainKey && label.partKey === null && label.index < start.index);
+    const previousDraftSameMain = rawDraftStarts
+      .slice(0, index)
+      .some((draftStart) => draftStart.mainKey === start.mainKey);
+    const preLabelContextStartIndex = findPreLabelContextStartIndex(questionLines, start, previousLabel);
+    const shouldIncludeMainContext = start.partKey && previousMainContext && !previousDraftSameMain;
+    const textStartIndex = shouldIncludeMainContext ? previousMainContext.index : preLabelContextStartIndex;
+    const visualStartIndex = shouldIncludeMainContext ? previousMainContext.index : preLabelContextStartIndex;
+
+    return {
+      ...start,
+      textStartIndex,
+      visualStartIndex,
+    } satisfies QuestionDraftStart;
+  });
+}
+
+function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string, MarkSchemeBlock>) {
+  const labels = questionLines
+    .map((line, index) => {
+      const label = parseQuestionLabel(line);
+
+      return label ? { ...label, line, index } : null;
+    })
+    .filter((entry): entry is QuestionLabel => entry !== null);
+  const draftStarts = buildDraftStarts(labels, questionLines);
   const fatalErrors: string[] = [];
   const consumedMarkSchemeLabels = new Set<string>();
   const drafts: QuestionDraft[] = [];
 
   for (const [displayIndex, start] of draftStarts.entries()) {
-    const nextBoundary = labels.find((label) => label.index > start.index) ?? null;
+    const nextDraftStart = draftStarts[displayIndex + 1] ?? null;
+    const nextBoundaryIndex = nextDraftStart?.visualStartIndex ?? questionLines.length;
+    const nextBoundaryLine = nextDraftStart ? questionLines[nextDraftStart.visualStartIndex] : null;
     const previousMainContext = [...labels]
       .reverse()
       .find((label) => label.mainKey === start.mainKey && label.partKey === null && label.index < start.index);
-    const previousDraftSameMain = draftStarts
-      .slice(0, displayIndex)
-      .some((draftStart) => draftStart.mainKey === start.mainKey);
-    const visualStartIndex = start.partKey && previousMainContext && !previousDraftSameMain ? previousMainContext.index : start.index;
-    const textStartIndex = start.partKey && previousMainContext && !previousDraftSameMain ? previousMainContext.index : start.index;
-    const textLines = questionLines.slice(textStartIndex, nextBoundary?.index ?? questionLines.length);
+    const textLines = questionLines.slice(start.textStartIndex, nextBoundaryIndex);
     const visualLines = questionLines
-      .slice(visualStartIndex, nextBoundary?.index ?? questionLines.length)
+      .slice(start.visualStartIndex, nextBoundaryIndex)
       .filter((line) => line.contentText.length > 0 && !isQuestionPaperBoilerplate(line));
     const markSchemeBlock = markSchemeBlocks.get(start.label);
 
@@ -309,19 +364,26 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
     const pageStart = visualLines[0]?.pageNumber ?? start.line.pageNumber;
     const pageEnd = visualLines.at(-1)?.pageNumber ?? pageStart;
     const primaryLines = visualLines.filter((line) => line.pageNumber === pageStart);
-    const nextStartOnPage = nextBoundary?.line.pageNumber === pageStart ? nextBoundary.line : null;
     const supportingPdfBoxes: SupportingPdfBox[] = [];
+    const hasAnswerGridInstruction = visualLines.some((line) => /answer grid below/i.test(line.rawText));
+    const blankAnswerGridPageEnd =
+      hasAnswerGridInstruction && nextBoundaryLine && nextBoundaryLine.pageNumber > pageEnd + 1
+        ? nextBoundaryLine.pageNumber - 1
+        : pageEnd;
 
-    for (let pageNumber = pageStart + 1; pageNumber <= pageEnd; pageNumber += 1) {
+    for (let pageNumber = pageStart + 1; pageNumber <= blankAnswerGridPageEnd; pageNumber += 1) {
       const pageLines = visualLines.filter((line) => line.pageNumber === pageNumber);
-
-      if (pageLines.length === 0) {
-        continue;
-      }
 
       supportingPdfBoxes.push({
         pageNumber,
-        ...buildPageBandPdfBox(pageLines, nextBoundary?.line.pageNumber === pageNumber ? nextBoundary.line : null),
+        ...(pageLines.length > 0
+          ? buildPageBandPdfBox(pageLines, nextBoundaryLine?.pageNumber === pageNumber ? nextBoundaryLine : null)
+          : {
+              left: QUESTION_CROP_LEFT,
+              right: QUESTION_CROP_RIGHT,
+              top: QUESTION_PAGE_TOP_LIMIT,
+              bottom: QUESTION_PAGE_BOTTOM_LIMIT,
+            }),
       });
     }
 
@@ -333,8 +395,8 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
       markSchemeText: markSchemeBlock.markSchemeText,
       markSchemeNotes: "",
       pageStart,
-      pageEnd,
-      primaryPdfBox: buildPageBandPdfBox(primaryLines, nextStartOnPage),
+      pageEnd: blankAnswerGridPageEnd,
+      primaryPdfBox: buildPageBandPdfBox(primaryLines, nextBoundaryLine?.pageNumber === pageStart ? nextBoundaryLine : null),
       supportingPdfBoxes,
       importDiagnostics: {
         adapterKey: aqaGcseComputerSciencePaper1BPythonAdapter.key,

@@ -76,6 +76,11 @@ textarea {
   font: inherit;
 }
 
+input,
+textarea {
+  color: var(--text);
+}
+
 .page-shell {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
@@ -583,6 +588,95 @@ h1 {
   padding: 10px 12px;
 }
 
+.login-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  border-top: 8px solid var(--accent);
+  background: var(--bg);
+  padding: 24px;
+}
+
+.login-panel {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 28px;
+  width: min(720px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow);
+  padding: 32px;
+}
+
+.login-panel__mark {
+  display: grid;
+  width: 88px;
+  height: 88px;
+  place-items: center;
+  border: 1px solid var(--text);
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.login-panel__copy {
+  display: grid;
+  gap: 10px;
+}
+
+.login-panel h1 {
+  font-size: clamp(2.4rem, 8vw, 4.6rem);
+}
+
+.login-panel p {
+  max-width: 520px;
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.login-form {
+  display: grid;
+  grid-column: 2;
+  gap: 14px;
+}
+
+.login-form input[type="password"] {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px 15px;
+}
+
+.login-form input[type="password"]:focus {
+  outline: 3px solid var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.login-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 12px 18px;
+}
+
+.login-form button:disabled {
+  border-color: var(--line);
+  background: var(--line);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .result-panel h2 {
   margin: 4px 0 14px;
   font-size: 2rem;
@@ -841,6 +935,44 @@ h1 {
 .question-map-panel .section-heading h2,
 .question-map-panel .section-heading p {
   margin: 0;
+}
+
+.section-heading__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--muted);
+}
+
+.total-score-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 900;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.total-score-chip[data-score="strong"] {
+  border-color: color-mix(in srgb, var(--success) 42%, var(--line));
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.total-score-chip[data-score="steady"] {
+  border-color: color-mix(in srgb, var(--warning) 42%, var(--line));
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.total-score-chip[data-score="low"] {
+  border-color: color-mix(in srgb, var(--danger) 42%, var(--line));
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .question-group-list {
@@ -1436,6 +1568,7 @@ h1 {
 }
 
 .paper-table-wrap,
+.subject-list-panel,
 .question-map-panel,
 .empty-state,
 .dev-panel {
@@ -1449,6 +1582,62 @@ h1 {
 .paper-table td {
   border-color: var(--line);
   padding: 20px 22px;
+}
+
+.library-subnav {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-subtle);
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 800;
+  padding: 16px 22px;
+}
+
+.subject-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.subject-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.subject-list a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 18px;
+  align-items: center;
+  color: inherit;
+  padding: 22px 24px;
+  text-decoration: none;
+}
+
+.subject-list a:hover {
+  background: var(--panel-subtle);
+}
+
+.subject-list__name {
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.subject-list__meta {
+  color: var(--muted);
+  font-size: 0.94rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.subject-list__action {
+  color: var(--accent);
+  font-weight: 900;
 }
 
 .paper-table th,
@@ -1845,6 +2034,15 @@ h1 {
 
   .paper-table-wrap {
     border-radius: 20px;
+  }
+
+  .subject-list a {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .subject-list__meta {
+    white-space: normal;
   }
 
   .question-flow .answer-form {

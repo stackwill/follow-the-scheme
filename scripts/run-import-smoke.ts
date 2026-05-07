@@ -6,8 +6,12 @@ import sharp from "sharp";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import {
+  importAqaBiologyPaper1HigherBenchmark,
+  importAqaBiologyPaper2HigherBenchmark,
   importAqaGcseComputerSciencePaper1BPythonBenchmark,
   importAqaPhysicsPaper1HigherBenchmark,
+  importOcrGcseBusinessPaper1Benchmark,
+  importOcrGcseBusinessPaper2Benchmark,
 } from "@/lib/import/core/import-paper";
 
 const BENCHMARK_EXPECTATIONS = {
@@ -23,6 +27,26 @@ const BENCHMARK_EXPECTATIONS = {
 const COMPUTER_SCIENCE_EXPECTATION = {
   questionCount: 36,
   totalMarks: 90,
+} as const;
+const BIOLOGY_EXPECTATIONS = {
+  paper1: {
+    questionCount: 34,
+    totalMarks: 70,
+  },
+  paper2: {
+    questionCount: 31,
+    totalMarks: 70,
+  },
+} as const;
+const OCR_BUSINESS_EXPECTATIONS = {
+  paper1: {
+    questionCount: 31,
+    totalMarks: 80,
+  },
+  paper2: {
+    questionCount: 36,
+    totalMarks: 80,
+  },
 } as const;
 const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
 const MIN_SUPPORTING_CROP_WIDTH = 800;
@@ -277,6 +301,136 @@ for (const question of csRepeatedPaper.questions) {
   );
 }
 
+const biologyImports = [
+  {
+    label: "Biology Paper 1H",
+    expectation: BIOLOGY_EXPECTATIONS.paper1,
+    importPaper: importAqaBiologyPaper1HigherBenchmark,
+  },
+  {
+    label: "Biology Paper 2H",
+    expectation: BIOLOGY_EXPECTATIONS.paper2,
+    importPaper: importAqaBiologyPaper2HigherBenchmark,
+  },
+] as const;
+
+const biologyPapers = [];
+
+for (const biologyImport of biologyImports) {
+  const initialResult = await biologyImport.importPaper(2023);
+  const initialPaper = await getPaperSnapshot(initialResult.paperId);
+  const initialQuestionIds = new Map(
+    initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
+  );
+
+  assert(
+    initialPaper.questions.length === biologyImport.expectation.questionCount,
+    `${biologyImport.label} imported ${initialPaper.questions.length} questions, expected ${biologyImport.expectation.questionCount}`,
+  );
+  assert(
+    initialPaper.totalMarks === biologyImport.expectation.totalMarks,
+    `${biologyImport.label} imported ${initialPaper.totalMarks} total marks, expected ${biologyImport.expectation.totalMarks}`,
+  );
+
+  for (const question of initialPaper.questions) {
+    await access(question.primaryCropPath);
+    assert(
+      question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
+      `${biologyImport.label} imported invalid mark scheme text for ${question.questionKey}`,
+    );
+  }
+
+  const repeatResult = await biologyImport.importPaper(2023);
+  const repeatedPaper = await getPaperSnapshot(repeatResult.paperId);
+
+  assert(
+    initialResult.paperId === repeatResult.paperId,
+    `${biologyImport.label} re-import changed paper id from ${initialResult.paperId} to ${repeatResult.paperId}`,
+  );
+  assert(
+    initialResult.questionCount === repeatResult.questionCount,
+    `${biologyImport.label} re-import changed question count from ${initialResult.questionCount} to ${repeatResult.questionCount}`,
+  );
+  assert(
+    initialResult.totalMarks === repeatResult.totalMarks,
+    `${biologyImport.label} re-import changed total marks from ${initialResult.totalMarks} to ${repeatResult.totalMarks}`,
+  );
+
+  for (const question of repeatedPaper.questions) {
+    assert(
+      initialQuestionIds.get(question.questionKey) === question.id,
+      `${biologyImport.label}/${question.questionKey} changed question id across repeat import`,
+    );
+  }
+
+  biologyPapers.push(repeatedPaper);
+}
+
+const ocrBusinessImports = [
+  {
+    label: "OCR Business Paper 1",
+    expectation: OCR_BUSINESS_EXPECTATIONS.paper1,
+    importPaper: importOcrGcseBusinessPaper1Benchmark,
+  },
+  {
+    label: "OCR Business Paper 2",
+    expectation: OCR_BUSINESS_EXPECTATIONS.paper2,
+    importPaper: importOcrGcseBusinessPaper2Benchmark,
+  },
+] as const;
+
+const ocrBusinessPapers = [];
+
+for (const businessImport of ocrBusinessImports) {
+  const initialResult = await businessImport.importPaper(2024);
+  const initialPaper = await getPaperSnapshot(initialResult.paperId);
+  const initialQuestionIds = new Map(
+    initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
+  );
+
+  assert(
+    initialPaper.questions.length === businessImport.expectation.questionCount,
+    `${businessImport.label} imported ${initialPaper.questions.length} questions, expected ${businessImport.expectation.questionCount}`,
+  );
+  assert(
+    initialPaper.totalMarks === businessImport.expectation.totalMarks,
+    `${businessImport.label} imported ${initialPaper.totalMarks} total marks, expected ${businessImport.expectation.totalMarks}`,
+  );
+
+  for (const question of initialPaper.questions) {
+    await access(question.primaryCropPath);
+    assert(
+      question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
+      `${businessImport.label} imported invalid mark scheme text for ${question.questionKey}`,
+    );
+  }
+
+  const repeatResult = await businessImport.importPaper(2024);
+  const repeatedPaper = await getPaperSnapshot(repeatResult.paperId);
+
+  assert(
+    initialResult.paperId === repeatResult.paperId,
+    `${businessImport.label} re-import changed paper id from ${initialResult.paperId} to ${repeatResult.paperId}`,
+  );
+  assert(
+    initialResult.questionCount === repeatResult.questionCount,
+    `${businessImport.label} re-import changed question count from ${initialResult.questionCount} to ${repeatResult.questionCount}`,
+  );
+  assert(
+    initialResult.totalMarks === repeatResult.totalMarks,
+    `${businessImport.label} re-import changed total marks from ${initialResult.totalMarks} to ${repeatResult.totalMarks}`,
+  );
+
+  for (const question of repeatedPaper.questions) {
+    assert(
+      initialQuestionIds.get(question.questionKey) === question.id,
+      `${businessImport.label}/${question.questionKey} changed question id across repeat import`,
+    );
+  }
+
+  ocrBusinessPapers.push(repeatedPaper);
+}
+
 for (const paper of results) {
   console.log(
     `Imported ${paper.sessionLabel}: ${paper.questions.length} questions, ${paper.totalMarks} marks, paper ${paper.id}`,
@@ -286,5 +440,17 @@ for (const paper of results) {
 console.log(
   `Imported ${csRepeatedPaper.title}: ${csRepeatedPaper.questions.length} questions, ${csRepeatedPaper.totalMarks} marks, paper ${csRepeatedPaper.id}`,
 );
+
+for (const paper of biologyPapers) {
+  console.log(
+    `Imported ${paper.title}: ${paper.questions.length} questions, ${paper.totalMarks} marks, paper ${paper.id}`,
+  );
+}
+
+for (const paper of ocrBusinessPapers) {
+  console.log(
+    `Imported ${paper.title}: ${paper.questions.length} questions, ${paper.totalMarks} marks, paper ${paper.id}`,
+  );
+}
 
 await db.$disconnect();
