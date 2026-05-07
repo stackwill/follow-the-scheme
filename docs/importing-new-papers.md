@@ -89,7 +89,7 @@ Look for:
 
 Create a new file in `src/lib/import/adapters/`.
 
-Adapter responsibilities:
+Adapter responsibilities, in order:
 
 - Group positioned text items into lines.
 - Detect question labels from the question paper.
@@ -100,13 +100,46 @@ Adapter responsibilities:
 - Validate total marks.
 - Fail fast on missing mark scheme blocks, unused mark scheme blocks, duplicate labels, or total-mark mismatch.
 
+Use the same adapter shape for every new paper family unless there is a documented reason not to. The shape is:
+
+1. **Normalize text items into lines.**
+   - Sort by page, then top-to-bottom, then left-to-right.
+   - Store `rawText`, `contentText`, item bounds, `pageNumber`, and line index.
+   - Strip boilerplate before boundary decisions, not after crops are built.
+
+2. **Detect all candidate labels before building drafts.**
+   - Produce a full ordered label list with main labels and subquestion labels.
+   - Do not immediately slice from one label to the next. Some papers put setup text for the next part before the visible next label.
+   - Record whether a main label is context-only or answerable by checking whether the mark scheme has a matching block.
+
+3. **Build explicit draft boundaries.**
+   - For each answerable label, compute `textStartIndex`, `visualStartIndex`, and `endIndex`.
+   - Source context before the first subquestion should belong to the first subquestion.
+   - Pre-label setup on a new page should belong to the following subquestion, not the previous one. Example: repeated code/figures above `12.3`.
+   - Same-page lines between two labels usually belong to the previous label unless they are clearly a heading/source block for the next part.
+   - Never include the next part's stem or setup in the previous part's `extractedQuestionText`; this breaks selection detection and marking.
+
+4. **Pair mark scheme blocks by normalized key.**
+   - Normalize labels the same way for question paper and mark scheme, for example `03.3`, `12.6`, or `05`.
+   - Compute marks from the matching block only.
+   - Validate the sum of imported marks against the paper total and, where possible, against each `Total Question N` line.
+   - Fail on unused mark scheme blocks. Do not hide them as warnings.
+
+5. **Build crops from the same draft boundaries.**
+   - Primary crop starts at `visualStartIndex`.
+   - Supporting crops use the same `endIndex`, not the next raw label if pre-label setup was reassigned.
+   - Crop heuristics must preserve raster/vector content that PDF text does not expose: answer grids, lozenges, option boxes, Punnett squares, graph axes, diagrams, circuit symbols, tables, code blocks, and repeated figures.
+   - If a question says "answer grid below", "complete the board", "complete the Punnett square", or similar, the crop must include the answer area even if the user will type into the app instead.
+
 Adapter rules:
 
 - Keep board/subject-specific heuristics inside the adapter.
+- Prefer extracting reusable helpers when two adapters share a real PDF layout. Do not copy-paste a whole adapter and then make unrelated local tweaks; shared boundary logic should live in a shared factory/helper.
 - Prefer preserving too much official paper context over omitting required material.
 - Never silently create placeholder mark scheme text unless `import-paper.ts` has a deliberate recovery path.
 - Preserve source material for the first subquestion in a group, then crop later subquestions tightly to their own visual segment where possible.
 - For raster/vector-heavy content, use explicit deterministic rules. Examples: answer grids, graph paper, circuit diagrams, lozenge options, tables, and code blocks.
+- Do not use generic words such as "figure", "show", "complete", or "grid" alone as proof that a question is paper-only. That classification happens after import and must distinguish an instruction to draw on the paper from a normal coding/written prompt that merely mentions a figure or answer grid.
 
 Register the adapter in `src/lib/import/adapters/index.ts`.
 
@@ -165,6 +198,7 @@ Inspect at least:
 
 - First multiple-choice question.
 - First question with shared source material.
+- Adjacent subquestions where setup appears before the next visible label.
 - A written response question.
 - A code/grid/table/graph/circuit question.
 - A multi-page question with supporting crops.
@@ -174,7 +208,9 @@ Visual acceptance criteria:
 
 - No relevant stem text omitted.
 - No answer options omitted.
+- No next-question stem or setup included in the previous question crop.
 - No figures/tables/graphs/code grids clipped in a way that makes the question unanswerable.
+- Answer grids and diagram-completion areas are visible when the official question relies on them.
 - Right-side AQA “Do not write outside...” furniture is trimmed where practical.
 - Supporting crops are only present when they contain useful continuation/source material.
 
@@ -185,10 +221,15 @@ Add discovery tests for every new PMT selector.
 Add adapter tests when a heuristic is important enough to regress, especially:
 
 - Adjacent subquestions that must not merge.
+- Pre-label setup that belongs to the following part rather than the previous part.
 - Raster/vector answer options that PDF text extraction cannot see.
+- Answer grids or board/Punnett-square completion areas that PDF text extraction cannot see.
 - Source figures that must be preserved.
 - Main-question context that should be included with the first subquestion.
+- Main-question labels that are answerable questions, not just context labels.
 - Mark scheme labels that use a different table format.
+- Selection-question extraction: the generated options must be only the actual choices, not stem/context lines from the next part.
+- Paper-only classification: coding and written-answer questions that mention figures, grids, or boards must still get a normal answer box when they can be typed and AI-marked.
 
 Update `scripts/run-import-smoke.ts` with the paper’s expected question count and total marks once the import shape is verified.
 
@@ -235,6 +276,7 @@ Open the imported paper in the app and check:
 - Question groups render in sensible order.
 - Multiple-choice questions get selectable options when `detectSelectionQuestion` can infer them.
 - Written/code questions get text areas.
+- Questions that require drawing on the paper show a paper-only callout, but coding questions and normal written answers do not.
 - Marking works with the existing OpenRouter settings.
 
 The app URL shape is:
@@ -249,6 +291,11 @@ Question practice pages are:
 
 - Text extraction sees labels and words but not diagrams, graph lines, code grids, or lozenge circles. Fix crop boxes deterministically.
 - A main question label is context, not an answerable question. Include it with the first subquestion but do not create a DB question unless the mark scheme has a matching block.
+- A main question label can also be an answerable question. If the mark scheme has a matching whole-question block such as `02` or `05`, import it as its own question.
+- Setup text for a later subquestion can appear before that subquestion's visible label, especially when figures or code are repeated at the top of a page. Assign that setup to the following part.
+- Context from the next part can create fake multiple-choice options. If selection options include normal prose sentences, the previous part probably swallowed the next part's stem.
+- Generic paper-only regexes can falsely classify coding prompts. Phrases such as "Figure 18 and Figure 19 show example boards" or "answer grid below" are not drawing instructions by themselves.
+- Coding answer grids are visual scaffolding, not a reason to disable AI marking. The crop should show them, but the app should still allow typed Python/C#/VB answers when the question asks for code.
 - A mark scheme uses a shared table across variants. Target the correct variant in QP discovery, but pair with the shared MS if that is how PMT/AQA publish it.
 - A footer-only page creates a useless continuation crop. Filter boilerplate and empty content before creating supporting boxes.
 - Re-import wants to delete stale questions with attempts. The importer correctly refuses this; decide whether to preserve attempts, migrate IDs, or clear local dev attempts before changing question keys.

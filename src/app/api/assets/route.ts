@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     return new Response(file, {
       headers: {
         "content-type": "image/png",
-        "cache-control": "private, max-age=300",
+        "cache-control": "no-store, max-age=0",
       },
     });
   } catch (error) {

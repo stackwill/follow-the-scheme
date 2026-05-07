@@ -103,6 +103,11 @@ function parseJsonContent(content: string) {
 
 export async function requestStructuredGrade(prompt: GradingPromptMessages) {
   const openRouterEnv = getOpenRouterEnv();
+
+  if (!openRouterEnv) {
+    throw new Error("Written-answer AI marking is not configured on this server. Multiple choice questions still mark automatically.");
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), OPENROUTER_TIMEOUT_MS);
 

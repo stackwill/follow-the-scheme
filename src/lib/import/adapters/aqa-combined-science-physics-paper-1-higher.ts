@@ -35,6 +35,7 @@ const MIN_EFFECTIVE_BOX_HEIGHT = 1;
 const BOX_PADDING_Y = 18;
 const BOX_BOTTOM_PADDING_Y = 30;
 const RASTER_MULTIPLE_CHOICE_MIN_HEIGHT = 520;
+const RASTER_DIAGRAM_COMPLETION_MIN_HEIGHT = 700;
 const FIGURE_SOURCE_BOTTOM_Y = 140;
 const MARK_RANGE_PATTERN = /^(\d+)[-\u2010-\u2015](\d+)$/;
 
@@ -311,6 +312,10 @@ function isMarkSchemeBoilerplate(line: Line) {
     return true;
   }
 
+  if (line.y < 50) {
+    return true;
+  }
+
   return (
     text.includes("mark scheme") ||
     text.includes("question answers extra information mark") ||
@@ -322,7 +327,7 @@ function isMarkSchemeBoilerplate(line: Line) {
 
 function parseMarkSchemeLabel(line: Line) {
   const labelItem = line.items.find(
-    (item) => item.x < 100 && /^\d{1,2}\.\d+$/.test(item.text.trim()),
+    (item) => item.x < 100 && /^\d{1,2}(?:\.\d+)?$/.test(item.text.trim()),
   );
 
   if (!labelItem) {
@@ -330,6 +335,10 @@ function parseMarkSchemeLabel(line: Line) {
   }
 
   const [mainKey, subKey] = labelItem.text.trim().split(".");
+
+  if (subKey === undefined) {
+    return mainKey.padStart(2, "0");
+  }
 
   return `${mainKey.padStart(2, "0")}.${subKey}`;
 }
@@ -474,7 +483,9 @@ function buildMarkSchemeBlocks(lines: Line[]) {
     const currentBlockLines = filteredLines.slice(blockStart.startIndex, nextTotalLineIndex);
     const mainKey = blockStart.label.split(".")[0];
     const markSchemeText = buildMarkSchemeText(currentBlockLines);
-    const maxMarks = computeBlockMaxMarks(currentBlockLines);
+    const maxMarks = blockStart.label.includes(".")
+      ? computeBlockMaxMarks(currentBlockLines)
+      : totalsByMainKey.get(mainKey) ?? computeBlockMaxMarks(currentBlockLines);
     const notes: string[] = [];
 
     if (markSchemeText.startsWith("[Non-textual mark scheme content in source PDF")) {
@@ -551,14 +562,23 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
   const hasExtractedOptionsBelowTick = tickOneBoxLine
     ? lines.some((line) => line.y < tickOneBoxLine.y - 20 && line.contentText.length > 0)
     : true;
+  const needsRasterDiagramSpace = lines.some((line) =>
+    /\b(?:complete|draw|plot|show|identify)\b.*\b(?:diagram|punnett square|graph|table)\b/i.test(line.rawText),
+  );
   const hasLikelyFigureSource =
     nextQuestionBottom === null &&
     lines.some((line) => /\bFigure\s+\d+\b/i.test(line.rawText)) &&
     !lines.some((line) => /\[\d+\s*marks?\]/i.test(line.rawText));
-  const minHeight = tickOneBoxLine && !hasExtractedOptionsBelowTick ? RASTER_MULTIPLE_CHOICE_MIN_HEIGHT : MIN_BOX_HEIGHT;
+  const minHeight =
+    tickOneBoxLine && !hasExtractedOptionsBelowTick
+      ? RASTER_MULTIPLE_CHOICE_MIN_HEIGHT
+      : needsRasterDiagramSpace
+        ? RASTER_DIAGRAM_COMPLETION_MIN_HEIGHT
+        : MIN_BOX_HEIGHT;
+  const minTopForHeight = needsRasterDiagramSpace ? maxY + BOX_PADDING_Y : QUESTION_FOOTER_CUTOFF_Y + minHeight;
   const paddedTop =
     nextQuestionBottom === null
-      ? Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, QUESTION_FOOTER_CUTOFF_Y + minHeight))
+      ? Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, minTopForHeight))
       : Math.min(QUESTION_PAGE_TOP_LIMIT, Math.max(maxY + BOX_PADDING_Y, nextQuestionBottom));
   const paddedBottom =
     nextQuestionBottom === null
@@ -615,9 +635,49 @@ function shouldAttachMainContextToCrop(start: QuestionStart) {
   return start.label.subKey === 1;
 }
 
+function isPreLabelContextForStart(
+  line: Line,
+  start: QuestionStart,
+  previousStart: QuestionStart | null,
+) {
+  if (!previousStart || start.label.subKey === null || previousStart.label.mainKey !== start.label.mainKey) {
+    return false;
+  }
+
+  const text = line.rawText.trim();
+  const looksLikeSetupForNextPart =
+    /\b(?:Figure|Table)\s+\d+\b.*\b(?:shows?|describes?|are repeated|is repeated)\b/i.test(text) ||
+    /\b(?:structure|graph|table|figure|diagram|results?|data)\b.+\b(?:is|are)\s+different\b/i.test(text) ||
+    /^One difference\b/i.test(text);
+
+  if (!looksLikeSetupForNextPart) {
+    return false;
+  }
+
+  return (
+    (line.pageNumber < start.line.pageNumber ||
+      (line.pageNumber === start.line.pageNumber && line.y > start.line.y)) &&
+    line.contentText.length > 0 &&
+    !parseQuestionLabel(line)
+  );
+}
+
+function getSegmentStartIndex(
+  filteredQuestionLines: Line[],
+  start: QuestionStart,
+  previousStart: QuestionStart | null,
+) {
+  const preLabelContextLine = filteredQuestionLines
+    .slice((previousStart?.lineIndex ?? start.lineIndex - 1) + 1, start.lineIndex)
+    .find((line) => isPreLabelContextForStart(line, start, previousStart));
+
+  return preLabelContextLine ? filteredQuestionLines.indexOf(preLabelContextLine) : start.lineIndex;
+}
+
 function buildQuestionDrafts(
   questionLines: Line[],
   markSchemeBlocksByLabel: Map<string, MarkSchemeBlock>,
+  adapterKey: string,
 ) {
   const filteredQuestionLines = questionLines.filter((line) => !isQuestionPaperBoilerplate(line));
   const { starts, warningsByLabel } = getQuestionStarts(filteredQuestionLines);
@@ -626,10 +686,58 @@ function buildQuestionDrafts(
   const fatalErrors: string[] = [];
 
   starts.forEach((start, index) => {
+    const previousStart = starts[index - 1] ?? null;
     const nextStart = starts[index + 1] ?? null;
-    const nextStartLineIndex = nextStart?.lineIndex ?? filteredQuestionLines.length;
+    const segmentStartIndex = getSegmentStartIndex(filteredQuestionLines, start, previousStart);
+    const nextStartLineIndex =
+      nextStart === null
+        ? filteredQuestionLines.length
+        : getSegmentStartIndex(filteredQuestionLines, nextStart, start);
 
     if (start.kind === "main") {
+      const markSchemeBlock = markSchemeBlocksByLabel.get(start.label.label);
+
+      if (markSchemeBlock) {
+        const segmentLines = filteredQuestionLines.slice(segmentStartIndex, nextStartLineIndex);
+        const pageStart = segmentLines[0]?.pageNumber ?? start.line.pageNumber;
+        const pageEnd = segmentLines.at(-1)?.pageNumber ?? pageStart;
+        const supportingPdfBoxes = buildSupportingPdfBoxes(segmentLines, pageStart, pageEnd, nextStart);
+        const effectivePageEnd = supportingPdfBoxes.at(-1)?.pageNumber ?? pageStart;
+
+        if (!markSchemeBlock.markSchemeText.trim()) {
+          fatalErrors.push(`empty mark scheme text for ${start.label.label}`);
+        }
+
+        if (pageEnd > pageStart && supportingPdfBoxes.length === 0 && nextStart?.line.pageNumber !== pageEnd) {
+          fatalErrors.push(`missing supporting crop boxes for multi-page question ${start.label.label}`);
+        }
+
+        drafts.push({
+          questionKey: start.label.label,
+          displayOrder: drafts.length + 1,
+          maxMarks: markSchemeBlock.maxMarks,
+          extractedQuestionText: getQuestionText([], segmentLines),
+          markSchemeText: markSchemeBlock.markSchemeText,
+          markSchemeNotes: markSchemeBlock.notes.join("\n"),
+          pageStart,
+          pageEnd: effectivePageEnd,
+          primaryPdfBox: buildPageBandPdfBox(
+            segmentLines.filter((line) => line.pageNumber === pageStart),
+            nextStart?.line.pageNumber === pageStart ? nextStart.line : null,
+          ),
+          supportingPdfBoxes,
+          importDiagnostics: {
+            adapterKey,
+            sourceQuestionLabel: start.label.label,
+            sourceMarkSchemeLabel: markSchemeBlock.label,
+            contextQuestionLabel: null,
+            warnings: [...(warningsByLabel.get(start.label.label) ?? [])],
+          },
+        });
+        currentMainContext = null;
+        return;
+      }
+
       currentMainContext = {
         label: start.label.label,
         lines: filteredQuestionLines
@@ -647,7 +755,7 @@ function buildQuestionDrafts(
       return;
     }
 
-    const segmentLines = filteredQuestionLines.slice(start.lineIndex, nextStartLineIndex);
+    const segmentLines = filteredQuestionLines.slice(segmentStartIndex, nextStartLineIndex);
     const pageStart = segmentLines[0]?.pageNumber ?? start.line.pageNumber;
     const pageEnd = segmentLines.at(-1)?.pageNumber ?? pageStart;
     const contextLines =
@@ -682,7 +790,7 @@ function buildQuestionDrafts(
       ),
       supportingPdfBoxes,
       importDiagnostics: {
-        adapterKey: aqaCombinedSciencePhysicsPaper1HigherAdapter.key,
+        adapterKey,
         sourceQuestionLabel: start.label.label,
         sourceMarkSchemeLabel: markSchemeBlock.label,
         contextQuestionLabel: currentMainContext?.label ?? null,
@@ -734,29 +842,35 @@ function validateConsumedMarkSchemeBlocks(
   }
 }
 
-export const aqaCombinedSciencePhysicsPaper1HigherAdapter: PaperImportAdapter = {
-  key: "aqa-combined-science-physics-paper-1-higher",
-  importVersion: "v1",
-  detectQuestionDrafts({ year, questionItems, markSchemeItems }: DetectQuestionDraftsInput) {
-    const questionLines = groupItemsIntoLines(questionItems);
-    const markSchemeLines = groupItemsIntoLines(
-      markSchemeItems.filter((item) => item.pageNumber >= MARK_SCHEME_START_PAGE),
-    );
-    const { blocksByLabel: markSchemeBlocksByLabel, fatalErrors } = buildMarkSchemeBlocks(markSchemeLines);
+export function createAqaCombinedSciencePaperAdapter(key: string): PaperImportAdapter {
+  return {
+    key,
+    importVersion: "v1",
+    detectQuestionDrafts({ year, questionItems, markSchemeItems }: DetectQuestionDraftsInput) {
+      const questionLines = groupItemsIntoLines(questionItems);
+      const markSchemeLines = groupItemsIntoLines(
+        markSchemeItems.filter((item) => item.pageNumber >= MARK_SCHEME_START_PAGE),
+      );
+      const { blocksByLabel: markSchemeBlocksByLabel, fatalErrors } = buildMarkSchemeBlocks(markSchemeLines);
 
-    if (fatalErrors.length > 0) {
-      throw new ImportFailure("adapter", "AQA mark scheme validation failed", {
-        problems: fatalErrors,
-      });
-    }
+      if (fatalErrors.length > 0) {
+        throw new ImportFailure("adapter", "AQA mark scheme validation failed", {
+          problems: fatalErrors,
+        });
+      }
 
-    const drafts = normalizeBenchmarkDraftShape(
-      year,
-      buildQuestionDrafts(questionLines, markSchemeBlocksByLabel),
-    );
+      const drafts = normalizeBenchmarkDraftShape(
+        year,
+        buildQuestionDrafts(questionLines, markSchemeBlocksByLabel, key),
+      );
 
-    validateConsumedMarkSchemeBlocks(drafts, markSchemeBlocksByLabel);
+      validateConsumedMarkSchemeBlocks(drafts, markSchemeBlocksByLabel);
 
-    return drafts;
-  },
-};
+      return drafts;
+    },
+  };
+}
+
+export const aqaCombinedSciencePhysicsPaper1HigherAdapter = createAqaCombinedSciencePaperAdapter(
+  "aqa-combined-science-physics-paper-1-higher",
+);

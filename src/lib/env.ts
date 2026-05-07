@@ -29,9 +29,15 @@ export const env = envSchema.parse({
 });
 
 export function getOpenRouterEnv() {
-  return openRouterEnvSchema.parse({
+  const candidate = {
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
     OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL,
-  });
+  };
+
+  if (!candidate.OPENROUTER_API_KEY && !candidate.OPENROUTER_MODEL && !candidate.OPENROUTER_BASE_URL) {
+    return null;
+  }
+
+  return openRouterEnvSchema.parse(candidate);
 }

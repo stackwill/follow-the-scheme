@@ -4,10 +4,10 @@ export type PmtPaperCandidate = {
   paperPageUrl: string;
   questionPaperUrl: string;
   markSchemeUrl: string;
-  examBoard: "AQA";
+  examBoard: "AQA" | "OCR";
   qualification: string;
   subject: string;
-  paperNumber: 1;
+  paperNumber: number;
   tier: string;
   sessionLabel: string;
   year: number;

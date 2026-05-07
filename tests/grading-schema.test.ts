@@ -104,6 +104,32 @@ describe("detectSelectionQuestion", () => {
       correctOptionId: "option-4",
     });
   });
+
+  it("detects OCR lettered multiple-choice questions with a single-letter mark scheme", () => {
+    const result = detectSelectionQuestion({
+      maxMarks: 1,
+      questionText: [
+        "1 What is a disadvantage of being a sole trader?",
+        "A Can only have one employee",
+        "B Cannot share business ownership",
+        "C Legally required to produce a business plan",
+        "D Must pay corporation tax",
+        "Your answer [1]",
+      ].join("\n"),
+      markSchemeText: "B",
+    });
+
+    expect(result).toEqual({
+      type: "single",
+      options: [
+        { id: "option-1", label: "Can only have one employee" },
+        { id: "option-2", label: "Cannot share business ownership" },
+        { id: "option-3", label: "Legally required to produce a business plan" },
+        { id: "option-4", label: "Must pay corporation tax" },
+      ],
+      correctOptionId: "option-2",
+    });
+  });
 });
 
 describe("gradeSelectionAnswer", () => {
@@ -163,6 +189,18 @@ describe("detectPaperOnlyQuestion", () => {
     expect(
       detectPaperOnlyQuestion({
         questionText: "Explain why the current increases when the resistance decreases.",
+      }),
+    ).toBeNull();
+  });
+
+  it("does not flag typed coding prompts that mention figures or answer grids", () => {
+    expect(
+      detectPaperOnlyQuestion({
+        questionText: [
+          "Figure 18 and Figure 19 show example boards.",
+          "Write a Python program to check that the first row is consecutive.",
+          "The answer grid below contains vertical lines to help you indent your code accurately.",
+        ].join("\n"),
       }),
     ).toBeNull();
   });

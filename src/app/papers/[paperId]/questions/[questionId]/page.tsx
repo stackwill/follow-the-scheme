@@ -1,15 +1,18 @@
 import type { Route } from "next";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { AnswerForm } from "@/components/questions/answer-form";
 import { ProgressHeader } from "@/components/questions/progress-header";
 import { detectPaperOnlyQuestion, detectSelectionQuestion } from "@/lib/grading/schema";
+import type { LocalQuestionAttempt } from "@/lib/questions/local-attempts";
+import { questionGroupKey, uniqueQuestionGroups } from "@/lib/questions/groups";
 
 export const dynamic = "force-dynamic";
 
 type FormState = {
   error: string | null;
   answers?: Record<string, string>;
+  results?: LocalQuestionAttempt[];
 };
 
 function paperHref(paperId: string) {
@@ -34,27 +37,6 @@ function parseSupportingAssetPaths(value: string) {
   return [];
 }
 
-function questionGroupKey(questionKey: string) {
-  return questionKey.split(".")[0] ?? questionKey;
-}
-
-function uniqueQuestionGroups<T extends { questionKey: string }>(questions: T[]) {
-  const groups: Array<{ key: string; firstQuestion: T; questions: T[] }> = [];
-
-  for (const question of questions) {
-    const key = questionGroupKey(question.questionKey);
-    const existingGroup = groups.at(-1);
-
-    if (existingGroup?.key === key) {
-      existingGroup.questions.push(question);
-    } else {
-      groups.push({ key, firstQuestion: question, questions: [question] });
-    }
-  }
-
-  return groups;
-}
-
 export default async function QuestionPage({
   params,
 }: {
@@ -67,12 +49,6 @@ export default async function QuestionPage({
     include: {
       questions: {
         orderBy: { displayOrder: "asc" },
-        include: {
-          attempts: {
-            orderBy: { createdAt: "desc" },
-            take: 1,
-          },
-        },
       },
     },
   });
@@ -88,8 +64,8 @@ export default async function QuestionPage({
     notFound();
   }
 
-  const groups = uniqueQuestionGroups(paper.questions);
-  const groupKey = questionGroupKey(question.questionKey);
+  const groups = uniqueQuestionGroups(paper, paper.questions);
+  const groupKey = questionGroupKey(paper, question);
   const currentGroupIndex = groups.findIndex((entry) => entry.key === groupKey);
   const currentGroup = groups[currentGroupIndex];
 
@@ -116,16 +92,6 @@ export default async function QuestionPage({
       imagePath: groupQuestion.primaryCropPath,
       continuationImagePaths: parseSupportingAssetPaths(groupQuestion.supportingAssetPaths),
       paperOnlyReason: paperOnlyQuestion?.reason ?? null,
-      latestAttempt: groupQuestion.attempts[0]
-        ? {
-            awardedMarks: groupQuestion.attempts[0].awardedMarks,
-            maxMarks: groupQuestion.attempts[0].maxMarks,
-            submittedAnswer: groupQuestion.attempts[0].submittedAnswer,
-            reasoning: groupQuestion.attempts[0].gradingReasoning,
-            feedback: groupQuestion.attempts[0].feedback,
-            createdAt: groupQuestion.attempts[0].createdAt.toISOString(),
-          }
-        : null,
       selectionQuestion: selectionQuestion
         ? {
             type: selectionQuestion.type,
@@ -150,6 +116,7 @@ export default async function QuestionPage({
     try {
       const { gradeQuestionAttempt } = await import("@/lib/grading/grade-question");
       let gradedCount = 0;
+      const results: LocalQuestionAttempt[] = [];
 
       for (const groupQuestion of currentGroup.questions) {
         const paperOnlyQuestion = detectPaperOnlyQuestion({
@@ -166,12 +133,13 @@ export default async function QuestionPage({
           continue;
         }
 
-        await gradeQuestionAttempt({
+        const result = await gradeQuestionAttempt({
           paperId,
           questionId: groupQuestion.id,
           answer,
           notes: "",
         });
+        results.push(result);
         gradedCount += 1;
       }
 
@@ -181,14 +149,18 @@ export default async function QuestionPage({
           answers: submittedAnswers,
         };
       }
+
+      return {
+        error: null,
+        answers: submittedAnswers,
+        results,
+      };
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : "Unknown grading error",
         answers: submittedAnswers,
       };
     }
-
-    redirect(`${questionHref(paperId, questionId)}#marks`);
   }
 
   return (
@@ -204,6 +176,7 @@ export default async function QuestionPage({
       <div className="question-flow">
         <AnswerForm
           action={submit}
+          paperId={paper.id}
           groupKey={currentGroup.key}
           questions={formQuestions}
         />

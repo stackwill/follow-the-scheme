@@ -154,6 +154,43 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
     ).toThrow("completeness validation failed");
   });
 
+  it("imports an answerable main question when the mark scheme has a whole-question block", () => {
+    const questionItems: TextItem[] = [
+      item(8, "0", 52.7, 715.0),
+      item(8, "2", 69.4, 715.0),
+      item(8, "Figure 2 shows onion cells viewed using a light microscope.", 114.8, 714.2, 330),
+      item(8, "Figure 2", 269.2, 665.0, 43),
+      item(9, "Describe how the student could estimate the mean length of onion cells.", 114.8, 720.0, 360),
+      item(9, "[6 marks]", 491.6, 690.0, 60),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(10, "10", 42.5, 37.4, 16),
+      item(12, "Level 3:", 113.2, 712.0, 46),
+      item(12, "valid method with logically sequenced steps", 153.0, 712.0, 240),
+      item(12, "5", 455.7, 705.0, 8),
+      item(12, "6", 466.2, 705.0, 8),
+      item(12, "02", 71.8, 679.7, 16),
+      item(12, "measure cells and calculate the mean", 113.2, 679.7, 220),
+      item(12, "Total Question 2 6", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0]?.questionKey).toBe("02");
+    expect(drafts[0]?.maxMarks).toBe(6);
+    expect(drafts[0]?.extractedQuestionText).toContain("Figure 2 shows onion cells");
+    expect(drafts[0]?.supportingPdfBoxes).toEqual([
+      expect.objectContaining({
+        pageNumber: 9,
+      }),
+    ]);
+  });
+
   it("ignores footer-only continuation noise and keeps raster-answer crops on the primary page", () => {
     const questionItems: TextItem[] = [
       item(20, "0", 52.4, 687.8),
@@ -366,5 +403,49 @@ describe("aqaCombinedSciencePhysicsPaper1HigherAdapter", () => {
     expect(drafts.map((draft) => draft.maxMarks)).toEqual([1, 1]);
     expect(drafts[0]?.markSchemeText).toContain("reproducible");
     expect(drafts[1]?.markSchemeText).toContain("resistor at constant temperature");
+  });
+
+  it("does not let setup for the next same-page subquestion become multiple-choice options", () => {
+    const questionItems: TextItem[] = [
+      item(11, "0", 52.7, 355.0),
+      item(11, "3", 69.4, 355.0),
+      item(11, ".", 82.4, 355.0),
+      item(11, "3", 92.6, 355.0),
+      item(11, "Which blood vessel carries deoxygenated blood?", 114.8, 354.2, 260),
+      item(11, "Tick () one box.", 114.8, 320.0, 110),
+      item(11, "Aorta", 170.0, 280.0, 60),
+      item(11, "Coronary artery", 170.0, 240.0, 120),
+      item(11, "Pulmonary artery", 170.0, 200.0, 120),
+      item(11, "Pulmonary vein", 170.0, 160.0, 110),
+      item(11, "The structure of a vein is different from the structure of an artery.", 114.8, 105.0, 360),
+      item(11, "One difference is that veins have valves but arteries do not have valves.", 114.8, 85.0, 380),
+      item(12, "0", 52.7, 720.0),
+      item(12, "3", 69.4, 720.0),
+      item(12, ".", 82.4, 720.0),
+      item(12, "4", 92.6, 720.0),
+      item(12, "Explain why veins have valves, but arteries do not.", 114.8, 719.2, 280),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(12, "03.3", 67.3, 675.7, 24),
+      item(12, "pulmonary artery", 113.2, 675.7, 120),
+      item(12, "1", 466.2, 675.7, 8),
+      item(12, "03.4", 67.3, 573.7, 24),
+      item(12, "veins carry blood at low pressure", 113.2, 573.7, 190),
+      item(12, "2", 466.2, 573.7, 8),
+      item(13, "Total Question 3 3", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+    const question033 = drafts.find((draft) => draft.questionKey === "03.3");
+    const question034 = drafts.find((draft) => draft.questionKey === "03.4");
+
+    expect(question033?.extractedQuestionText).toContain("Pulmonary vein");
+    expect(question033?.extractedQuestionText).not.toContain("veins have valves");
+    expect(question034?.extractedQuestionText).toContain("veins have valves");
+    expect(question034?.extractedQuestionText).toContain("Explain why veins have valves");
   });
 });

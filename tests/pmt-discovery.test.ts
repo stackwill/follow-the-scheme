@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  discoverAqaBiologyPaper1HigherFromHtml,
+  discoverAqaBiologyPaper2HigherFromHtml,
   discoverAqaGcseComputerSciencePaper1BPythonFromHtml,
   discoverAqaPhysicsPaper1HigherFromHtml,
+  discoverOcrGcseBusinessPaper1FromHtml,
+  discoverOcrGcseBusinessPaper2FromHtml,
 } from "@/lib/import/pmt/discovery";
 import { parseSessionLabel } from "@/lib/import/pmt/normalize";
 
@@ -54,6 +58,130 @@ describe("discoverAqaGcseComputerSciencePaper1BPythonFromHtml", () => {
         subject: "Computer Science",
         paperNumber: 1,
         tier: "Python",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+});
+
+describe("discoverAqaBiologyPaperHigherFromHtml", () => {
+  it("selects the June 2023 Biology Paper 1H QP and MS pair", () => {
+    const html = `
+      <main>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1F/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1F/MS/June 2023 MS.pdf">June 2023 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1H/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1H/MS/June 2023 MS.pdf">June 2023 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2H/QP/June 2023 QP.pdf">June 2023 QP</a>
+      </main>
+    `;
+
+    expect(discoverAqaBiologyPaper1HigherFromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-1/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-1H/QP/June%202023%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-1H/MS/June%202023%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Biology",
+        paperNumber: 1,
+        tier: "Higher",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+    ]);
+  });
+
+  it("selects the June 2023 Biology Paper 2H QP and MS pair", () => {
+    const html = `
+      <main>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2F/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2H/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2H/MS/June 2023 MS.pdf">June 2023 MS</a>
+      </main>
+    `;
+
+    expect(discoverAqaBiologyPaper2HigherFromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-2H/QP/June%202023%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-2H/MS/June%202023%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Biology",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+    ]);
+  });
+});
+
+describe("discoverOcrGcseBusinessPaperFromHtml", () => {
+  it("selects the first OCR GCSE Business 2024 Paper 1 QP and MS pair", () => {
+    const html = `
+      <main>
+        <h4>2024 - June series</h4>
+        <a href="/Images/727519-question-paper-business-1-business-activity-marketing-and-people.pdf">Question paper - Business 1: business activity, marketing and people</a>
+        <a href="/Images/727634-mark-scheme-business-1-business-activity-marketing-and-people.pdf">Mark scheme - Business 1: business activity, marketing and people</a>
+        <a href="/Images/727520-question-paper-business-2-operations-finance-and-influences-on-business.pdf">Question paper - Business 2: operations, finance and influences on business</a>
+        <a href="/Images/727635-mark-scheme-business-2-operations-finance-and-influences-on-business.pdf">Mark scheme - Business 2: operations, finance and influences on business</a>
+        <h4>2023 - June series</h4>
+        <a href="/Images/704745-question-paper-business-1-business-activity-marketing-and-people.pdf">Question paper - Business 1: business activity, marketing and people</a>
+        <a href="/Images/704864-mark-scheme-business-1-business-activity-marketing-and-people.pdf">Mark scheme - Business 1: business activity, marketing and people</a>
+      </main>
+    `;
+
+    expect(discoverOcrGcseBusinessPaper1FromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct",
+        questionPaperUrl:
+          "https://www.ocr.org.uk/Images/727519-question-paper-business-1-business-activity-marketing-and-people.pdf",
+        markSchemeUrl:
+          "https://www.ocr.org.uk/Images/727634-mark-scheme-business-1-business-activity-marketing-and-people.pdf",
+        examBoard: "OCR",
+        qualification: "GCSE Business",
+        subject: "Business",
+        paperNumber: 1,
+        tier: "Business activity, marketing and people",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+
+  it("selects the OCR GCSE Business 2024 Paper 2 QP and MS pair", () => {
+    const html = `
+      <main>
+        <a href="/Images/727519-question-paper-business-1-business-activity-marketing-and-people.pdf">Question paper - Business 1: business activity, marketing and people</a>
+        <a href="/Images/727634-mark-scheme-business-1-business-activity-marketing-and-people.pdf">Mark scheme - Business 1: business activity, marketing and people</a>
+        <a href="/Images/727520-question-paper-business-2-operations-finance-and-influences-on-business.pdf">Question paper - Business 2: operations, finance and influences on business</a>
+        <a href="/Images/727635-mark-scheme-business-2-operations-finance-and-influences-on-business.pdf">Mark scheme - Business 2: operations, finance and influences on business</a>
+      </main>
+    `;
+
+    expect(discoverOcrGcseBusinessPaper2FromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct",
+        questionPaperUrl:
+          "https://www.ocr.org.uk/Images/727520-question-paper-business-2-operations-finance-and-influences-on-business.pdf",
+        markSchemeUrl:
+          "https://www.ocr.org.uk/Images/727635-mark-scheme-business-2-operations-finance-and-influences-on-business.pdf",
+        examBoard: "OCR",
+        qualification: "GCSE Business",
+        subject: "Business",
+        paperNumber: 2,
+        tier: "Operations, finance and influences on business",
         sessionLabel: "June 2024",
         year: 2024,
       },

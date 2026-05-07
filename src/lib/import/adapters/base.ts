@@ -47,9 +47,18 @@ export type PaperImportAdapter = {
  *   differently.
  * - Treat an adapter as three separate contracts: question-start detection, mark-scheme block
  *   pairing, and crop-box construction. Add tests for each contract before trusting a new paper.
+ * - Build explicit boundaries for every answerable draft: text start, visual start, and end.
+ *   Do not assume a question owns every line until the next visible label. Some papers place
+ *   repeated figures, code, tables, or setup text before the next label, and that setup belongs to
+ *   the following part.
  * - Preserve visual context generously for code grids, figures, tables, circuits, graphs, and
  *   source material. It is better for the UI to show extra official paper context than to omit a
  *   line needed to answer.
+ * - Preserve answer areas that are part of the official paper, including answer grids and board
+ *   completion spaces, even when the app will collect a typed answer.
+ * - Verify downstream classifiers after import. Selection options must contain only real choices,
+ *   and paper-only detection must not disable normal typed coding or written responses simply
+ *   because the stem mentions a figure, board, grid, or table.
  * - Validate total marks and fail fast on missing/unused mark-scheme blocks. Silent partial
  *   imports make marking untrustworthy.
  * - Keep board/subject-specific heuristics inside the adapter file unless two adapters genuinely
