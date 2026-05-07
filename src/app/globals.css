@@ -604,8 +604,9 @@ h1 {
   width: min(720px, 100%);
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.96);
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
   box-shadow: var(--shadow);
+  color: var(--text);
   padding: 32px;
 }
 
@@ -647,8 +648,14 @@ h1 {
   width: 100%;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--panel-subtle);
+  color: var(--text);
   padding: 14px 15px;
+}
+
+.login-form input[type="password"]:-webkit-autofill {
+  -webkit-text-fill-color: var(--text);
+  box-shadow: 0 0 0 1000px var(--panel-subtle) inset;
 }
 
 .login-form input[type="password"]:focus {
@@ -2077,5 +2084,16 @@ h1 {
   .question-group-list__score,
   .question-group-list__action {
     grid-column: 2;
+  }
+
+  .login-panel {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    padding: 24px;
+  }
+
+  .login-panel__mark,
+  .login-form {
+    grid-column: 1;
   }
 }
