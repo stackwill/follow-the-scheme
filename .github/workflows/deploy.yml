@@ -94,11 +94,6 @@ jobs:
           REMOTE_TMP_DIR: ${{ env.REMOTE_TMP_DIR }}
           IMAGE_REPOSITORY: ${{ steps.image.outputs.repository }}
           IMAGE_TAG: sha-${{ github.sha }}
-          AUTH_PASSWORD: ${{ secrets.AUTH_PASSWORD }}
-          AUTH_SESSION_SECRET: ${{ secrets.AUTH_SESSION_SECRET }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          OPENROUTER_MODEL: ${{ secrets.OPENROUTER_MODEL }}
-          OPENROUTER_BASE_URL: ${{ secrets.OPENROUTER_BASE_URL }}
           GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
           GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
         with:
@@ -106,7 +101,7 @@ jobs:
           username: ${{ env.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ env.DEPLOY_PORT }}
-          envs: APP_BIND,APP_DIR,APP_PORT,CONTAINER_NAME,REMOTE_TMP_DIR,IMAGE_REPOSITORY,IMAGE_TAG,AUTH_PASSWORD,AUTH_SESSION_SECRET,OPENROUTER_API_KEY,OPENROUTER_MODEL,OPENROUTER_BASE_URL,GHCR_PULL_USERNAME,GHCR_PULL_TOKEN
+          envs: APP_BIND,APP_DIR,APP_PORT,CONTAINER_NAME,REMOTE_TMP_DIR,IMAGE_REPOSITORY,IMAGE_TAG,GHCR_PULL_USERNAME,GHCR_PULL_TOKEN
           script: |
             set -eu
             mv "$REMOTE_TMP_DIR/docker-compose.yml" "$APP_DIR/docker-compose.yml"
@@ -114,25 +109,8 @@ jobs:
             cd "$APP_DIR"
 
             if [ ! -f .env ]; then
-              {
-                printf 'AUTH_PASSWORD=%s\n' "$AUTH_PASSWORD"
-                printf 'AUTH_SESSION_SECRET=%s\n' "$AUTH_SESSION_SECRET"
-                if [ -n "${OPENROUTER_API_KEY}" ]; then
-                  printf 'OPENROUTER_API_KEY=%s\n' "$OPENROUTER_API_KEY"
-                fi
-                if [ -n "${OPENROUTER_MODEL}" ]; then
-                  printf 'OPENROUTER_MODEL=%s\n' "$OPENROUTER_MODEL"
-                fi
-                if [ -n "${OPENROUTER_BASE_URL}" ]; then
-                  printf 'OPENROUTER_BASE_URL=%s\n' "$OPENROUTER_BASE_URL"
-                elif [ -n "${OPENROUTER_API_KEY}" ]; then
-                  printf 'OPENROUTER_BASE_URL=https://openrouter.ai/api/v1\n'
-                fi
-              } > .env
-              chmod 600 .env
-              if [ -z "${AUTH_PASSWORD}" ] || [ -z "${AUTH_SESSION_SECRET}" ]; then
-                echo "::warning::.env was missing on the server. A placeholder was created at $APP_DIR/.env; fill AUTH_PASSWORD and AUTH_SESSION_SECRET before using the app."
-              fi
+              echo "::error::.env is missing at $APP_DIR/.env. Create or copy it on the server before deploying; this workflow will not write app secrets."
+              exit 1
             fi
 
             cat > .deploy.env <<EOF
