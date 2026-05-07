@@ -4,6 +4,18 @@ const SESSION_VERSION = "v1";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 14;
 const encoder = new TextEncoder();
 
+function shouldUseSecureCookie() {
+  if (process.env.AUTH_COOKIE_SECURE === "false") {
+    return false;
+  }
+
+  if (process.env.AUTH_COOKIE_SECURE === "true") {
+    return true;
+  }
+
+  return process.env.NODE_ENV === "production";
+}
+
 function base64UrlEncode(bytes: ArrayBuffer) {
   const binary = String.fromCharCode(...new Uint8Array(bytes));
 
@@ -44,7 +56,7 @@ export function authCookieOptions() {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookie(),
     path: "/",
     maxAge: SESSION_DURATION_SECONDS,
   };

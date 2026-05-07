@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       APP_DIR: ${{ vars.DEPLOY_PATH || '/opt/follow-the-scheme' }}
-      APP_BIND: ${{ vars.APP_BIND || '127.0.0.1' }}
+      APP_BIND: ${{ vars.APP_BIND || '0.0.0.0' }}
       APP_PORT: ${{ vars.APP_PORT || '33200' }}
       CONTAINER_NAME: ${{ vars.CONTAINER_NAME || 'follow-the-scheme' }}
       DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
@@ -129,9 +129,15 @@ jobs:
             set +a
 
             mkdir -p data
-            BOOTSTRAP_IMPORTS=0
+            IMPORTED_PAPER_COUNT=0
+            BOOTSTRAP_IMPORTS=1
             if [ ! -f data/app.db ]; then
               BOOTSTRAP_IMPORTS=1
+            else
+              IMPORTED_PAPER_COUNT="$(docker compose run --rm app bun -e 'import { PrismaClient } from "@prisma/client"; const db = new PrismaClient(); const count = await db.paper.count(); console.log(count); await db.$disconnect();' | tail -n 1)"
+              if [ "$IMPORTED_PAPER_COUNT" -ge 7 ]; then
+                BOOTSTRAP_IMPORTS=0
+              fi
             fi
 
             docker compose pull
