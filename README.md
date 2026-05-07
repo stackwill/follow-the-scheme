@@ -64,6 +64,7 @@ The app binds to `127.0.0.1:33200` by default, which is intended for Cloudflared
 
 Set these in `Settings -> Secrets and variables -> Actions -> Secrets`:
 
+- `DEPLOY_HOST`: public IP address or DNS hostname for SSH.
 - `DEPLOY_SSH_KEY`: private SSH key that can log in as `will` on the server.
 - `GHCR_PULL_USERNAME`: optional if the GHCR image is public.
 - `GHCR_PULL_TOKEN`: optional if the GHCR image is public; otherwise use a token with `read:packages`.
@@ -72,7 +73,6 @@ Set these in `Settings -> Secrets and variables -> Actions -> Secrets`:
 
 These have safe defaults in the workflow, so only set them if you want to override:
 
-- `DEPLOY_HOST`: defaults to `192.168.1.51`.
 - `DEPLOY_USER`: defaults to `will`.
 - `DEPLOY_PORT`: defaults to `22`.
 - `DEPLOY_PATH`: defaults to `/opt/follow-the-scheme`.
