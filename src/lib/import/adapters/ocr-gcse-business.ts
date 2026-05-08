@@ -132,7 +132,23 @@ function parseQuestionPaperLabel(line: Line, state: { mainKey: string | null; pa
     }
   }
 
-  const partMatch = text.match(/^\(([a-e])\*?\)\*?(?=\s|$)/);
+  const partWithRomanMatch = text.match(/^\(([a-f])\*?\)\*?\s+\((i{1,3})\)(?=\s|$)/);
+
+  if (partWithRomanMatch && state.mainKey) {
+    const partKey = partWithRomanMatch[1];
+    const romanKey = normalizeRoman(partWithRomanMatch[2]);
+
+    state.partKey = partKey;
+
+    return {
+      label: formatQuestionLabel(state.mainKey, partKey, romanKey),
+      mainKey: state.mainKey,
+      partKey,
+      romanKey,
+    };
+  }
+
+  const partMatch = text.match(/^\(([a-f])\*?\)\*?(?=\s|$)/);
 
   if (partMatch && state.mainKey) {
     const partKey = partMatch[1];
@@ -183,7 +199,7 @@ function parseSectionAMarkSchemeLine(line: Line) {
 }
 
 function readMarksFromStartLine(text: string) {
-  const match = text.match(/\s(\d+)\s+(?:One mark|Use marking|Two marks|Three marks|For each|Advantage|AO1|AO2|AO3|Guidance)\b/);
+  const match = text.match(/\s(\d+)\s+(?:One mark|Use marking|Use the level|Two marks|Three marks|For each|Advantage|AO1|AO2|AO3|Guidance)\b/);
 
   return match ? Number(match[1]) : 0;
 }
@@ -198,7 +214,7 @@ function parseMarkSchemeStart(
     return null;
   }
 
-  const explicitMainMatch = text.match(/^(\d{2})\s+(?:\(([a-e])\)|([a-e]))\*?(?:\s*\((i{1,3})\))?(?=\s|$)/);
+  const explicitMainMatch = text.match(/^(\d{2})\s+(?:\(([a-f])\)|([a-f]))\*?(?:\s*\((i{1,3})\))?(?=\s|$)/);
 
   if (explicitMainMatch) {
     const maxMarks = readMarksFromStartLine(text);
@@ -219,7 +235,7 @@ function parseMarkSchemeStart(
     };
   }
 
-  const partWithRomanMatch = text.match(/^([a-e])\s*\((i{1,3})\)(?=\s|$)/);
+  const partWithRomanMatch = text.match(/^([a-f])\s*\((i{1,3})\)(?=\s|$)/);
 
   if (partWithRomanMatch && state.mainKey) {
     const maxMarks = readMarksFromStartLine(text);
@@ -239,7 +255,7 @@ function parseMarkSchemeStart(
     };
   }
 
-  const partMatch = text.match(/^([a-e])\*?(?=\s)/);
+  const partMatch = text.match(/^([a-f])\*?(?=\s)/);
 
   if (partMatch && state.mainKey) {
     const maxMarks = readMarksFromStartLine(text);
@@ -349,7 +365,7 @@ function isQuestionPaperBoilerplate(line: Line) {
     text.includes("end of question paper") ||
     text.includes("copyright information") ||
     text.includes("oxford cambridge and rsa") ||
-    /^©\s*ocr\s*2024/i.test(line.rawText) ||
+    /^©\s*ocr\s*20\d{2}/i.test(line.rawText) ||
     /^\*\s*j\s*2\s*0\s*4\s*0\s*[12]\s*\*$/i.test(line.rawText) ||
     /^\*\s*\d(?:\s*\d)+\s*\*$/.test(line.rawText) ||
     /^\d+$/.test(line.rawText)
@@ -597,7 +613,7 @@ function buildQuestionDrafts(
 function createOcrGcseBusinessAdapter(config: BusinessPaperConfig): PaperImportAdapter {
   return {
     key: config.key,
-    importVersion: "2026-05-07.1",
+    importVersion: "2026-05-08.1",
     detectQuestionDrafts({ questionItems, markSchemeItems }: DetectQuestionDraftsInput) {
       const questionLines = groupItemsIntoLines(questionItems);
       const markSchemeLines = groupItemsIntoLines(markSchemeItems);

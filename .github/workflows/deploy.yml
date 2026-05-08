@@ -135,7 +135,7 @@ jobs:
               BOOTSTRAP_IMPORTS=1
             else
               IMPORTED_PAPER_COUNT="$(docker compose run --rm app bun -e 'import { PrismaClient } from "@prisma/client"; const db = new PrismaClient(); const count = await db.paper.count(); console.log(count); await db.$disconnect();' | tail -n 1)"
-              if [ "$IMPORTED_PAPER_COUNT" -ge 7 ]; then
+              if [ "$IMPORTED_PAPER_COUNT" -ge 9 ]; then
                 BOOTSTRAP_IMPORTS=0
               fi
             fi
