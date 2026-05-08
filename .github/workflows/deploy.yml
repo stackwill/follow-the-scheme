@@ -140,6 +140,16 @@ jobs:
               fi
             fi
 
+            echo "Disk usage before Docker cleanup:"
+            df -h /
+            docker system df || true
+            docker container prune -f || true
+            docker image prune -af || true
+            docker builder prune -af || true
+            echo "Disk usage after Docker cleanup:"
+            df -h /
+            docker system df || true
+
             docker compose pull
             docker compose run --rm app bunx prisma migrate deploy
             if [ "$BOOTSTRAP_IMPORTS" = "1" ]; then
