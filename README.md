@@ -21,7 +21,7 @@ The workflow in [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml)
 5. Requires and preserves the server's existing `.env`.
 6. Writes `.deploy.env` with the image tag, bind address, port, and container name.
 7. Runs Prisma migrations.
-8. Runs fixture imports when the database has fewer than the expected seven papers.
+8. Runs fixture imports when the database has fewer than the expected nine papers.
 9. Starts the container with `restart: unless-stopped`.
 
 The app binds to `0.0.0.0:33200` by default so a separate Cloudflared LXC can reach it at `http://192.168.1.51:33200`.

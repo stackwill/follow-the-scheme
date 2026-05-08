@@ -46,7 +46,8 @@ const BIOLOGY_TOTAL_MARKS: Record<BiologyBenchmarkYear, number> = {
 const COMPUTER_SCIENCE_TOTAL_MARKS: Record<2024, number> = {
   2024: 90,
 };
-const OCR_BUSINESS_TOTAL_MARKS: Record<2024, number> = {
+const OCR_BUSINESS_TOTAL_MARKS: Record<OcrBusinessBenchmarkYear, number> = {
+  2023: 80,
   2024: 80,
 };
 const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
@@ -54,7 +55,7 @@ const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
 type BenchmarkYear = 2023 | 2024;
 type BiologyBenchmarkYear = 2023;
 type ComputerScienceBenchmarkYear = 2024;
-type OcrBusinessBenchmarkYear = 2024;
+type OcrBusinessBenchmarkYear = 2023 | 2024;
 type QuestionRecord = Awaited<ReturnType<typeof buildQuestionRecordData>>[number];
 type ImportTransaction = Parameters<Parameters<typeof db.$transaction>[0]>[0];
 type BenchmarkCandidate =

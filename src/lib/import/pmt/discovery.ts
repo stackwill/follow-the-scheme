@@ -17,7 +17,7 @@ const OCR_GCSE_BUSINESS_ASSESSMENT_URL =
 const BENCHMARK_YEARS = [2023, 2024] as const;
 const BIOLOGY_BENCHMARK_YEARS = [2023] as const;
 const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2024] as const;
-const OCR_BUSINESS_BENCHMARK_YEARS = [2024] as const;
+const OCR_BUSINESS_BENCHMARK_YEARS = [2023, 2024] as const;
 
 type SessionLinks = {
   questionPaperUrl?: string;
@@ -278,8 +278,11 @@ function discoverOcrGcseBusinessPaperFromHtml(html: string, paperNumber: 1 | 2) 
   const candidates: PmtPaperCandidate[] = [];
 
   for (const year of OCR_BUSINESS_BENCHMARK_YEARS) {
-    const questionPaper = $(`a:contains("Question paper - ${title}")`).first();
-    const markScheme = $(`a:contains("Mark scheme - ${title}")`).first();
+    const yearHeading = $(`h4:contains("${year} - June series")`).first();
+    const yearSection = yearHeading.nextUntil("h4");
+    const yearLinks = yearSection.filter("a").add(yearSection.find("a"));
+    const questionPaper = yearLinks.filter(`:contains("Question paper - ${title}")`).first();
+    const markScheme = yearLinks.filter(`:contains("Mark scheme - ${title}")`).first();
     const questionPaperHref = questionPaper.attr("href");
     const markSchemeHref = markScheme.attr("href");
 

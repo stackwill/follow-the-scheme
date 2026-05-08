@@ -126,7 +126,7 @@ describe("discoverAqaBiologyPaperHigherFromHtml", () => {
 });
 
 describe("discoverOcrGcseBusinessPaperFromHtml", () => {
-  it("selects the first OCR GCSE Business 2024 Paper 1 QP and MS pair", () => {
+  it("selects the OCR GCSE Business 2023 and 2024 Paper 1 QP and MS pairs", () => {
     const html = `
       <main>
         <h4>2024 - June series</h4>
@@ -145,6 +145,21 @@ describe("discoverOcrGcseBusinessPaperFromHtml", () => {
         paperPageUrl:
           "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct",
         questionPaperUrl:
+          "https://www.ocr.org.uk/Images/704745-question-paper-business-1-business-activity-marketing-and-people.pdf",
+        markSchemeUrl:
+          "https://www.ocr.org.uk/Images/704864-mark-scheme-business-1-business-activity-marketing-and-people.pdf",
+        examBoard: "OCR",
+        qualification: "GCSE Business",
+        subject: "Business",
+        paperNumber: 1,
+        tier: "Business activity, marketing and people",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl:
+          "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct",
+        questionPaperUrl:
           "https://www.ocr.org.uk/Images/727519-question-paper-business-1-business-activity-marketing-and-people.pdf",
         markSchemeUrl:
           "https://www.ocr.org.uk/Images/727634-mark-scheme-business-1-business-activity-marketing-and-people.pdf",
@@ -159,17 +174,38 @@ describe("discoverOcrGcseBusinessPaperFromHtml", () => {
     ]);
   });
 
-  it("selects the OCR GCSE Business 2024 Paper 2 QP and MS pair", () => {
+  it("selects the OCR GCSE Business 2023 and 2024 Paper 2 QP and MS pairs", () => {
     const html = `
       <main>
+        <h4>2024 - June series</h4>
         <a href="/Images/727519-question-paper-business-1-business-activity-marketing-and-people.pdf">Question paper - Business 1: business activity, marketing and people</a>
         <a href="/Images/727634-mark-scheme-business-1-business-activity-marketing-and-people.pdf">Mark scheme - Business 1: business activity, marketing and people</a>
         <a href="/Images/727520-question-paper-business-2-operations-finance-and-influences-on-business.pdf">Question paper - Business 2: operations, finance and influences on business</a>
         <a href="/Images/727635-mark-scheme-business-2-operations-finance-and-influences-on-business.pdf">Mark scheme - Business 2: operations, finance and influences on business</a>
+        <h4>2023 - June series</h4>
+        <a href="/Images/704745-question-paper-business-1-business-activity-marketing-and-people.pdf">Question paper - Business 1: business activity, marketing and people</a>
+        <a href="/Images/704864-mark-scheme-business-1-business-activity-marketing-and-people.pdf">Mark scheme - Business 1: business activity, marketing and people</a>
+        <a href="/Images/704746-question-paper-business-2-operations-finance-and-influences-on-business.pdf">Question paper - Business 2: operations, finance and influences on business</a>
+        <a href="/Images/704865-mark-scheme-business-2-operations-finance-and-influences-on-business.pdf">Mark scheme - Business 2: operations, finance and influences on business</a>
       </main>
     `;
 
     expect(discoverOcrGcseBusinessPaper2FromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct",
+        questionPaperUrl:
+          "https://www.ocr.org.uk/Images/704746-question-paper-business-2-operations-finance-and-influences-on-business.pdf",
+        markSchemeUrl:
+          "https://www.ocr.org.uk/Images/704865-mark-scheme-business-2-operations-finance-and-influences-on-business.pdf",
+        examBoard: "OCR",
+        qualification: "GCSE Business",
+        subject: "Business",
+        paperNumber: 2,
+        tier: "Operations, finance and influences on business",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
       {
         paperPageUrl:
           "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct",

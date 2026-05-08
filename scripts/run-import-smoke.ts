@@ -381,54 +381,56 @@ const ocrBusinessImports = [
 
 const ocrBusinessPapers = [];
 
-for (const businessImport of ocrBusinessImports) {
-  const initialResult = await businessImport.importPaper(2024);
-  const initialPaper = await getPaperSnapshot(initialResult.paperId);
-  const initialQuestionIds = new Map(
-    initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
-  );
-
-  assert(
-    initialPaper.questions.length === businessImport.expectation.questionCount,
-    `${businessImport.label} imported ${initialPaper.questions.length} questions, expected ${businessImport.expectation.questionCount}`,
-  );
-  assert(
-    initialPaper.totalMarks === businessImport.expectation.totalMarks,
-    `${businessImport.label} imported ${initialPaper.totalMarks} total marks, expected ${businessImport.expectation.totalMarks}`,
-  );
-
-  for (const question of initialPaper.questions) {
-    await access(question.primaryCropPath);
-    assert(
-      question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
-      `${businessImport.label} imported invalid mark scheme text for ${question.questionKey}`,
+for (const year of [2023, 2024] as const) {
+  for (const businessImport of ocrBusinessImports) {
+    const initialResult = await businessImport.importPaper(year);
+    const initialPaper = await getPaperSnapshot(initialResult.paperId);
+    const initialQuestionIds = new Map(
+      initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
     );
-  }
 
-  const repeatResult = await businessImport.importPaper(2024);
-  const repeatedPaper = await getPaperSnapshot(repeatResult.paperId);
-
-  assert(
-    initialResult.paperId === repeatResult.paperId,
-    `${businessImport.label} re-import changed paper id from ${initialResult.paperId} to ${repeatResult.paperId}`,
-  );
-  assert(
-    initialResult.questionCount === repeatResult.questionCount,
-    `${businessImport.label} re-import changed question count from ${initialResult.questionCount} to ${repeatResult.questionCount}`,
-  );
-  assert(
-    initialResult.totalMarks === repeatResult.totalMarks,
-    `${businessImport.label} re-import changed total marks from ${initialResult.totalMarks} to ${repeatResult.totalMarks}`,
-  );
-
-  for (const question of repeatedPaper.questions) {
     assert(
-      initialQuestionIds.get(question.questionKey) === question.id,
-      `${businessImport.label}/${question.questionKey} changed question id across repeat import`,
+      initialPaper.questions.length === businessImport.expectation.questionCount,
+      `${businessImport.label} ${year} imported ${initialPaper.questions.length} questions, expected ${businessImport.expectation.questionCount}`,
     );
-  }
+    assert(
+      initialPaper.totalMarks === businessImport.expectation.totalMarks,
+      `${businessImport.label} ${year} imported ${initialPaper.totalMarks} total marks, expected ${businessImport.expectation.totalMarks}`,
+    );
 
-  ocrBusinessPapers.push(repeatedPaper);
+    for (const question of initialPaper.questions) {
+      await access(question.primaryCropPath);
+      assert(
+        question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
+        `${businessImport.label} ${year} imported invalid mark scheme text for ${question.questionKey}`,
+      );
+    }
+
+    const repeatResult = await businessImport.importPaper(year);
+    const repeatedPaper = await getPaperSnapshot(repeatResult.paperId);
+
+    assert(
+      initialResult.paperId === repeatResult.paperId,
+      `${businessImport.label} ${year} re-import changed paper id from ${initialResult.paperId} to ${repeatResult.paperId}`,
+    );
+    assert(
+      initialResult.questionCount === repeatResult.questionCount,
+      `${businessImport.label} ${year} re-import changed question count from ${initialResult.questionCount} to ${repeatResult.questionCount}`,
+    );
+    assert(
+      initialResult.totalMarks === repeatResult.totalMarks,
+      `${businessImport.label} ${year} re-import changed total marks from ${initialResult.totalMarks} to ${repeatResult.totalMarks}`,
+    );
+
+    for (const question of repeatedPaper.questions) {
+      assert(
+        initialQuestionIds.get(question.questionKey) === question.id,
+        `${businessImport.label} ${year}/${question.questionKey} changed question id across repeat import`,
+      );
+    }
+
+    ocrBusinessPapers.push(repeatedPaper);
+  }
 }
 
 for (const paper of results) {
