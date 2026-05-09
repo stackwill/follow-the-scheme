@@ -473,4 +473,140 @@ ag E: oC = -1 B
     expect(question034?.extractedQuestionText).toContain("veins have valves");
     expect(question034?.extractedQuestionText).toContain("Explain why veins have valves");
   });
+
+  it("moves post-answer setup to the following Biology subquestion", () => {
+    const questionItems: TextItem[] = [
+      item(3, "0", 52.7, 760.0),
+      item(3, "1", 69.4, 760.0),
+      item(3, ".", 82.4, 760.0),
+      item(3, "4", 92.6, 760.0),
+      item(3, "Body mass index (BMI) is one measure of obesity.", 114.8, 759.2, 300),
+      item(3, "BMI is calculated using the equation:", 114.8, 704.0, 220),
+      item(3, "Table 1 shows how BMI is used to describe an adult's BMI category.", 114.8, 620.0, 380),
+      item(3, "A person is 1.64 m tall and has a mass of 69 kg.", 114.8, 360.0, 320),
+      item(3, "Determine the BMI category for this person.", 114.8, 300.0, 260),
+      item(3, "[3 marks]", 491.6, 270.0, 60),
+      item(3, "The person's BMI category is", 114.8, 180.0, 180),
+      item(4, "Scientists investigated the effect of smoking and of BMI on the birth mass of babies.", 114.8, 760.0, 420),
+      item(4, "Women's BMI categories were determined before the women became pregnant.", 114.8, 720.0, 390),
+      item(4, "0", 52.7, 620.0),
+      item(4, "1", 69.4, 620.0),
+      item(4, ".", 82.4, 620.0),
+      item(4, "5", 92.6, 620.0),
+      item(4, "Suggest why BMI categories were determined before the women became pregnant.", 114.8, 619.2, 390),
+      item(4, "[1 mark]", 491.6, 590.0, 60),
+      item(4, "Figure 1 shows the results.", 114.8, 310.0, 180),
+      item(4, "Figure 1", 270.0, 270.0, 50),
+      item(5, "0", 52.7, 760.0),
+      item(5, "1", 69.4, 760.0),
+      item(5, ".", 82.4, 760.0),
+      item(5, "6", 92.6, 760.0),
+      item(5, "Give two conclusions that can be made from Figure 1.", 114.8, 759.2, 320),
+      item(5, "[2 marks]", 491.6, 730.0, 60),
+      item(5, "0", 52.7, 500.0),
+      item(5, "1", 69.4, 500.0),
+      item(5, ".", 82.4, 500.0),
+      item(5, "7", 92.6, 500.0),
+      item(5, "Measles is a communicable disease.", 114.8, 499.2, 240),
+      item(5, "Describe how the measles virus is transferred from person to person.", 114.8, 440.0, 360),
+      item(5, "[2 marks]", 491.6, 410.0, 60),
+      item(6, "Athlete's foot is a communicable disease.", 114.8, 760.0, 250),
+      item(6, "A fungus causes athlete's foot.", 114.8, 710.0, 210),
+      item(6, "The athlete's foot fungus infects the skin on feet.", 114.8, 660.0, 310),
+      item(6, "0", 52.7, 540.0),
+      item(6, "1", 69.4, 540.0),
+      item(6, ".", 82.4, 540.0),
+      item(6, "8", 92.6, 540.0),
+      item(6, "Scientists estimate that 17% of the UK population have athlete's foot.", 114.8, 539.2, 390),
+      item(6, "[2 marks]", 491.6, 510.0, 60),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(7, "01.4", 67.3, 675.7, 24),
+      item(7, "BMI calculation and category", 113.2, 675.7, 160),
+      item(7, "3", 466.2, 675.7, 8),
+      item(7, "01.5", 67.3, 573.7, 24),
+      item(7, "pregnancy increases mass", 113.2, 573.7, 150),
+      item(7, "1", 466.2, 573.7, 8),
+      item(7, "01.6", 67.3, 473.7, 24),
+      item(7, "valid conclusions from figure", 113.2, 473.7, 160),
+      item(7, "2", 466.2, 473.7, 8),
+      item(7, "01.7", 67.3, 373.7, 24),
+      item(7, "virus droplets inhaled", 113.2, 373.7, 140),
+      item(7, "2", 466.2, 373.7, 8),
+      item(7, "01.8", 67.3, 273.7, 24),
+      item(7, "correct percentage calculation", 113.2, 273.7, 180),
+      item(7, "2", 466.2, 273.7, 8),
+      item(8, "Total Question 1 10", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+    const question014 = drafts.find((draft) => draft.questionKey === "01.4");
+    const question015 = drafts.find((draft) => draft.questionKey === "01.5");
+    const question016 = drafts.find((draft) => draft.questionKey === "01.6");
+    const question017 = drafts.find((draft) => draft.questionKey === "01.7");
+    const question018 = drafts.find((draft) => draft.questionKey === "01.8");
+
+    expect(question014?.extractedQuestionText).toContain("Table 1 shows");
+    expect(question014?.extractedQuestionText).not.toContain("Scientists investigated");
+    expect(question015?.extractedQuestionText).toContain("Scientists investigated");
+    expect(question015?.extractedQuestionText).not.toContain("Table 1 shows");
+    expect(question015?.extractedQuestionText).not.toContain("Figure 1 shows");
+    expect(question016?.extractedQuestionText).toContain("Figure 1 shows");
+    expect(question016?.extractedQuestionText).not.toContain("Measles");
+    expect(question017?.extractedQuestionText).not.toContain("Athlete's foot");
+    expect(question017?.supportingPdfBoxes).toEqual([]);
+    expect(question018?.extractedQuestionText).toContain("Athlete's foot is a communicable disease");
+    expect(question018?.pageStart).toBe(6);
+  });
+
+  it("starts experiment context at the first setup line after the previous answer", () => {
+    const questionItems: TextItem[] = [
+      item(17, "0", 52.7, 760.0),
+      item(17, "6", 69.4, 760.0),
+      item(17, "Amylase is an enzyme that digests starch in the digestive system.", 114.8, 759.2, 360),
+      item(17, "0", 52.7, 680.0),
+      item(17, "6", 69.4, 680.0),
+      item(17, ".", 82.4, 680.0),
+      item(17, "1", 92.6, 680.0),
+      item(17, "Explain why starch has to be digested.", 114.8, 679.2, 240),
+      item(17, "[2 marks]", 491.6, 650.0, 60),
+      item(18, "A student used a colorimeter to investigate the rate of starch digestion.", 114.8, 760.0, 390),
+      item(18, "A colorimeter measures the percentage of light passing through a liquid.", 114.8, 710.0, 390),
+      item(18, "Figure 7 shows the results.", 114.8, 500.0, 180),
+      item(18, "Figure 7", 270.0, 460.0, 50),
+      item(19, "0", 52.7, 760.0),
+      item(19, "6", 69.4, 760.0),
+      item(19, ".", 82.4, 760.0),
+      item(19, "2", 92.6, 760.0),
+      item(19, "Suggest what liquid was used for the test with 0 g/dm3 starch concentration.", 114.8, 759.2, 420),
+      item(19, "[1 mark]", 491.6, 730.0, 60),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(7, "06.1", 67.3, 675.7, 24),
+      item(7, "starch is too large", 113.2, 675.7, 120),
+      item(7, "2", 466.2, 675.7, 8),
+      item(7, "06.2", 67.3, 573.7, 24),
+      item(7, "iodine solution", 113.2, 573.7, 100),
+      item(7, "1", 466.2, 573.7, 8),
+      item(8, "Total Question 6 3", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+    const question061 = drafts.find((draft) => draft.questionKey === "06.1");
+    const question062 = drafts.find((draft) => draft.questionKey === "06.2");
+
+    expect(question061?.extractedQuestionText).not.toContain("A student used a colorimeter");
+    expect(question061?.supportingPdfBoxes).toEqual([]);
+    expect(question062?.extractedQuestionText).toContain("A student used a colorimeter");
+    expect(question062?.extractedQuestionText).toContain("Figure 7 shows");
+    expect(question062?.pageStart).toBe(18);
+  });
 });
