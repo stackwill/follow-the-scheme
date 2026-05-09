@@ -635,6 +635,28 @@ function shouldAttachMainContextToCrop(start: QuestionStart) {
   return start.label.subKey === 1;
 }
 
+function isQuestionMarkAllocationLine(line: Line) {
+  return /\[\d+\s*marks?\]/i.test(line.rawText);
+}
+
+function looksLikeSetupForNextPart(line: Line) {
+  const text = line.rawText.trim();
+
+  return (
+    /\b(?:Figure|Table)\s+\d+\b.*\b(?:shows?|describes?|are repeated|is repeated)\b/i.test(text) ||
+    /\b(?:structure|graph|table|figure|diagram|results?|data)\b.+\b(?:is|are)\s+different\b/i.test(text) ||
+    /^One difference\b/i.test(text) ||
+    /\b(?:scientists?|students?)\b.*\b(?:investigated|used|estimate|estimated|concluded|discovered)\b/i.test(text) ||
+    /^Women(?:'|’)s BMI categories were determined\b/i.test(text) ||
+    /^Athlete(?:'|’)s foot is a communicable disease\b/i.test(text) ||
+    /^A fungus causes athlete(?:'|’)s foot\b/i.test(text) ||
+    /^The athlete(?:'|’)s foot fungus\b/i.test(text) ||
+    /^Broken bones are sometimes repaired\b/i.test(text) ||
+    /^The student then investigated\b/i.test(text) ||
+    /^This is the method used\.?$/i.test(text)
+  );
+}
+
 function isPreLabelContextForStart(
   line: Line,
   start: QuestionStart,
@@ -644,13 +666,7 @@ function isPreLabelContextForStart(
     return false;
   }
 
-  const text = line.rawText.trim();
-  const looksLikeSetupForNextPart =
-    /\b(?:Figure|Table)\s+\d+\b.*\b(?:shows?|describes?|are repeated|is repeated)\b/i.test(text) ||
-    /\b(?:structure|graph|table|figure|diagram|results?|data)\b.+\b(?:is|are)\s+different\b/i.test(text) ||
-    /^One difference\b/i.test(text);
-
-  if (!looksLikeSetupForNextPart) {
+  if (!looksLikeSetupForNextPart(line)) {
     return false;
   }
 
@@ -667,8 +683,17 @@ function getSegmentStartIndex(
   start: QuestionStart,
   previousStart: QuestionStart | null,
 ) {
+  const lowerBoundIndex = (previousStart?.lineIndex ?? start.lineIndex - 1) + 1;
+  const searchStartIndex =
+    filteredQuestionLines
+      .slice(lowerBoundIndex, start.lineIndex)
+      .reduce(
+        (latestMarkLineIndex, line, offset) =>
+          isQuestionMarkAllocationLine(line) ? lowerBoundIndex + offset : latestMarkLineIndex,
+        lowerBoundIndex - 1,
+      ) + 1;
   const preLabelContextLine = filteredQuestionLines
-    .slice((previousStart?.lineIndex ?? start.lineIndex - 1) + 1, start.lineIndex)
+    .slice(searchStartIndex, start.lineIndex)
     .find((line) => isPreLabelContextForStart(line, start, previousStart));
 
   return preLabelContextLine ? filteredQuestionLines.indexOf(preLabelContextLine) : start.lineIndex;
