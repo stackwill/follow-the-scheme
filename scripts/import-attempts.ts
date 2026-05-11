@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 
-import { findPaperForAttemptImport, type AttemptExport } from "@/lib/data/attempt-transfer";
+import { findPaperForAttemptImport, type AttemptExport } from "@/lib/attempts/attempt-transfer";
 import { db } from "@/lib/db";
 
 const inputPath = process.argv[2];

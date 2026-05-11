@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 
-import { buildAttemptExport } from "@/lib/data/attempt-transfer";
+import { buildAttemptExport } from "@/lib/attempts/attempt-transfer";
 import { db } from "@/lib/db";
 
 const outputPath = process.argv[2];
