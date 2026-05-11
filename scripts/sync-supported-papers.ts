@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { importAllSupportedBenchmarkPapers } from "@/lib/import/core/import-paper";
+import { importAllSupportedPapers } from "@/lib/import/core/import-supported";
 
-const results = await importAllSupportedBenchmarkPapers();
+const results = await importAllSupportedPapers();
 
 for (const result of results) {
   console.log(

@@ -3,6 +3,7 @@ import { access } from "node:fs/promises";
 
 import sharp from "sharp";
 
+import { dataRootPathForAsset } from "@/lib/assets/paths";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import {
@@ -74,6 +75,10 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
+function assetFilePath(assetPath: string) {
+  return dataRootPathForAsset(assetPath);
+}
+
 async function getPaperSnapshot(paperId: string) {
   const paper = await db.paper.findFirst({
     where: { id: paperId },
@@ -142,8 +147,9 @@ async function assertPaperIntegrity(year: 2023 | 2024, paperId: string) {
       const supportingPdfBoxHeight =
         supportingPdfBox === undefined ? MIN_SUPPORTING_PDF_BOX_HEIGHT : supportingPdfBox.top - supportingPdfBox.bottom;
 
-      await access(assetPath);
-      const metadata = await sharp(assetPath).metadata();
+      const filePath = assetFilePath(assetPath);
+      await access(filePath);
+      const metadata = await sharp(filePath).metadata();
 
       assert(metadata.width, `Missing crop width metadata for ${assetPath}`);
       assert(metadata.height, `Missing crop height metadata for ${assetPath}`);
@@ -158,8 +164,9 @@ async function assertPaperIntegrity(year: 2023 | 2024, paperId: string) {
   }
 
   for (const question of paper.questions) {
-    await access(question.primaryCropPath);
-    const metadata = await sharp(question.primaryCropPath).metadata();
+    const filePath = assetFilePath(question.primaryCropPath);
+    await access(filePath);
+    const metadata = await sharp(filePath).metadata();
 
     assert(metadata.width, `Missing crop width metadata for ${question.primaryCropPath}`);
     assert(metadata.height, `Missing crop height metadata for ${question.primaryCropPath}`);
@@ -187,7 +194,7 @@ async function assertPaperIntegrity(year: 2023 | 2024, paperId: string) {
       `2024/05.2 should not create a footer-only continuation crop (pages ${question052.pageStart}-${question052.pageEnd})`,
     );
 
-    const primaryMetadata = await sharp(question052.primaryCropPath).metadata();
+    const primaryMetadata = await sharp(assetFilePath(question052.primaryCropPath)).metadata();
 
     assert(primaryMetadata.width, `Missing crop width metadata for ${question052.primaryCropPath}`);
     assert(primaryMetadata.height, `Missing crop height metadata for ${question052.primaryCropPath}`);
@@ -271,8 +278,9 @@ assert(
 );
 
 for (const question of csInitialPaper.questions) {
-  await access(question.primaryCropPath);
-  const metadata = await sharp(question.primaryCropPath).metadata();
+  const filePath = assetFilePath(question.primaryCropPath);
+  await access(filePath);
+  const metadata = await sharp(filePath).metadata();
 
   assert(metadata.width, `Missing crop width metadata for ${question.primaryCropPath}`);
   assert(metadata.height, `Missing crop height metadata for ${question.primaryCropPath}`);
@@ -347,7 +355,7 @@ for (const year of [2023, 2024] as const) {
     );
 
     for (const question of initialPaper.questions) {
-      await access(question.primaryCropPath);
+      await access(assetFilePath(question.primaryCropPath));
       assert(
         question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
         `${biologyImport.label} ${year} imported invalid mark scheme text for ${question.questionKey}`,
@@ -414,7 +422,7 @@ for (const year of [2023, 2024] as const) {
     );
 
     for (const question of initialPaper.questions) {
-      await access(question.primaryCropPath);
+      await access(assetFilePath(question.primaryCropPath));
       assert(
         question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
         `${businessImport.label} ${year} imported invalid mark scheme text for ${question.questionKey}`,

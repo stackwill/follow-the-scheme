@@ -142,6 +142,6 @@ jobs:
 
             docker compose pull
             docker compose run --rm app bunx prisma migrate deploy
-            docker compose run --rm app bun run import:sync
+            echo "Code deploy only: paper data is managed by local data releases."
             docker compose up -d --force-recreate --remove-orphans
             docker image prune -f

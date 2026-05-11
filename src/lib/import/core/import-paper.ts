@@ -5,80 +5,41 @@ import { spawn } from "node:child_process";
 
 import sharp from "sharp";
 
+import { assetPathFromDataRoot } from "@/lib/assets/paths";
 import { getAdapter } from "@/lib/import/adapters";
 import type { QuestionDraft, QuestionPdfBox } from "@/lib/import/adapters/base";
 import { ImportFailure, serializeImportDiagnostics } from "@/lib/import/core/diagnostics";
 import { cropRegion } from "@/lib/import/core/crop";
 import { extractPdfTextItems } from "@/lib/import/core/pdf-text";
 import { renderPdfPages } from "@/lib/import/core/pdf-render";
-import { downloadPdf, getPaperDir, getPaperDirForAdapter } from "@/lib/import/core/storage";
+import { downloadPdf } from "@/lib/import/core/storage";
 import {
-  discoverAqaBiologyPaper1Higher,
-  discoverAqaBiologyPaper2Higher,
-  discoverAqaGcseComputerSciencePaper1BPython,
-  discoverAqaPhysicsPaper1Higher,
-  discoverOcrGcseBusinessPaper1,
-  discoverOcrGcseBusinessPaper2,
-} from "@/lib/import/pmt/discovery";
+  AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION,
+  AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION,
+  AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
+  AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION,
+  DEFAULT_SOURCE_PROVIDER,
+  DEFAULT_SUBJECT_INDEX_URL,
+  OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
+  OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
+  type BiologyBenchmarkYear,
+  type ComputerScienceBenchmarkYear,
+  type OcrBusinessBenchmarkYear,
+  type SupportedImportYear,
+  type SupportedPaperCandidate,
+  type SupportedPaperDefinition,
+} from "@/lib/import/registry";
 import { db } from "@/lib/db";
 import { cropsRoot, ensureDataDirs, logsRoot } from "@/lib/paths";
 
-const PAPER_SOURCE_PROVIDER = "PMT";
-const SUBJECT_INDEX_URL = "https://www.physicsandmathstutor.com/past-papers/";
-const FAMILY_PAGE_URL = "https://www.physicsandmathstutor.com/past-papers/gcse-science/";
 const RENDER_SCALE = 2;
-const ADAPTER_KEY = "aqa-combined-science-physics-paper-1-higher";
-const AQA_BIOLOGY_PAPER_1_HIGHER_ADAPTER_KEY =
-  "aqa-combined-science-biology-paper-1-higher";
-const AQA_BIOLOGY_PAPER_2_HIGHER_ADAPTER_KEY =
-  "aqa-combined-science-biology-paper-2-higher";
-const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY =
-  "aqa-gcse-computer-science-paper-1b-python";
-const OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY = "ocr-gcse-business-paper-1";
-const OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY = "ocr-gcse-business-paper-2";
-const BENCHMARK_TOTAL_MARKS: Record<BenchmarkYear, number> = {
-  2023: 70,
-  2024: 70,
-};
-const BIOLOGY_TOTAL_MARKS: Record<BiologyBenchmarkYear, number> = {
-  2023: 70,
-  2024: 70,
-};
-const COMPUTER_SCIENCE_TOTAL_MARKS: Record<2024, number> = {
-  2024: 90,
-};
-const OCR_BUSINESS_TOTAL_MARKS: Record<OcrBusinessBenchmarkYear, number> = {
-  2023: 80,
-  2024: 80,
-};
 const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
 
-type BenchmarkYear = 2023 | 2024;
-type BiologyBenchmarkYear = 2023 | 2024;
-type ComputerScienceBenchmarkYear = 2024;
-type OcrBusinessBenchmarkYear = 2023 | 2024;
+type BenchmarkYear = SupportedImportYear;
 type QuestionRecord = Awaited<ReturnType<typeof buildQuestionRecordData>>[number];
 type ImportTransaction = Parameters<Parameters<typeof db.$transaction>[0]>[0];
-type BenchmarkCandidate =
-  | Awaited<ReturnType<typeof discoverAqaPhysicsPaper1Higher>>[number]
-  | Awaited<ReturnType<typeof discoverAqaBiologyPaper1Higher>>[number]
-  | Awaited<ReturnType<typeof discoverAqaBiologyPaper2Higher>>[number]
-  | Awaited<ReturnType<typeof discoverAqaGcseComputerSciencePaper1BPython>>[number]
-  | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper1>>[number]
-  | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper2>>[number];
-type FailureCandidateContext = Partial<BenchmarkCandidate> & {
+type FailureCandidateContext = Partial<SupportedPaperCandidate> & {
   sessionLabel?: string;
-};
-type ImportBenchmarkDefinition<Year extends BenchmarkYear = BenchmarkYear> = {
-  adapterKey: string;
-  sourceProvider?: string;
-  subjectIndexUrl?: string;
-  familyPageUrl: string;
-  specCode: string;
-  title: (candidate: BenchmarkCandidate) => string;
-  totalMarks: Record<Year, number>;
-  discover: () => Promise<BenchmarkCandidate[]>;
-  paperDir: (year: Year) => string;
 };
 
 export type ImportPaperResult = {
@@ -396,8 +357,8 @@ function buildQuestionRecordData(
         displayOrder: draft.displayOrder,
         maxMarks: draft.maxMarks,
         extractedQuestionText: draft.extractedQuestionText,
-        primaryCropPath: cropPath,
-        supportingAssetPaths: JSON.stringify(supportingAssetPaths),
+        primaryCropPath: assetPathFromDataRoot(cropPath),
+        supportingAssetPaths: JSON.stringify(supportingAssetPaths.map(assetPathFromDataRoot)),
         pageStart: draft.pageStart,
         pageEnd: draft.pageEnd,
         boundingBoxes: JSON.stringify({
@@ -472,78 +433,8 @@ async function syncPaperQuestions(
   }
 }
 
-const AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION: ImportBenchmarkDefinition = {
-  adapterKey: ADAPTER_KEY,
-  familyPageUrl: FAMILY_PAGE_URL,
-  specCode: "8464",
-  title: (candidate) => `AQA Combined Science Trilogy Physics Paper 1 Higher ${candidate.sessionLabel}`,
-  totalMarks: BENCHMARK_TOTAL_MARKS,
-  discover: discoverAqaPhysicsPaper1Higher,
-  paperDir: getPaperDir,
-};
-
-const AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION: ImportBenchmarkDefinition<BiologyBenchmarkYear> = {
-  adapterKey: AQA_BIOLOGY_PAPER_1_HIGHER_ADAPTER_KEY,
-  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-1/",
-  specCode: "8464",
-  title: (candidate) => `AQA Combined Science Trilogy Biology Paper 1 Higher ${candidate.sessionLabel}`,
-  totalMarks: BIOLOGY_TOTAL_MARKS,
-  discover: discoverAqaBiologyPaper1Higher,
-  paperDir: (year) => getPaperDirForAdapter(AQA_BIOLOGY_PAPER_1_HIGHER_ADAPTER_KEY, year),
-};
-
-const AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION: ImportBenchmarkDefinition<BiologyBenchmarkYear> = {
-  adapterKey: AQA_BIOLOGY_PAPER_2_HIGHER_ADAPTER_KEY,
-  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-2/",
-  specCode: "8464",
-  title: (candidate) => `AQA Combined Science Trilogy Biology Paper 2 Higher ${candidate.sessionLabel}`,
-  totalMarks: BIOLOGY_TOTAL_MARKS,
-  discover: discoverAqaBiologyPaper2Higher,
-  paperDir: (year) => getPaperDirForAdapter(AQA_BIOLOGY_PAPER_2_HIGHER_ADAPTER_KEY, year),
-};
-
-const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION: ImportBenchmarkDefinition<ComputerScienceBenchmarkYear> = {
-  adapterKey: AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY,
-  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1",
-  specCode: "8525",
-  title: (candidate) => `AQA GCSE Computer Science Paper 1B Python ${candidate.sessionLabel}`,
-  totalMarks: COMPUTER_SCIENCE_TOTAL_MARKS,
-  discover: discoverAqaGcseComputerSciencePaper1BPython,
-  paperDir: (year) => getPaperDirForAdapter(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY, year),
-};
-
-const OCR_GCSE_BUSINESS_PAPER_1_DEFINITION: ImportBenchmarkDefinition<OcrBusinessBenchmarkYear> = {
-  adapterKey: OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY,
-  sourceProvider: "OCR",
-  subjectIndexUrl: "https://www.ocr.org.uk/qualifications/past-paper-finder/",
-  familyPageUrl: "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct",
-  specCode: "J204",
-  title: (candidate) => `OCR GCSE Business Paper 1: Business activity, marketing and people ${candidate.sessionLabel}`,
-  totalMarks: OCR_BUSINESS_TOTAL_MARKS,
-  discover: discoverOcrGcseBusinessPaper1,
-  paperDir: (year) => getPaperDirForAdapter(OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY, year),
-};
-
-const OCR_GCSE_BUSINESS_PAPER_2_DEFINITION: ImportBenchmarkDefinition<OcrBusinessBenchmarkYear> = {
-  adapterKey: OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY,
-  sourceProvider: "OCR",
-  subjectIndexUrl: "https://www.ocr.org.uk/qualifications/past-paper-finder/",
-  familyPageUrl: "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct",
-  specCode: "J204",
-  title: (candidate) => `OCR GCSE Business Paper 2: Operations, finance and influences on business ${candidate.sessionLabel}`,
-  totalMarks: OCR_BUSINESS_TOTAL_MARKS,
-  discover: discoverOcrGcseBusinessPaper2,
-  paperDir: (year) => getPaperDirForAdapter(OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY, year),
-};
-
-function yearsForDefinition<Year extends BenchmarkYear>(
-  definition: ImportBenchmarkDefinition<Year>,
-) {
-  return Object.keys(definition.totalMarks).map(Number) as Year[];
-}
-
-async function importBenchmarkPaper<Year extends BenchmarkYear>(
-  definition: ImportBenchmarkDefinition<Year>,
+export async function importSupportedPaper<Year extends BenchmarkYear>(
+  definition: SupportedPaperDefinition<Year>,
   year: Year,
 ): Promise<ImportPaperResult> {
   await ensureDataDirs();
@@ -591,8 +482,8 @@ async function importBenchmarkPaper<Year extends BenchmarkYear>(
         lastDiscoveredAt: new Date(),
       },
       create: {
-        provider: definition.sourceProvider ?? PAPER_SOURCE_PROVIDER,
-        subjectIndexUrl: definition.subjectIndexUrl ?? SUBJECT_INDEX_URL,
+        provider: definition.sourceProvider ?? DEFAULT_SOURCE_PROVIDER,
+        subjectIndexUrl: definition.subjectIndexUrl ?? DEFAULT_SUBJECT_INDEX_URL,
         familyPageUrl: definition.familyPageUrl,
         paperPageUrl: candidate.paperPageUrl,
         questionPaperUrl: candidate.questionPaperUrl,
@@ -643,8 +534,8 @@ async function importBenchmarkPaper<Year extends BenchmarkYear>(
           sessionLabel: candidate.sessionLabel,
           year,
           totalMarks,
-          questionPaperAssetPath: questionPaperPath,
-          markSchemeAssetPath: markSchemePath,
+          questionPaperAssetPath: assetPathFromDataRoot(questionPaperPath),
+          markSchemeAssetPath: assetPathFromDataRoot(markSchemePath),
           importVersion: adapter.importVersion,
           adapterKey: adapter.key,
           status: "ready",
@@ -662,8 +553,8 @@ async function importBenchmarkPaper<Year extends BenchmarkYear>(
           sessionLabel: candidate.sessionLabel,
           year,
           totalMarks,
-          questionPaperAssetPath: questionPaperPath,
-          markSchemeAssetPath: markSchemePath,
+          questionPaperAssetPath: assetPathFromDataRoot(questionPaperPath),
+          markSchemeAssetPath: assetPathFromDataRoot(markSchemePath),
           importVersion: adapter.importVersion,
           adapterKey: adapter.key,
           status: "ready",
@@ -717,66 +608,36 @@ async function importBenchmarkPaper<Year extends BenchmarkYear>(
   }
 }
 
-export async function importAllSupportedBenchmarkPapers(): Promise<ImportPaperResult[]> {
-  const results: ImportPaperResult[] = [];
-
-  for (const year of yearsForDefinition(AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION)) {
-    results.push(await importBenchmarkPaper(AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION, year));
-  }
-
-  for (const year of yearsForDefinition(AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION)) {
-    results.push(await importBenchmarkPaper(AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION, year));
-  }
-
-  for (const year of yearsForDefinition(AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION)) {
-    results.push(await importBenchmarkPaper(AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION, year));
-  }
-
-  for (const year of yearsForDefinition(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION)) {
-    results.push(await importBenchmarkPaper(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION, year));
-  }
-
-  for (const year of yearsForDefinition(OCR_GCSE_BUSINESS_PAPER_1_DEFINITION)) {
-    results.push(await importBenchmarkPaper(OCR_GCSE_BUSINESS_PAPER_1_DEFINITION, year));
-  }
-
-  for (const year of yearsForDefinition(OCR_GCSE_BUSINESS_PAPER_2_DEFINITION)) {
-    results.push(await importBenchmarkPaper(OCR_GCSE_BUSINESS_PAPER_2_DEFINITION, year));
-  }
-
-  return results;
-}
-
 export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear): Promise<ImportPaperResult> {
-  return importBenchmarkPaper(AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION, year);
+  return importSupportedPaper(AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION, year);
 }
 
 export async function importAqaBiologyPaper1HigherBenchmark(
   year: BiologyBenchmarkYear,
 ): Promise<ImportPaperResult> {
-  return importBenchmarkPaper(AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION, year);
+  return importSupportedPaper(AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION, year);
 }
 
 export async function importAqaBiologyPaper2HigherBenchmark(
   year: BiologyBenchmarkYear,
 ): Promise<ImportPaperResult> {
-  return importBenchmarkPaper(AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION, year);
+  return importSupportedPaper(AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION, year);
 }
 
 export async function importAqaGcseComputerSciencePaper1BPythonBenchmark(
   year: ComputerScienceBenchmarkYear,
 ): Promise<ImportPaperResult> {
-  return importBenchmarkPaper(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION, year);
+  return importSupportedPaper(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION, year);
 }
 
 export async function importOcrGcseBusinessPaper1Benchmark(
   year: OcrBusinessBenchmarkYear,
 ): Promise<ImportPaperResult> {
-  return importBenchmarkPaper(OCR_GCSE_BUSINESS_PAPER_1_DEFINITION, year);
+  return importSupportedPaper(OCR_GCSE_BUSINESS_PAPER_1_DEFINITION, year);
 }
 
 export async function importOcrGcseBusinessPaper2Benchmark(
   year: OcrBusinessBenchmarkYear,
 ): Promise<ImportPaperResult> {
-  return importBenchmarkPaper(OCR_GCSE_BUSINESS_PAPER_2_DEFINITION, year);
+  return importSupportedPaper(OCR_GCSE_BUSINESS_PAPER_2_DEFINITION, year);
 }
