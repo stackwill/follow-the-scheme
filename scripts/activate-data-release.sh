@@ -11,6 +11,13 @@ ATTEMPTS_BACKUP="$APP_DIR/data/attempts-backup-$TIMESTAMP.json"
 
 cd "$APP_DIR"
 
+if [ -f "$APP_DIR/.deploy.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$APP_DIR/.deploy.env"
+  set +a
+fi
+
 if [ ! -f "$RELEASE_TARBALL" ]; then
   echo "Missing release tarball: $RELEASE_TARBALL" >&2
   exit 1
@@ -52,7 +59,10 @@ if [ -d "$APP_DIR/data" ]; then
 fi
 mv "$STAGING_DIR" "$APP_DIR/data"
 
-docker compose run --rm app bunx prisma migrate deploy
+if ! docker compose run --rm app bunx prisma migrate deploy; then
+  docker compose run --rm app bunx prisma migrate resolve --applied 0001_init
+  docker compose run --rm app bunx prisma migrate deploy
+fi
 
 if [ -f "$APP_DIR/data/$(basename "$ATTEMPTS_BACKUP")" ]; then
   docker compose run --rm app bun run scripts/import-attempts.ts "/app/data/$(basename "$ATTEMPTS_BACKUP")"

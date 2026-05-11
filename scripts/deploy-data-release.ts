@@ -1,6 +1,19 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 
+async function commandExists(command: string) {
+  const child = spawn("sh", ["-c", `command -v ${command} >/dev/null 2>&1`], {
+    stdio: "ignore",
+  });
+
+  return (
+    (await new Promise<number>((resolve) => {
+      child.once("error", () => resolve(1));
+      child.once("exit", (code) => resolve(code ?? 1));
+    })) === 0
+  );
+}
+
 async function run(command: string, args: string[]) {
   const child = spawn(command, args, {
     stdio: "inherit",
@@ -31,25 +44,44 @@ const releaseFileName = path.basename(releaseTarball);
 const releaseSha = `${releaseTarball}.sha256`;
 const remoteIncomingDir = `${appDir}/incoming-data`;
 const remoteTarball = `${remoteIncomingDir}/${releaseFileName}`;
+const canUseRsync = await commandExists("rsync");
 
 await run("ssh", ["-p", deployPort, sshTarget, `mkdir -p ${JSON.stringify(remoteIncomingDir)}`]);
-await run("rsync", [
-  "-avz",
-  "--progress",
-  "-e",
-  `ssh -p ${deployPort}`,
-  "scripts/activate-data-release.sh",
-  `${sshTarget}:${appDir}/activate-data-release.sh`,
-]);
-await run("rsync", [
-  "-avz",
-  "--progress",
-  "-e",
-  `ssh -p ${deployPort}`,
-  releaseTarball,
-  releaseSha,
-  `${sshTarget}:${remoteIncomingDir}/`,
-]);
+
+if (canUseRsync) {
+  await run("rsync", [
+    "-avz",
+    "--progress",
+    "-e",
+    `ssh -p ${deployPort}`,
+    "scripts/activate-data-release.sh",
+    `${sshTarget}:${appDir}/activate-data-release.sh`,
+  ]);
+  await run("rsync", [
+    "-avz",
+    "--progress",
+    "-e",
+    `ssh -p ${deployPort}`,
+    releaseTarball,
+    releaseSha,
+    `${sshTarget}:${remoteIncomingDir}/`,
+  ]);
+} else {
+  await run("scp", [
+    "-P",
+    deployPort,
+    "scripts/activate-data-release.sh",
+    `${sshTarget}:${appDir}/activate-data-release.sh`,
+  ]);
+  await run("scp", [
+    "-P",
+    deployPort,
+    releaseTarball,
+    releaseSha,
+    `${sshTarget}:${remoteIncomingDir}/`,
+  ]);
+}
+
 await run("ssh", [
   "-p",
   deployPort,
