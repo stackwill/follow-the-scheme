@@ -2,6 +2,8 @@ import type { PaperImportAdapter } from "@/lib/import/adapters/base";
 import {
   aqaCombinedScienceBiologyPaper1HigherAdapter,
   aqaCombinedScienceBiologyPaper2HigherAdapter,
+  aqaCombinedScienceChemistryPaper1HigherAdapter,
+  aqaCombinedScienceChemistryPaper2HigherAdapter,
 } from "@/lib/import/adapters/aqa-combined-science-biology-paper-higher";
 import { aqaCombinedSciencePhysicsPaper1HigherAdapter } from "@/lib/import/adapters/aqa-combined-science-physics-paper-1-higher";
 import { aqaGcseComputerSciencePaper1BPythonAdapter } from "@/lib/import/adapters/aqa-gcse-computer-science-paper-1b-python";
@@ -15,6 +17,10 @@ export const adapters: Record<string, PaperImportAdapter> = {
     aqaCombinedScienceBiologyPaper1HigherAdapter,
   [aqaCombinedScienceBiologyPaper2HigherAdapter.key]:
     aqaCombinedScienceBiologyPaper2HigherAdapter,
+  [aqaCombinedScienceChemistryPaper1HigherAdapter.key]:
+    aqaCombinedScienceChemistryPaper1HigherAdapter,
+  [aqaCombinedScienceChemistryPaper2HigherAdapter.key]:
+    aqaCombinedScienceChemistryPaper2HigherAdapter,
   [aqaCombinedSciencePhysicsPaper1HigherAdapter.key]:
     aqaCombinedSciencePhysicsPaper1HigherAdapter,
   [aqaGcseComputerSciencePaper1BPythonAdapter.key]:
@@ -30,6 +36,8 @@ export function getAdapter(key: string) {
 export {
   aqaCombinedScienceBiologyPaper1HigherAdapter,
   aqaCombinedScienceBiologyPaper2HigherAdapter,
+  aqaCombinedScienceChemistryPaper1HigherAdapter,
+  aqaCombinedScienceChemistryPaper2HigherAdapter,
 };
 export { aqaCombinedSciencePhysicsPaper1HigherAdapter };
 export { aqaGcseComputerSciencePaper1BPythonAdapter };

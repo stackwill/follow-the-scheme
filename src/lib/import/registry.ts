@@ -2,6 +2,8 @@ import { getPaperDir, getPaperDirForAdapter } from "@/lib/import/core/storage";
 import {
   discoverAqaBiologyPaper1Higher,
   discoverAqaBiologyPaper2Higher,
+  discoverAqaChemistryPaper1Higher,
+  discoverAqaChemistryPaper2Higher,
   discoverAqaGcseComputerSciencePaper1BPython,
   discoverAqaPhysicsPaper1Higher,
   discoverOcrGcseBusinessPaper1,
@@ -18,6 +20,10 @@ export const AQA_BIOLOGY_PAPER_1_HIGHER_ADAPTER_KEY =
   "aqa-combined-science-biology-paper-1-higher";
 export const AQA_BIOLOGY_PAPER_2_HIGHER_ADAPTER_KEY =
   "aqa-combined-science-biology-paper-2-higher";
+export const AQA_CHEMISTRY_PAPER_1_HIGHER_ADAPTER_KEY =
+  "aqa-combined-science-chemistry-paper-1-higher";
+export const AQA_CHEMISTRY_PAPER_2_HIGHER_ADAPTER_KEY =
+  "aqa-combined-science-chemistry-paper-2-higher";
 export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY =
   "aqa-gcse-computer-science-paper-1b-python";
 export const OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY = "ocr-gcse-business-paper-1";
@@ -25,6 +31,7 @@ export const OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY = "ocr-gcse-business-paper-2"
 
 export type SupportedImportYear = 2023 | 2024;
 export type BiologyBenchmarkYear = 2023 | 2024;
+export type ChemistryBenchmarkYear = 2023 | 2024;
 export type ComputerScienceBenchmarkYear = 2024;
 export type OcrBusinessBenchmarkYear = 2023 | 2024;
 
@@ -32,6 +39,8 @@ export type SupportedPaperCandidate =
   | Awaited<ReturnType<typeof discoverAqaPhysicsPaper1Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaBiologyPaper1Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaBiologyPaper2Higher>>[number]
+  | Awaited<ReturnType<typeof discoverAqaChemistryPaper1Higher>>[number]
+  | Awaited<ReturnType<typeof discoverAqaChemistryPaper2Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaGcseComputerSciencePaper1BPython>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper1>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper2>>[number];
@@ -92,6 +101,26 @@ export const AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION = {
   paperDir: (year) => getPaperDirForAdapter(AQA_BIOLOGY_PAPER_2_HIGHER_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<BiologyBenchmarkYear>;
 
+export const AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION = {
+  adapterKey: AQA_CHEMISTRY_PAPER_1_HIGHER_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-chemistry-1/",
+  specCode: "8464",
+  title: (candidate) => `AQA Combined Science Trilogy Chemistry Paper 1 Higher ${candidate.sessionLabel}`,
+  totalMarks: SCIENCE_TOTAL_MARKS,
+  discover: discoverAqaChemistryPaper1Higher,
+  paperDir: (year) => getPaperDirForAdapter(AQA_CHEMISTRY_PAPER_1_HIGHER_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<ChemistryBenchmarkYear>;
+
+export const AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION = {
+  adapterKey: AQA_CHEMISTRY_PAPER_2_HIGHER_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-chemistry-2/",
+  specCode: "8464",
+  title: (candidate) => `AQA Combined Science Trilogy Chemistry Paper 2 Higher ${candidate.sessionLabel}`,
+  totalMarks: SCIENCE_TOTAL_MARKS,
+  discover: discoverAqaChemistryPaper2Higher,
+  paperDir: (year) => getPaperDirForAdapter(AQA_CHEMISTRY_PAPER_2_HIGHER_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<ChemistryBenchmarkYear>;
+
 export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION = {
   adapterKey: AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY,
   familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1",
@@ -130,6 +159,8 @@ export const supportedPaperDefinitions = [
   AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION,
   AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION,
   AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION,
+  AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
+  AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,

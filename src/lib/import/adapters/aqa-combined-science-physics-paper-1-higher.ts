@@ -167,7 +167,7 @@ function isQuestionPaperBoilerplate(line: Line) {
     text.includes("copyright") ||
     text.includes("answer in the spaces provided") ||
     text.includes("there are no questions printed on this page") ||
-    text.includes("physics paper 1h") ||
+    /\b(?:biology|chemistry|physics) paper [12]h\b/.test(text) ||
     text.includes("the maximum mark for this paper") ||
     text.includes("jun23") ||
     text.includes("jun24") ||
