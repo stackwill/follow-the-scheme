@@ -42,6 +42,7 @@ const BENCHMARK_TOTAL_MARKS: Record<BenchmarkYear, number> = {
 };
 const BIOLOGY_TOTAL_MARKS: Record<BiologyBenchmarkYear, number> = {
   2023: 70,
+  2024: 70,
 };
 const COMPUTER_SCIENCE_TOTAL_MARKS: Record<2024, number> = {
   2024: 90,
@@ -53,7 +54,7 @@ const OCR_BUSINESS_TOTAL_MARKS: Record<OcrBusinessBenchmarkYear, number> = {
 const PLACEHOLDER_MARK_SCHEME_PATTERN = /^\[Non-textual mark scheme content/i;
 
 type BenchmarkYear = 2023 | 2024;
-type BiologyBenchmarkYear = 2023;
+type BiologyBenchmarkYear = 2023 | 2024;
 type ComputerScienceBenchmarkYear = 2024;
 type OcrBusinessBenchmarkYear = 2023 | 2024;
 type QuestionRecord = Awaited<ReturnType<typeof buildQuestionRecordData>>[number];

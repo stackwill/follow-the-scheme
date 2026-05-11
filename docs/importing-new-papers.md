@@ -18,6 +18,7 @@ Key files:
 - `src/lib/import/core/pdf-text.ts`: Extracts positioned PDF text items.
 - `src/lib/import/core/pdf-render.ts`: Renders PDF pages for screenshots/crops.
 - `src/lib/import/core/crop.ts`: Crops rendered page images.
+- `scripts/sync-supported-papers.ts`: Production deploy sync entrypoint for every supported paper wired into `importAllSupportedBenchmarkPapers`.
 - `scripts/run-import-smoke.ts`: Full deterministic import verification.
 
 ## Step 1: Identify The Exact Paper
@@ -145,19 +146,24 @@ Register the adapter in `src/lib/import/adapters/index.ts`.
 
 ## Step 5: Wire The Import
 
-In `src/lib/import/core/import-paper.ts`, add a benchmark definition or import function for the new paper.
+In `src/lib/import/core/import-paper.ts`, add a benchmark definition, import function, and production sync wiring for the new paper.
 
 The definition must specify:
 
 - `adapterKey`
-- PMT family page URL
+- family page URL
 - `specCode`
 - paper title builder
 - expected total marks by year
 - discovery function
 - source directory path
+- `sourceProvider` and `subjectIndexUrl` when the source is not the default PMT past-papers index
 
-Use adapter-specific source and crop directories so papers do not overwrite each other.
+If the paper introduces a new year for a typed family, update the year type too, for example `BiologyBenchmarkYear` or `OcrBusinessBenchmarkYear`.
+
+Use adapter-specific source and crop directories so papers do not overwrite each other. Prefer `getPaperDirForAdapter(adapterKey, year)` for new imports.
+
+Add the new definition to `importAllSupportedBenchmarkPapers()` in `src/lib/import/core/import-paper.ts`. This is required for `bun run import:sync` and the GitHub Actions deploy workflow to download/import the paper automatically on the live server after a push.
 
 Expected data locations:
 
@@ -251,6 +257,12 @@ Run targeted checks while iterating:
 bun run test -- tests/pmt-discovery.test.ts
 bunx tsc --noEmit
 bun run lint
+```
+
+Run the deploy-style sync locally before pushing:
+
+```bash
+bun run import:sync
 ```
 
 Run full import smoke before considering the adapter complete:
