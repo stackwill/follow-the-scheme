@@ -383,7 +383,65 @@ ag E: oC = -1 B
       markSchemeItems,
     });
 
-    expect(drafts[0]?.primaryPdfBox.bottom).toBe(140);
+    expect(drafts[0]?.primaryPdfBox.bottom).toBeLessThanOrEqual(80);
+  });
+
+  it("keeps large carried Biology figures intact for the next subquestion", () => {
+    const questionItems: TextItem[] = [
+      item(24, "0", 52.7, 740.0),
+      item(24, "7", 69.4, 740.0),
+      item(24, "Antibiotics are drugs used to treat bacterial infections.", 114.8, 739.2, 340),
+      item(24, "0", 52.7, 650.0),
+      item(24, "7", 69.4, 650.0),
+      item(24, ".", 82.4, 650.0),
+      item(24, "1", 92.6, 650.0),
+      item(24, "Where do mutations happen in a bacterial cell?", 114.8, 649.2, 280),
+      item(24, "[1 mark]", 491.6, 620.0, 60),
+      item(24, "A scientist investigated which antibiotics killed S. aureus bacteria.", 114.8, 560.0, 380),
+      item(24, "This is the method used.", 114.8, 500.0, 180),
+      item(24, "Figure 9 shows the results.", 114.8, 280.0, 180),
+      item(24, "A clear area around a disc shows where the bacteria have been killed.", 114.8, 250.0, 390),
+      item(24, "Figure 9", 270.0, 220.0, 50),
+      item(25, "0", 52.7, 740.0),
+      item(25, "7", 69.4, 740.0),
+      item(25, ".", 82.4, 740.0),
+      item(25, "2", 92.6, 740.0),
+      item(25, "The scientist concluded:", 114.8, 739.2, 180),
+      item(25, "Explain the evidence for this conclusion.", 114.8, 650.0, 280),
+      item(25, "[2 marks]", 491.6, 620.0, 60),
+      item(25, "0", 52.7, 480.0),
+      item(25, "7", 69.4, 480.0),
+      item(25, ".", 82.4, 480.0),
+      item(25, "3", 92.6, 480.0),
+      item(25, "The scientist later discovered that S. aureus is not resistant to antibiotic E.", 114.8, 479.2, 420),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(30, "07.1", 67.3, 675.7, 24),
+      item(30, "DNA", 113.2, 675.7, 40),
+      item(30, "1", 466.2, 675.7, 8),
+      item(30, "07.2", 67.3, 573.7, 24),
+      item(30, "no clear zone around C or E", 113.2, 573.7, 160),
+      item(30, "2", 466.2, 573.7, 8),
+      item(30, "07.3", 67.3, 473.7, 24),
+      item(30, "repeat with lower concentration", 113.2, 473.7, 170),
+      item(30, "2", 466.2, 473.7, 8),
+      item(31, "Total Question 7 5", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+    const question072 = drafts.find((draft) => draft.questionKey === "07.2");
+
+    expect(question072?.extractedQuestionText).toContain("Figure 9 shows the results");
+    expect(question072?.primaryPdfBox.bottom).toBeLessThanOrEqual(80);
+    expect(question072?.supportingPdfBoxes).toEqual([
+      expect.objectContaining({
+        pageNumber: 25,
+      }),
+    ]);
   });
 
   it("keeps adjacent 2024 tick-box questions as separate answerable parts", () => {
