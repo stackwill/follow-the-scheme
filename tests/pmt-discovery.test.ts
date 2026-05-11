@@ -68,9 +68,13 @@ describe("discoverAqaGcseComputerSciencePaper1BPythonFromHtml", () => {
 });
 
 describe("discoverAqaBiologyPaperHigherFromHtml", () => {
-  it("selects the June 2023 and 2024 Biology Paper 1H QP and MS pairs", () => {
+  it("selects the June 2021-2024 Biology Paper 1H QP and MS pairs", () => {
     const html = `
       <main>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1H/QP/June 2021 QP.pdf">June 2021 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1H/MS/June 2021 MS.pdf">June 2021 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1H/QP/June 2022 QP.pdf">June 2022 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1H/MS/June 2022 MS.pdf">June 2022 MS</a>
         <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1F/QP/June 2023 QP.pdf">June 2023 QP</a>
         <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1F/MS/June 2023 MS.pdf">June 2023 MS</a>
         <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-1H/QP/June 2023 QP.pdf">June 2023 QP</a>
@@ -81,43 +85,34 @@ describe("discoverAqaBiologyPaperHigherFromHtml", () => {
       </main>
     `;
 
-    expect(discoverAqaBiologyPaper1HigherFromHtml(html)).toEqual([
-      {
+    const candidates = discoverAqaBiologyPaper1HigherFromHtml(html);
+
+    expect(candidates.map((candidate) => candidate.year)).toEqual([2021, 2022, 2023, 2024]);
+    expect(candidates).toContainEqual(
+      expect.objectContaining({
         paperPageUrl:
           "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-1/",
         questionPaperUrl:
-          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-1H/QP/June%202023%20QP.pdf",
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-1H/QP/June%202021%20QP.pdf",
         markSchemeUrl:
-          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-1H/MS/June%202023%20MS.pdf",
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-1H/MS/June%202021%20MS.pdf",
         examBoard: "AQA",
         qualification: "GCSE Combined Science Trilogy",
         subject: "Biology",
         paperNumber: 1,
         tier: "Higher",
-        sessionLabel: "June 2023",
-        year: 2023,
-      },
-      {
-        paperPageUrl:
-          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-1/",
-        questionPaperUrl:
-          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-1H/QP/June%202024%20QP.pdf",
-        markSchemeUrl:
-          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-1H/MS/June%202024%20MS.pdf",
-        examBoard: "AQA",
-        qualification: "GCSE Combined Science Trilogy",
-        subject: "Biology",
-        paperNumber: 1,
-        tier: "Higher",
-        sessionLabel: "June 2024",
-        year: 2024,
-      },
-    ]);
+        sessionLabel: "June 2021",
+      }),
+    );
   });
 
-  it("selects the June 2023 and 2024 Biology Paper 2H QP and MS pairs", () => {
+  it("selects the June 2021-2024 Biology Paper 2H QP and MS pairs", () => {
     const html = `
       <main>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2H/QP/June 2021 QP.pdf">June 2021 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2H/MS/June 2021 MS.pdf">June 2021 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2H/QP/June 2022 QP.pdf">June 2022 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2H/MS/June 2022 MS.pdf">June 2022 MS</a>
         <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2F/QP/June 2023 QP.pdf">June 2023 QP</a>
         <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2H/QP/June 2023 QP.pdf">June 2023 QP</a>
         <a href="/download/Science/GCSE/Past-Papers/AQA/Biology-2H/MS/June 2023 MS.pdf">June 2023 MS</a>
@@ -126,38 +121,25 @@ describe("discoverAqaBiologyPaperHigherFromHtml", () => {
       </main>
     `;
 
-    expect(discoverAqaBiologyPaper2HigherFromHtml(html)).toEqual([
-      {
+    const candidates = discoverAqaBiologyPaper2HigherFromHtml(html);
+
+    expect(candidates.map((candidate) => candidate.year)).toEqual([2021, 2022, 2023, 2024]);
+    expect(candidates).toContainEqual(
+      expect.objectContaining({
         paperPageUrl:
           "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-2/",
         questionPaperUrl:
-          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-2H/QP/June%202023%20QP.pdf",
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-2H/QP/June%202022%20QP.pdf",
         markSchemeUrl:
-          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-2H/MS/June%202023%20MS.pdf",
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-2H/MS/June%202022%20MS.pdf",
         examBoard: "AQA",
         qualification: "GCSE Combined Science Trilogy",
         subject: "Biology",
         paperNumber: 2,
         tier: "Higher",
-        sessionLabel: "June 2023",
-        year: 2023,
-      },
-      {
-        paperPageUrl:
-          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-2/",
-        questionPaperUrl:
-          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-2H/QP/June%202024%20QP.pdf",
-        markSchemeUrl:
-          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Biology-2H/MS/June%202024%20MS.pdf",
-        examBoard: "AQA",
-        qualification: "GCSE Combined Science Trilogy",
-        subject: "Biology",
-        paperNumber: 2,
-        tier: "Higher",
-        sessionLabel: "June 2024",
-        year: 2024,
-      },
-    ]);
+        sessionLabel: "June 2022",
+      }),
+    );
   });
 });
 

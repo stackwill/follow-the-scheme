@@ -9,6 +9,7 @@ import { ImportFailure, type ImportWarning } from "@/lib/import/core/diagnostics
 import type { TextItem } from "@/lib/import/core/pdf-text";
 
 const QUESTION_LINE_Y_TOLERANCE = 2.5;
+const MARK_SCHEME_LINE_Y_TOLERANCE = 4;
 const MARK_SCHEME_START_PAGE = 7;
 const LEFT_MARGIN_MIN_X = 50;
 const LEFT_MARGIN_MAX_X = 60;
@@ -326,6 +327,10 @@ function isMarkSchemeBoilerplate(line: Line) {
 }
 
 function parseMarkSchemeLabel(line: Line) {
+  if (/\bcont\.?$/i.test(line.rawText)) {
+    return null;
+  }
+
   const labelItem = line.items.find(
     (item) => item.x < 100 && /^\d{1,2}(?:\.\d+)?$/.test(item.text.trim()),
   );
@@ -334,7 +339,13 @@ function parseMarkSchemeLabel(line: Line) {
     return null;
   }
 
-  const [mainKey, subKey] = labelItem.text.trim().split(".");
+  const normalizedLabelText = labelItem.text.trim();
+
+  if (/^\d$/.test(normalizedLabelText)) {
+    return null;
+  }
+
+  const [mainKey, subKey] = normalizedLabelText.split(".");
 
   if (subKey === undefined) {
     return mainKey.padStart(2, "0");
@@ -354,6 +365,16 @@ function parseTotalQuestionLine(line: Line) {
     mainKey: match[1].padStart(2, "0"),
     totalMarks: Number(match[2]),
   };
+}
+
+function parseSectionTotalLine(line: Line) {
+  const match = line.rawText.match(/^Total\s*(\d+)$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  return Number(match[1]);
 }
 
 function buildMarkSchemeText(lines: Line[]) {
@@ -417,25 +438,24 @@ function computeBlockMaxMarks(lines: Line[]) {
   const singleMarks: number[] = [];
 
   for (const line of lines) {
-    for (const item of line.items) {
-      if (item.x < MARK_COLUMN_MIN_X || item.x > MARK_COLUMN_MAX_X) {
-        continue;
-      }
+    const compactText = line.items
+      .filter((item) => item.x >= MARK_COLUMN_MIN_X && item.x <= MARK_COLUMN_MAX_X)
+      .sort((left, right) => left.x - right.x)
+      .map((item) => item.text)
+      .join("")
+      .replace(/\s+/g, "");
+    const rangeMatch = compactText.match(MARK_RANGE_PATTERN);
 
-      const compactText = item.text.replace(/\s+/g, "");
-      const rangeMatch = compactText.match(MARK_RANGE_PATTERN);
+    if (rangeMatch) {
+      rangeMarks.push(Number(rangeMatch[2]));
+      continue;
+    }
 
-      if (rangeMatch) {
-        rangeMarks.push(Number(rangeMatch[2]));
-        continue;
-      }
+    if (/^\d+$/.test(compactText)) {
+      const value = Number(compactText);
 
-      if (/^\d+$/.test(compactText)) {
-        const value = Number(compactText);
-
-        if (value <= 9) {
-          singleMarks.push(value);
-        }
+      if (value <= 9) {
+        singleMarks.push(value);
       }
     }
   }
@@ -445,6 +465,26 @@ function computeBlockMaxMarks(lines: Line[]) {
   }
 
   return singleMarks.reduce((total, value) => total + value, 0);
+}
+
+function isMarkSchemeReferenceLine(lines: Line[], index: number) {
+  const line = lines[index];
+
+  if (!/^\d(?:\.\d+)?\b/.test(line.rawText)) {
+    return false;
+  }
+
+  return lines.some((candidate, candidateIndex) => {
+    if (candidateIndex === index || candidate.pageNumber !== line.pageNumber) {
+      return false;
+    }
+
+    if (candidate.minX >= 100 || Math.abs(candidate.y - line.y) > 25) {
+      return false;
+    }
+
+    return /^cont\.?$/i.test(candidate.rawText) || /^(?:view with|indirect|marking)$/i.test(candidate.rawText);
+  });
 }
 
 function buildMarkSchemeBlocks(lines: Line[]) {
@@ -460,6 +500,23 @@ function buildMarkSchemeBlocks(lines: Line[]) {
     if (total) {
       totalsByMainKey.set(total.mainKey, total.totalMarks);
       totalLineIndices.push(index);
+      return;
+    }
+
+    const sectionTotal = parseSectionTotalLine(line);
+
+    if (sectionTotal !== null) {
+      const previousBlock = blockStarts.at(-1);
+
+      if (previousBlock) {
+        totalsByMainKey.set(previousBlock.label.split(".")[0], sectionTotal);
+        totalLineIndices.push(index);
+      }
+
+      return;
+    }
+
+    if (isMarkSchemeReferenceLine(filteredLines, index)) {
       return;
     }
 
@@ -652,6 +709,7 @@ function looksLikeSetupForNextPart(line: Line) {
     /^A fungus causes athlete(?:'|’)s foot\b/i.test(text) ||
     /^The athlete(?:'|’)s foot fungus\b/i.test(text) ||
     /^Broken bones are sometimes repaired\b/i.test(text) ||
+    /^Female reproductive hormones\b/i.test(text) ||
     /^The student then investigated\b/i.test(text) ||
     /^This is the method used\.?$/i.test(text)
   );
@@ -875,6 +933,7 @@ export function createAqaCombinedSciencePaperAdapter(key: string): PaperImportAd
       const questionLines = groupItemsIntoLines(questionItems);
       const markSchemeLines = groupItemsIntoLines(
         markSchemeItems.filter((item) => item.pageNumber >= MARK_SCHEME_START_PAGE),
+        MARK_SCHEME_LINE_Y_TOLERANCE,
       );
       const { blocksByLabel: markSchemeBlocksByLabel, fatalErrors } = buildMarkSchemeBlocks(markSchemeLines);
 

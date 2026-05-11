@@ -89,7 +89,9 @@ ag E: oC = -1 B
       item(7, "AO2", 512.1, 573.7, 24),
       item(8, "Level 2:", 113.2, 712.0, 46),
       item(8, "clear explanation linked to figure trends", 153.0, 712.0, 200),
-      item(8, "5‒6", 455.7, 705.0, 20),
+      item(8, "5", 455.7, 705.0, 8),
+      item(8, "‒", 461.7, 705.0, 8),
+      item(8, "6", 467.7, 705.0, 8),
       item(8, "01.3", 62.9, 705.0, 24),
       item(8, "AO3", 507.8, 705.0, 24),
       item(8, "Total Question 1 8", 49.5, 75.7, 96),
@@ -177,6 +179,140 @@ ag E: oC = -1 B
         markSchemeItems,
       }),
     ).toThrow("completeness validation failed");
+  });
+
+  it("accepts older AQA mark schemes with section total lines", () => {
+    const questionItems: TextItem[] = [
+      item(3, "0", 52.7, 707.9),
+      item(3, "1", 69.4, 707.9),
+      item(3, ".", 82.4, 707.9),
+      item(3, "1", 92.6, 707.9),
+      item(3, "Write the word equation for photosynthesis.", 114.8, 707.0, 280),
+      item(3, "0", 52.7, 607.9),
+      item(3, "1", 69.4, 607.9),
+      item(3, ".", 82.4, 607.9),
+      item(3, "2", 92.6, 607.9),
+      item(3, "Name the control variable.", 114.8, 607.0, 180),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(7, "01.1", 67.3, 675.7, 24),
+      item(7, "carbon dioxide + water produces glucose + oxygen", 113.2, 675.7, 260),
+      item(7, "1", 466.2, 675.7, 8),
+      item(7, "01.2", 67.3, 573.7, 24),
+      item(7, "distance from lamp", 113.2, 573.7, 110),
+      item(7, "1", 466.2, 573.7, 8),
+      item(7, "Total", 430.0, 75.7, 34),
+      item(7, "2", 466.2, 75.7, 8),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+
+    expect(drafts.map((draft) => draft.maxMarks)).toEqual([1, 1]);
+    expect(drafts[0]?.markSchemeNotes).toContain("validated against Total Question 1 = 2");
+  });
+
+  it("keeps same-row mark scheme answers with slight y drift attached to their label", () => {
+    const questionItems: TextItem[] = [
+      item(3, "0", 52.7, 707.9),
+      item(3, "5", 69.4, 707.9),
+      item(3, ".", 82.4, 707.9),
+      item(3, "1", 92.6, 707.9),
+      item(3, "Which structure carries blood to the lungs?", 114.8, 707.0, 300),
+      item(3, "0", 52.7, 607.9),
+      item(3, "5", 69.4, 607.9),
+      item(3, ".", 82.4, 607.9),
+      item(3, "2", 92.6, 607.9),
+      item(3, "Which chamber receives blood from the body?", 114.8, 607.0, 320),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(16, "05.1", 67.3, 694.9, 24),
+      item(16, "D", 113.2, 698.2, 8),
+      item(16, "1", 466.2, 694.9, 8),
+      item(16, "05.2", 67.3, 628.7, 24),
+      item(16, "C", 113.2, 632.0, 8),
+      item(16, "1", 466.2, 628.7, 8),
+      item(18, "Total", 430.0, 75.7, 34),
+      item(18, "2", 466.2, 75.7, 8),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+
+    expect(drafts.find((draft) => draft.questionKey === "05.1")?.markSchemeText).toBe("D");
+    expect(drafts.find((draft) => draft.questionKey === "05.2")?.markSchemeText).toBe("C");
+  });
+
+  it("ignores mark scheme continuation markers as duplicate question labels", () => {
+    const questionItems: TextItem[] = [
+      item(9, "0", 52.7, 707.9),
+      item(9, "2", 69.4, 707.9),
+      item(9, "Describe causes of water pollution.", 114.8, 707.0, 260),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(9, "02", 67.3, 664.7, 16),
+      item(9, "Level 3: relevant points are logically linked", 110.2, 664.7, 260),
+      item(9, "5", 459.8, 664.7, 8),
+      item(9, "–", 465.8, 664.7, 8),
+      item(9, "6", 471.8, 664.7, 8),
+      item(10, "2", 70.5, 733.1, 8),
+      item(10, "cont.", 60.4, 720.0, 26),
+      item(10, "Indicative content", 110.2, 733.4, 100),
+      item(10, "Total Question 2 6", 48.0, 109.3, 100),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0]?.maxMarks).toBe(6);
+  });
+
+  it("ignores unpadded indirect marking references as duplicate labels", () => {
+    const questionItems: TextItem[] = [
+      item(14, "0", 52.7, 707.9),
+      item(14, "5", 69.4, 707.9),
+      item(14, ".", 82.4, 707.9),
+      item(14, "2", 92.6, 707.9),
+      item(14, "Name hormones A and B.", 114.8, 707.0, 180),
+      item(15, "0", 52.7, 707.9),
+      item(15, "5", 69.4, 707.9),
+      item(15, ".", 82.4, 707.9),
+      item(15, "3", 92.6, 707.9),
+      item(15, "Explain how blood glucose concentration returns to normal.", 114.8, 707.0, 360),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(16, "05.2", 67.3, 514.8, 24),
+      item(16, "A = glucagon", 113.2, 514.8, 80),
+      item(16, "1", 466.2, 514.8, 8),
+      item(17, "05.3", 63.0, 690.6, 24),
+      item(17, "insulin is secreted", 110.3, 690.6, 130),
+      item(17, "1", 463.3, 690.6, 8),
+      item(17, "view with", 49.2, 627.3, 50),
+      item(17, "5.2", 66.0, 614.7, 16),
+      item(17, "(glucose is) converted to glycogen", 110.3, 614.7, 220),
+      item(17, "1", 463.3, 614.7, 8),
+      item(19, "Total Question 5 3", 48.0, 109.3, 100),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+
+    expect(drafts.find((draft) => draft.questionKey === "05.2")?.maxMarks).toBe(1);
+    expect(drafts.find((draft) => draft.questionKey === "05.3")?.maxMarks).toBe(2);
+    expect(drafts.find((draft) => draft.questionKey === "05.2")?.markSchemeText).toContain("A = glucagon");
   });
 
   it("imports an answerable main question when the mark scheme has a whole-question block", () => {
@@ -666,5 +802,42 @@ ag E: oC = -1 B
     expect(question062?.extractedQuestionText).toContain("A student used a colorimeter");
     expect(question062?.extractedQuestionText).toContain("Figure 7 shows");
     expect(question062?.pageStart).toBe(18);
+  });
+
+  it("moves reproductive hormone setup to the following Biology subquestion", () => {
+    const questionItems: TextItem[] = [
+      item(15, "0", 52.7, 760.0),
+      item(15, "5", 69.4, 760.0),
+      item(15, ".", 82.4, 760.0),
+      item(15, "3", 92.6, 760.0),
+      item(15, "Explain how blood glucose returns to normal after a meal.", 114.8, 759.2, 360),
+      item(15, "[6 marks]", 491.6, 730.0, 60),
+      item(16, "Female reproductive hormones are used to treat infertility in women.", 114.8, 760.0, 380),
+      item(16, "0", 52.7, 680.0),
+      item(16, "5", 69.4, 680.0),
+      item(16, ".", 82.4, 680.0),
+      item(16, "4", 92.6, 680.0),
+      item(16, "Explain how injecting FSH and then LH will help a woman become pregnant.", 114.8, 679.2, 420),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(17, "05.3", 67.3, 675.7, 24),
+      item(17, "insulin and glucagon explanation", 113.2, 675.7, 180),
+      item(17, "6", 466.2, 675.7, 8),
+      item(17, "05.4", 67.3, 573.7, 24),
+      item(17, "FSH matures eggs and LH causes ovulation", 113.2, 573.7, 220),
+      item(17, "3", 466.2, 573.7, 8),
+      item(19, "Total Question 5 9", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+    const question053 = drafts.find((draft) => draft.questionKey === "05.3");
+    const question054 = drafts.find((draft) => draft.questionKey === "05.4");
+
+    expect(question053?.supportingPdfBoxes).toEqual([]);
+    expect(question054?.extractedQuestionText).toContain("Female reproductive hormones");
   });
 });

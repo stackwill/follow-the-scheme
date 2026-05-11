@@ -91,7 +91,11 @@ Look for:
 
 ## Step 4: Write The Adapter
 
-Create a new file in `src/lib/import/adapters/`.
+Before creating a new adapter, check whether the target paper uses a PDF layout already handled by an existing adapter. If the exam board, spec family, tier, question numbering, mark-scheme table format, and crop behavior match an existing adapter, reuse that adapter and add the new year through discovery, registry totals, smoke expectations, and visual crop checks.
+
+For example, new AQA Combined Science Trilogy Biology Higher years should use the existing `createAqaCombinedSciencePaperAdapter(...)` registrations for Biology Paper 1H and Paper 2H. Do not fork the adapter just because the year is new. Only add adapter code when inspection shows a real layout or mark-scheme contract difference.
+
+If a new adapter is genuinely needed, create a new file in `src/lib/import/adapters/`.
 
 Adapter responsibilities, in order:
 
@@ -149,7 +153,9 @@ Register the adapter in `src/lib/import/adapters/index.ts`.
 
 ## Step 5: Wire The Import
 
-In `src/lib/import/core/import-paper.ts`, add a benchmark definition, import function, and production sync wiring for the new paper.
+For an existing paper family with a new year, update the year list in `src/lib/import/pmt/discovery.ts`, the year type and `totalMarks` record in `src/lib/import/registry.ts`, and the relevant expectations in `scripts/run-import-smoke.ts`. The existing benchmark definition and import function should stay in place.
+
+For a genuinely new paper family, add a benchmark definition, import function, and production sync wiring for the new paper.
 
 The definition must specify:
 
