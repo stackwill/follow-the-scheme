@@ -16,6 +16,8 @@ import { downloadPdf } from "@/lib/import/core/storage";
 import {
   AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION,
   AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION,
+  AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
+  AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
   AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION,
   DEFAULT_SOURCE_PROVIDER,
@@ -23,6 +25,7 @@ import {
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
   type BiologyBenchmarkYear,
+  type ChemistryBenchmarkYear,
   type ComputerScienceBenchmarkYear,
   type OcrBusinessBenchmarkYear,
   type SupportedImportYear,
@@ -622,6 +625,18 @@ export async function importAqaBiologyPaper2HigherBenchmark(
   year: BiologyBenchmarkYear,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION, year);
+}
+
+export async function importAqaChemistryPaper1HigherBenchmark(
+  year: ChemistryBenchmarkYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION, year);
+}
+
+export async function importAqaChemistryPaper2HigherBenchmark(
+  year: ChemistryBenchmarkYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION, year);
 }
 
 export async function importAqaGcseComputerSciencePaper1BPythonBenchmark(

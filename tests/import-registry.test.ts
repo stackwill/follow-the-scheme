@@ -31,6 +31,14 @@ describe("supported paper registry", () => {
         years: [2023, 2024],
       },
       {
+        adapterKey: "aqa-combined-science-chemistry-paper-1-higher",
+        years: [2023, 2024],
+      },
+      {
+        adapterKey: "aqa-combined-science-chemistry-paper-2-higher",
+        years: [2023, 2024],
+      },
+      {
         adapterKey: "aqa-gcse-computer-science-paper-1b-python",
         years: [2024],
       },

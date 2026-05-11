@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   discoverAqaBiologyPaper1HigherFromHtml,
   discoverAqaBiologyPaper2HigherFromHtml,
+  discoverAqaChemistryPaper1HigherFromHtml,
+  discoverAqaChemistryPaper2HigherFromHtml,
   discoverAqaGcseComputerSciencePaper1BPythonFromHtml,
   discoverAqaPhysicsPaper1HigherFromHtml,
   discoverOcrGcseBusinessPaper1FromHtml,
@@ -150,6 +152,100 @@ describe("discoverAqaBiologyPaperHigherFromHtml", () => {
         examBoard: "AQA",
         qualification: "GCSE Combined Science Trilogy",
         subject: "Biology",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+});
+
+describe("discoverAqaChemistryPaperHigherFromHtml", () => {
+  it("selects the June 2023 and 2024 Chemistry Paper 1H QP and MS pairs", () => {
+    const html = `
+      <main>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-1F/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-1F/MS/June 2023 MS.pdf">June 2023 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-1H/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-1H/MS/June 2023 MS.pdf">June 2023 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-1H/QP/June 2024 QP.pdf">June 2024 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-1H/MS/June 2024 MS.pdf">June 2024 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-2H/QP/June 2023 QP.pdf">June 2023 QP</a>
+      </main>
+    `;
+
+    expect(discoverAqaChemistryPaper1HigherFromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-chemistry-1/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Chemistry-1H/QP/June%202023%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Chemistry-1H/MS/June%202023%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Chemistry",
+        paperNumber: 1,
+        tier: "Higher",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-chemistry-1/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Chemistry-1H/QP/June%202024%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Chemistry-1H/MS/June%202024%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Chemistry",
+        paperNumber: 1,
+        tier: "Higher",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+
+  it("selects the June 2023 and 2024 Chemistry Paper 2H QP and MS pairs", () => {
+    const html = `
+      <main>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-2F/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-2H/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-2H/MS/June 2023 MS.pdf">June 2023 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-2H/QP/June 2024 QP.pdf">June 2024 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Chemistry-2H/MS/June 2024 MS.pdf">June 2024 MS</a>
+      </main>
+    `;
+
+    expect(discoverAqaChemistryPaper2HigherFromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-chemistry-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Chemistry-2H/QP/June%202023%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Chemistry-2H/MS/June%202023%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Chemistry",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-chemistry-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Chemistry-2H/QP/June%202024%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Chemistry-2H/MS/June%202024%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Chemistry",
         paperNumber: 2,
         tier: "Higher",
         sessionLabel: "June 2024",

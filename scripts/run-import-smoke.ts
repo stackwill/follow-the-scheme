@@ -9,6 +9,8 @@ import { env } from "@/lib/env";
 import {
   importAqaBiologyPaper1HigherBenchmark,
   importAqaBiologyPaper2HigherBenchmark,
+  importAqaChemistryPaper1HigherBenchmark,
+  importAqaChemistryPaper2HigherBenchmark,
   importAqaGcseComputerSciencePaper1BPythonBenchmark,
   importAqaPhysicsPaper1HigherBenchmark,
   importOcrGcseBusinessPaper1Benchmark,
@@ -47,6 +49,28 @@ const BIOLOGY_EXPECTATIONS = {
     },
     2024: {
       questionCount: 34,
+      totalMarks: 70,
+    },
+  },
+} as const;
+const CHEMISTRY_EXPECTATIONS = {
+  paper1: {
+    2023: {
+      questionCount: 32,
+      totalMarks: 70,
+    },
+    2024: {
+      questionCount: 32,
+      totalMarks: 70,
+    },
+  },
+  paper2: {
+    2023: {
+      questionCount: 35,
+      totalMarks: 70,
+    },
+    2024: {
+      questionCount: 33,
       totalMarks: 70,
     },
   },
@@ -389,6 +413,74 @@ for (const year of [2023, 2024] as const) {
   }
 }
 
+const chemistryImports = [
+  {
+    label: "Chemistry Paper 1H",
+    expectation: CHEMISTRY_EXPECTATIONS.paper1,
+    importPaper: importAqaChemistryPaper1HigherBenchmark,
+  },
+  {
+    label: "Chemistry Paper 2H",
+    expectation: CHEMISTRY_EXPECTATIONS.paper2,
+    importPaper: importAqaChemistryPaper2HigherBenchmark,
+  },
+] as const;
+
+const chemistryPapers = [];
+
+for (const year of [2023, 2024] as const) {
+  for (const chemistryImport of chemistryImports) {
+    const expectation = chemistryImport.expectation[year];
+    const initialResult = await chemistryImport.importPaper(year);
+    const initialPaper = await getPaperSnapshot(initialResult.paperId);
+    const initialQuestionIds = new Map(
+      initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
+    );
+
+    assert(
+      initialPaper.questions.length === expectation.questionCount,
+      `${chemistryImport.label} ${year} imported ${initialPaper.questions.length} questions, expected ${expectation.questionCount}`,
+    );
+    assert(
+      initialPaper.totalMarks === expectation.totalMarks,
+      `${chemistryImport.label} ${year} imported ${initialPaper.totalMarks} total marks, expected ${expectation.totalMarks}`,
+    );
+
+    for (const question of initialPaper.questions) {
+      await access(assetFilePath(question.primaryCropPath));
+      assert(
+        question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
+        `${chemistryImport.label} ${year} imported invalid mark scheme text for ${question.questionKey}`,
+      );
+    }
+
+    const repeatResult = await chemistryImport.importPaper(year);
+    const repeatedPaper = await getPaperSnapshot(repeatResult.paperId);
+
+    assert(
+      initialResult.paperId === repeatResult.paperId,
+      `${chemistryImport.label} ${year} re-import changed paper id from ${initialResult.paperId} to ${repeatResult.paperId}`,
+    );
+    assert(
+      initialResult.questionCount === repeatResult.questionCount,
+      `${chemistryImport.label} ${year} re-import changed question count from ${initialResult.questionCount} to ${repeatResult.questionCount}`,
+    );
+    assert(
+      initialResult.totalMarks === repeatResult.totalMarks,
+      `${chemistryImport.label} ${year} re-import changed total marks from ${initialResult.totalMarks} to ${repeatResult.totalMarks}`,
+    );
+
+    for (const question of repeatedPaper.questions) {
+      assert(
+        initialQuestionIds.get(question.questionKey) === question.id,
+        `${chemistryImport.label} ${year}/${question.questionKey} changed question id across repeat import`,
+      );
+    }
+
+    chemistryPapers.push(repeatedPaper);
+  }
+}
+
 const ocrBusinessImports = [
   {
     label: "OCR Business Paper 1",
@@ -467,6 +559,12 @@ console.log(
 );
 
 for (const paper of biologyPapers) {
+  console.log(
+    `Imported ${paper.title}: ${paper.questions.length} questions, ${paper.totalMarks} marks, paper ${paper.id}`,
+  );
+}
+
+for (const paper of chemistryPapers) {
   console.log(
     `Imported ${paper.title}: ${paper.questions.length} questions, ${paper.totalMarks} marks, paper ${paper.id}`,
   );
