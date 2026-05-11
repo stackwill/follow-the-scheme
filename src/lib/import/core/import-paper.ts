@@ -28,6 +28,7 @@ import {
   type ChemistryBenchmarkYear,
   type ComputerScienceBenchmarkYear,
   type OcrBusinessBenchmarkYear,
+  type PhysicsBenchmarkYear,
   type SupportedImportYear,
   type SupportedPaperCandidate,
   type SupportedPaperDefinition,
@@ -611,7 +612,7 @@ export async function importSupportedPaper<Year extends BenchmarkYear>(
   }
 }
 
-export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear): Promise<ImportPaperResult> {
+export async function importAqaPhysicsPaper1HigherBenchmark(year: PhysicsBenchmarkYear): Promise<ImportPaperResult> {
   return importSupportedPaper(AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION, year);
 }
 

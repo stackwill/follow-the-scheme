@@ -30,6 +30,7 @@ export const OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY = "ocr-gcse-business-paper-1"
 export const OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY = "ocr-gcse-business-paper-2";
 
 export type SupportedImportYear = 2021 | 2022 | 2023 | 2024;
+export type PhysicsBenchmarkYear = 2023 | 2024;
 export type BiologyBenchmarkYear = 2021 | 2022 | 2023 | 2024;
 export type ChemistryBenchmarkYear = 2023 | 2024;
 export type ComputerScienceBenchmarkYear = 2024;
@@ -64,7 +65,7 @@ const BIOLOGY_TOTAL_MARKS: Record<BiologyBenchmarkYear, number> = {
   2024: 70,
 };
 
-const SCIENCE_TOTAL_MARKS: Record<2023 | 2024, number> = {
+const SCIENCE_TOTAL_MARKS: Record<PhysicsBenchmarkYear, number> = {
   2023: 70,
   2024: 70,
 };
@@ -86,7 +87,7 @@ export const AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION = {
   totalMarks: SCIENCE_TOTAL_MARKS,
   discover: discoverAqaPhysicsPaper1Higher,
   paperDir: getPaperDir,
-} satisfies SupportedPaperDefinition;
+} satisfies SupportedPaperDefinition<PhysicsBenchmarkYear>;
 
 export const AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION = {
   adapterKey: AQA_BIOLOGY_PAPER_1_HIGHER_ADAPTER_KEY,
