@@ -4,7 +4,7 @@ import {
   buildAttemptExport,
   findPaperForAttemptImport,
   type AttemptExportInput,
-} from "@/lib/data/attempt-transfer";
+} from "@/lib/attempts/attempt-transfer";
 
 describe("data release attempt preservation", () => {
   it("exports attempts keyed by stable paper and question identity", () => {

@@ -599,7 +599,7 @@ git commit -m "Store import asset paths relative to data root"
 ### Task 3: Preserve User Attempts During Data Releases
 
 **Files:**
-- Create: `src/lib/data/attempt-transfer.ts`
+- Create: `src/lib/attempts/attempt-transfer.ts`
 - Create: `scripts/export-attempts.ts`
 - Create: `scripts/import-attempts.ts`
 - Create: `scripts/normalize-data-paths.ts`
@@ -618,7 +618,7 @@ import {
   buildAttemptExport,
   findPaperForAttemptImport,
   type AttemptExportInput,
-} from "@/lib/data/attempt-transfer";
+} from "@/lib/attempts/attempt-transfer";
 
 describe("data release attempt preservation", () => {
   it("exports attempts keyed by stable paper and question identity", () => {
@@ -711,7 +711,7 @@ describe("data release attempt preservation", () => {
 
 - [ ] **Step 2: Implement attempt transfer helpers**
 
-Create `src/lib/data/attempt-transfer.ts`:
+Create `src/lib/attempts/attempt-transfer.ts`:
 
 ```ts
 export type PaperAttemptIdentity = {
@@ -810,7 +810,7 @@ Create `scripts/export-attempts.ts`:
 ```ts
 import { writeFile } from "node:fs/promises";
 
-import { buildAttemptExport } from "@/lib/data/attempt-transfer";
+import { buildAttemptExport } from "@/lib/attempts/attempt-transfer";
 import { db } from "@/lib/db";
 
 const outputPath = process.argv[2];
@@ -858,7 +858,7 @@ Create `scripts/import-attempts.ts`:
 ```ts
 import { readFile } from "node:fs/promises";
 
-import { findPaperForAttemptImport, type AttemptExport } from "@/lib/data/attempt-transfer";
+import { findPaperForAttemptImport, type AttemptExport } from "@/lib/attempts/attempt-transfer";
 import { db } from "@/lib/db";
 
 const inputPath = process.argv[2];
@@ -1002,7 +1002,7 @@ Expected:
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/lib/data/attempt-transfer.ts scripts/export-attempts.ts scripts/import-attempts.ts scripts/normalize-data-paths.ts tests/data-release-attempts.test.ts
+git add src/lib/attempts/attempt-transfer.ts scripts/export-attempts.ts scripts/import-attempts.ts scripts/normalize-data-paths.ts tests/data-release-attempts.test.ts
 git commit -m "Preserve attempts across data releases"
 ```
 
