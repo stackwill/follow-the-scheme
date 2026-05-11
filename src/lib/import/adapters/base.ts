@@ -27,7 +27,7 @@ export type QuestionDraft = {
 };
 
 export type DetectQuestionDraftsInput = {
-  year: 2023 | 2024;
+  year: number;
   questionItems: TextItem[];
   markSchemeItems: TextItem[];
 };

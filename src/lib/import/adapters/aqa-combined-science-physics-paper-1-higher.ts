@@ -893,7 +893,7 @@ function buildQuestionDrafts(
   return drafts;
 }
 
-function normalizeBenchmarkDraftShape(year: 2023 | 2024, drafts: QuestionDraft[]) {
+function normalizeBenchmarkDraftShape(year: number, drafts: QuestionDraft[]) {
   if (year !== 2024) {
     return drafts;
   }
