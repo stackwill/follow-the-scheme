@@ -129,16 +129,6 @@ jobs:
             set +a
 
             mkdir -p data
-            IMPORTED_PAPER_COUNT=0
-            BOOTSTRAP_IMPORTS=1
-            if [ ! -f data/app.db ]; then
-              BOOTSTRAP_IMPORTS=1
-            else
-              IMPORTED_PAPER_COUNT="$(docker compose run --rm app bun -e 'import { PrismaClient } from "@prisma/client"; const db = new PrismaClient(); const count = await db.paper.count(); console.log(count); await db.$disconnect();' | tail -n 1)"
-              if [ "$IMPORTED_PAPER_COUNT" -ge 9 ]; then
-                BOOTSTRAP_IMPORTS=0
-              fi
-            fi
 
             echo "Disk usage before Docker cleanup:"
             df -h /
@@ -152,9 +142,6 @@ jobs:
 
             docker compose pull
             docker compose run --rm app bunx prisma migrate deploy
-            if [ "$BOOTSTRAP_IMPORTS" = "1" ]; then
-              docker compose run --rm app bun run fixtures:fetch
-              docker compose run --rm app bun run import:smoke
-            fi
+            docker compose run --rm app bun run import:sync
             docker compose up -d --force-recreate --remove-orphans
             docker image prune -f
