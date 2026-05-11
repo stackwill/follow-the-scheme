@@ -535,6 +535,12 @@ const OCR_GCSE_BUSINESS_PAPER_2_DEFINITION: ImportBenchmarkDefinition<OcrBusines
   paperDir: (year) => getPaperDirForAdapter(OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY, year),
 };
 
+function yearsForDefinition<Year extends BenchmarkYear>(
+  definition: ImportBenchmarkDefinition<Year>,
+) {
+  return Object.keys(definition.totalMarks).map(Number) as Year[];
+}
+
 async function importBenchmarkPaper<Year extends BenchmarkYear>(
   definition: ImportBenchmarkDefinition<Year>,
   year: Year,
@@ -708,6 +714,36 @@ async function importBenchmarkPaper<Year extends BenchmarkYear>(
       cause: error,
     });
   }
+}
+
+export async function importAllSupportedBenchmarkPapers(): Promise<ImportPaperResult[]> {
+  const results: ImportPaperResult[] = [];
+
+  for (const year of yearsForDefinition(AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION)) {
+    results.push(await importBenchmarkPaper(AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION, year));
+  }
+
+  for (const year of yearsForDefinition(AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION)) {
+    results.push(await importBenchmarkPaper(AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION, year));
+  }
+
+  for (const year of yearsForDefinition(AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION)) {
+    results.push(await importBenchmarkPaper(AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION, year));
+  }
+
+  for (const year of yearsForDefinition(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION)) {
+    results.push(await importBenchmarkPaper(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION, year));
+  }
+
+  for (const year of yearsForDefinition(OCR_GCSE_BUSINESS_PAPER_1_DEFINITION)) {
+    results.push(await importBenchmarkPaper(OCR_GCSE_BUSINESS_PAPER_1_DEFINITION, year));
+  }
+
+  for (const year of yearsForDefinition(OCR_GCSE_BUSINESS_PAPER_2_DEFINITION)) {
+    results.push(await importBenchmarkPaper(OCR_GCSE_BUSINESS_PAPER_2_DEFINITION, year));
+  }
+
+  return results;
 }
 
 export async function importAqaPhysicsPaper1HigherBenchmark(year: BenchmarkYear): Promise<ImportPaperResult> {
