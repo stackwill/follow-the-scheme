@@ -33,6 +33,14 @@ const COMPUTER_SCIENCE_EXPECTATION = {
 } as const;
 const BIOLOGY_EXPECTATIONS = {
   paper1: {
+    2021: {
+      questionCount: 32,
+      totalMarks: 70,
+    },
+    2022: {
+      questionCount: 36,
+      totalMarks: 70,
+    },
     2023: {
       questionCount: 34,
       totalMarks: 70,
@@ -43,6 +51,14 @@ const BIOLOGY_EXPECTATIONS = {
     },
   },
   paper2: {
+    2021: {
+      questionCount: 32,
+      totalMarks: 70,
+    },
+    2022: {
+      questionCount: 23,
+      totalMarks: 70,
+    },
     2023: {
       questionCount: 31,
       totalMarks: 70,
@@ -360,7 +376,7 @@ const biologyImports = [
 
 const biologyPapers = [];
 
-for (const year of [2023, 2024] as const) {
+for (const year of [2021, 2022, 2023, 2024] as const) {
   for (const biologyImport of biologyImports) {
     const expectation = biologyImport.expectation[year];
     const initialResult = await biologyImport.importPaper(year);

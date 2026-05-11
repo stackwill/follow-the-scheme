@@ -29,8 +29,8 @@ export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY =
 export const OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY = "ocr-gcse-business-paper-1";
 export const OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY = "ocr-gcse-business-paper-2";
 
-export type SupportedImportYear = 2023 | 2024;
-export type BiologyBenchmarkYear = 2023 | 2024;
+export type SupportedImportYear = 2021 | 2022 | 2023 | 2024;
+export type BiologyBenchmarkYear = 2021 | 2022 | 2023 | 2024;
 export type ChemistryBenchmarkYear = 2023 | 2024;
 export type ComputerScienceBenchmarkYear = 2024;
 export type OcrBusinessBenchmarkYear = 2023 | 2024;
@@ -57,7 +57,14 @@ export type SupportedPaperDefinition<Year extends SupportedImportYear = Supporte
   paperDir: (year: Year) => string;
 };
 
-const SCIENCE_TOTAL_MARKS: Record<SupportedImportYear, number> = {
+const BIOLOGY_TOTAL_MARKS: Record<BiologyBenchmarkYear, number> = {
+  2021: 70,
+  2022: 70,
+  2023: 70,
+  2024: 70,
+};
+
+const SCIENCE_TOTAL_MARKS: Record<2023 | 2024, number> = {
   2023: 70,
   2024: 70,
 };
@@ -86,7 +93,7 @@ export const AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION = {
   familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-1/",
   specCode: "8464",
   title: (candidate) => `AQA Combined Science Trilogy Biology Paper 1 Higher ${candidate.sessionLabel}`,
-  totalMarks: SCIENCE_TOTAL_MARKS,
+  totalMarks: BIOLOGY_TOTAL_MARKS,
   discover: discoverAqaBiologyPaper1Higher,
   paperDir: (year) => getPaperDirForAdapter(AQA_BIOLOGY_PAPER_1_HIGHER_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<BiologyBenchmarkYear>;
@@ -96,7 +103,7 @@ export const AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION = {
   familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-2/",
   specCode: "8464",
   title: (candidate) => `AQA Combined Science Trilogy Biology Paper 2 Higher ${candidate.sessionLabel}`,
-  totalMarks: SCIENCE_TOTAL_MARKS,
+  totalMarks: BIOLOGY_TOTAL_MARKS,
   discover: discoverAqaBiologyPaper2Higher,
   paperDir: (year) => getPaperDirForAdapter(AQA_BIOLOGY_PAPER_2_HIGHER_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<BiologyBenchmarkYear>;
