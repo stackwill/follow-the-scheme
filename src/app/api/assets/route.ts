@@ -3,12 +3,6 @@ import path from "node:path";
 
 import type { NextRequest } from "next/server";
 
-function isPathInside(childPath: string, parentPath: string) {
-  const relativePath = path.relative(parentPath, childPath);
-
-  return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
-}
-
 export async function GET(request: NextRequest) {
   const assetPath = request.nextUrl.searchParams.get("path");
 
@@ -17,11 +11,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const { cropRootPathForAsset } = await import("@/lib/assets/paths");
     const { cropsRoot } = await import("@/lib/paths");
-    const resolvedPath = path.resolve(assetPath);
+    const resolvedPath = cropRootPathForAsset(assetPath);
     const [realCropsRoot, realAssetPath] = await Promise.all([realpath(cropsRoot), realpath(resolvedPath)]);
+    const relativePath = path.relative(realCropsRoot, realAssetPath);
 
-    if (!isPathInside(realAssetPath, realCropsRoot)) {
+    if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
       return new Response("Asset path is outside the crop asset directory", { status: 403 });
     }
 
@@ -46,6 +42,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       return new Response("Asset not found", { status: 404 });
+    }
+
+    if (error instanceof Error && /Invalid data asset path|outside the crop asset directory/.test(error.message)) {
+      return new Response("Asset path is outside the crop asset directory", { status: 403 });
     }
 
     throw error;

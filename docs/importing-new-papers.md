@@ -18,7 +18,10 @@ Key files:
 - `src/lib/import/core/pdf-text.ts`: Extracts positioned PDF text items.
 - `src/lib/import/core/pdf-render.ts`: Renders PDF pages for screenshots/crops.
 - `src/lib/import/core/crop.ts`: Crops rendered page images.
-- `scripts/sync-supported-papers.ts`: Production deploy sync entrypoint for every supported paper wired into `importAllSupportedBenchmarkPapers`.
+- `src/lib/import/registry.ts`: Lists every supported paper family, expected years, total marks, discovery function, and adapter key.
+- `scripts/sync-supported-papers.ts`: Local sync entrypoint for every supported paper wired into the registry.
+- `scripts/create-data-release.ts`: Packages imported local paper data for production.
+- `scripts/deploy-data-release.ts`: Uploads a packaged data release to the self-hosted server.
 - `scripts/run-import-smoke.ts`: Full deterministic import verification.
 
 ## Step 1: Identify The Exact Paper
@@ -163,7 +166,19 @@ If the paper introduces a new year for a typed family, update the year type too,
 
 Use adapter-specific source and crop directories so papers do not overwrite each other. Prefer `getPaperDirForAdapter(adapterKey, year)` for new imports.
 
-Add the new definition to `importAllSupportedBenchmarkPapers()` in `src/lib/import/core/import-paper.ts`. This is required for `bun run import:sync` and the GitHub Actions deploy workflow to download/import the paper automatically on the live server after a push.
+Add the new definition to `supportedPaperDefinitions` in `src/lib/import/registry.ts`. This is required for `bun run import:sync` to import the paper locally.
+
+Production code deploys do not download papers. After adding adapter code and importing locally, ship the imported data with a data release:
+
+```bash
+bun run import:sync
+bun run import:smoke
+bun run data:normalize-paths
+bun run data:release
+DEPLOY_HOST=91.151.248.184 DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
+```
+
+For an already-supported adapter/year where no code changes are needed, a data release is enough. No Git push is needed just to move newly imported local data to production.
 
 Expected data locations:
 
@@ -270,6 +285,8 @@ Run full import smoke before considering the adapter complete:
 ```bash
 bun run import:smoke
 ```
+
+When the import is complete, create and deploy a data release as documented in `docs/data-releases.md`. Do not rely on GitHub Actions to run the importer on the production server.
 
 If `.next` becomes stale after builds/imports during development, restart dev cleanly:
 

@@ -15,7 +15,10 @@
     "fixtures:fetch": "bun run scripts/fetch-benchmark-fixtures.ts",
     "release:check": "bun run scripts/release-check.ts",
     "import:sync": "bun run scripts/sync-supported-papers.ts",
-    "import:smoke": "bun run scripts/run-import-smoke.ts"
+    "import:smoke": "bun run scripts/run-import-smoke.ts",
+    "data:normalize-paths": "bun run scripts/normalize-data-paths.ts",
+    "data:release": "bun run scripts/create-data-release.ts",
+    "data:deploy": "bun run scripts/deploy-data-release.ts"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.70",
