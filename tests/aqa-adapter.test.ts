@@ -840,4 +840,118 @@ ag E: oC = -1 B
     expect(question053?.supportingPdfBoxes).toEqual([]);
     expect(question054?.extractedQuestionText).toContain("Female reproductive hormones");
   });
+
+  it("moves Chemistry equation setup to the following tick-box subquestion", () => {
+    const questionItems: TextItem[] = [
+      item(5, "0", 52.7, 760.0),
+      item(5, "1", 69.4, 760.0),
+      item(5, ".", 82.4, 760.0),
+      item(5, "4", 92.6, 760.0),
+      item(5, "Carbon dioxide dissolves in water to form an acidic solution.", 114.8, 759.2, 360),
+      item(5, "Tick (✓) one box.", 114.8, 650.0, 120),
+      item(5, "pH of the solution decreases", 114.8, 590.0, 180),
+      item(5, "pH of the solution does not change", 114.8, 540.0, 220),
+      item(5, "pH of the solution increases", 114.8, 490.0, 180),
+      item(5, "Calcium carbonate reacts with hydrochloric acid to produce carbon dioxide.", 114.8, 330.0, 390),
+      item(5, "The equation for the reaction is:", 114.8, 300.0, 190),
+      item(5, "CaCO3(s) + 2 HCl(aq) → CaCl2(aq) + CO2(g) + H2O(x)", 160.0, 270.0, 330),
+      item(5, "0", 52.7, 210.0),
+      item(5, "1", 69.4, 210.0),
+      item(5, ".", 82.4, 210.0),
+      item(5, "5", 92.6, 210.0),
+      item(5, "What is the state symbol (x) in the equation?", 114.8, 209.2, 280),
+      item(5, "Tick (✓) one box.", 114.8, 180.0, 120),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(7, "01.4", 67.3, 675.7, 24),
+      item(7, "pH increases", 113.2, 675.7, 80),
+      item(7, "1", 466.2, 675.7, 8),
+      item(7, "01.5", 67.3, 573.7, 24),
+      item(7, "(l)", 113.2, 573.7, 30),
+      item(7, "1", 466.2, 573.7, 8),
+      item(8, "Total Question 1 2", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+    const question014 = drafts.find((draft) => draft.questionKey === "01.4");
+    const question015 = drafts.find((draft) => draft.questionKey === "01.5");
+
+    expect(question014?.extractedQuestionText).not.toContain("Calcium carbonate reacts");
+    expect(question015?.extractedQuestionText).toContain("Calcium carbonate reacts");
+    expect(question015?.extractedQuestionText).toContain("The equation for the reaction is");
+  });
+
+  it("moves Chemistry isotope setup to the following subquestion", () => {
+    const questionItems: TextItem[] = [
+      item(12, "0", 52.7, 260.0),
+      item(12, "4", 69.4, 260.0),
+      item(12, ".", 82.4, 260.0),
+      item(12, "2", 92.6, 260.0),
+      item(12, "Calculate how many times heavier a proton is than an electron.", 114.8, 259.2, 360),
+      item(12, "[2 marks]", 491.6, 230.0, 60),
+      item(12, "Times heavier a proton is than an electron =", 114.8, 170.0, 260),
+      item(13, "81", 308.6, 767.3, 10),
+      item(13, "A bromine atom can be represented as", 114.8, 762.0, 190),
+      item(13, "Br.", 318.1, 762.0, 14),
+      item(13, "35", 308.6, 759.4, 10),
+      item(13, "0", 52.7, 700.0),
+      item(13, "4", 69.4, 700.0),
+      item(13, ".", 82.4, 700.0),
+      item(13, "3", 92.6, 700.0),
+      item(13, "What is the number of neutrons in this bromine atom?", 114.8, 699.2, 320),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(17, "04.2", 67.3, 675.7, 24),
+      item(17, "1836", 113.2, 675.7, 40),
+      item(17, "2", 466.2, 675.7, 8),
+      item(17, "04.3", 67.3, 573.7, 24),
+      item(17, "46", 113.2, 573.7, 20),
+      item(17, "1", 466.2, 573.7, 8),
+      item(19, "Total Question 4 3", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+    const question042 = drafts.find((draft) => draft.questionKey === "04.2");
+    const question043 = drafts.find((draft) => draft.questionKey === "04.3");
+
+    expect(question042?.supportingPdfBoxes).toEqual([]);
+    expect(question042?.extractedQuestionText).not.toContain("A bromine atom");
+    expect(question043?.extractedQuestionText).toContain("A bromine atom");
+  });
+
+  it("keeps space for Chemistry figure completion prompts", () => {
+    const questionItems: TextItem[] = [
+      item(19, "0", 52.7, 760.0),
+      item(19, "5", 69.4, 760.0),
+      item(19, ".", 82.4, 760.0),
+      item(19, "4", 92.6, 760.0),
+      item(19, "Energy is released from the reaction to produce ammonia.", 114.8, 759.2, 330),
+      item(19, "Figure 8 shows part of the reaction profile.", 114.8, 700.0, 300),
+      item(19, "Complete Figure 8.", 114.8, 640.0, 130),
+      item(19, "Figure 8", 270.0, 520.0, 60),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(17, "05.4", 67.3, 573.7, 24),
+      item(17, "correct profile completion", 113.2, 573.7, 140),
+      item(17, "3", 466.2, 573.7, 8),
+      item(19, "Total Question 5 3", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2024,
+      questionItems,
+      markSchemeItems,
+    });
+    const question054 = drafts.find((draft) => draft.questionKey === "05.4");
+
+    expect(question054?.primaryPdfBox.bottom).toBeLessThan(140);
+  });
 });

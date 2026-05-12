@@ -19,3 +19,10 @@ ssh -p 42143 will@91.151.248.184
 
 - The host responded as `deployme`.
 - Use this host/port for future data-release upload commands unless Will provides newer deployment details.
+
+## Adding New Papers
+
+- When Will asks to add new papers, follow `docs/start-to-finish.md`.
+- The import flow must stop before any production data push until the manual crop review site has been generated, hosted, reviewed by Will, and approved.
+- Host only the review site for the papers Will needs to check.
+- After Will approves the hosted review site, wait for Will to tell Codex to continue before creating or deploying the data release.

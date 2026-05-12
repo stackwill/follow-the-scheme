@@ -4,8 +4,10 @@ import { fetchHtml } from "@/lib/import/core/http";
 import { parseSessionLabel } from "@/lib/import/pmt/normalize";
 import type { PmtPaperCandidate } from "@/lib/import/types";
 
-const FAMILY_URL =
+const AQA_PHYSICS_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-1/";
+const AQA_PHYSICS_PAPER_2_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-2/";
 const AQA_BIOLOGY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-biology-1/";
 const AQA_BIOLOGY_PAPER_2_URL =
@@ -16,12 +18,16 @@ const AQA_CHEMISTRY_PAPER_2_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-chemistry-2/";
 const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1";
+const EDEXCEL_A_GEOGRAPHY_PAPER_1_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-geography/edexcel-a-paper-1/";
 const OCR_GCSE_BUSINESS_ASSESSMENT_URL =
   "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct";
-const BENCHMARK_YEARS = [2023, 2024] as const;
+const PHYSICS_PAPER_1_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
+const PHYSICS_PAPER_2_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const BIOLOGY_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
 const CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
-const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2024] as const;
+const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2023, 2024] as const;
+const EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS = [2023, 2024] as const;
 const OCR_BUSINESS_BENCHMARK_YEARS = [2023, 2024] as const;
 
 type SessionLinks = {
@@ -30,7 +36,7 @@ type SessionLinks = {
 };
 
 function normalizeLinkUrl(href: string) {
-  return new URL(href, FAMILY_URL).toString();
+  return new URL(href, AQA_PHYSICS_PAPER_1_URL).toString();
 }
 
 function normalizeLinkUrlForBase(href: string, baseUrl: string) {
@@ -53,6 +59,7 @@ function collectSessionLinks(
   $: cheerio.CheerioAPI,
   selector: string,
   targetKey: keyof SessionLinks,
+  baseUrl = AQA_PHYSICS_PAPER_1_URL,
 ) {
   const linksBySession = new Map<string, SessionLinks>();
 
@@ -69,22 +76,26 @@ function collectSessionLinks(
 
     if (existing[targetKey]) {
       throw new Error(
-        `PMT benchmark discovery contract failed for ${FAMILY_URL}: duplicate ${targetKey} link for ${session.sessionLabel}`,
+        `PMT benchmark discovery contract failed for ${baseUrl}: duplicate ${targetKey} link for ${session.sessionLabel}`,
       );
     }
 
-    existing[targetKey] = normalizeLinkUrl(href);
+    existing[targetKey] = normalizeLinkUrlForBase(href, baseUrl);
     linksBySession.set(session.sessionLabel, existing);
   });
 
   return linksBySession;
 }
 
-function assertBenchmarkContract(candidates: PmtPaperCandidate[]) {
+function assertBenchmarkContract(
+  candidates: PmtPaperCandidate[],
+  benchmarkYears: readonly number[],
+  familyUrl: string,
+) {
   const byYear = new Map(candidates.map((candidate) => [candidate.year, candidate]));
   const problems: string[] = [];
 
-  for (const year of BENCHMARK_YEARS) {
+  for (const year of benchmarkYears) {
     const candidate = byYear.get(year);
 
     if (!candidate) {
@@ -101,15 +112,15 @@ function assertBenchmarkContract(candidates: PmtPaperCandidate[]) {
     }
   }
 
-  if (candidates.length !== BENCHMARK_YEARS.length) {
+  if (candidates.length !== benchmarkYears.length) {
     problems.push(
-      `expected ${BENCHMARK_YEARS.length} benchmark candidates, found ${candidates.length}`,
+      `expected ${benchmarkYears.length} benchmark candidates, found ${candidates.length}`,
     );
   }
 
   if (problems.length > 0) {
     throw new Error(
-      `PMT benchmark discovery contract failed for ${FAMILY_URL}: ${problems.join("; ")}`,
+      `PMT benchmark discovery contract failed for ${familyUrl}: ${problems.join("; ")}`,
     );
   }
 }
@@ -258,10 +269,26 @@ export async function discoverAqaChemistryPaper2Higher() {
   return discoverAqaChemistryPaper2HigherFromHtml(html);
 }
 
-export function discoverAqaPhysicsPaper1HigherFromHtml(html: string) {
+function discoverAqaPhysicsPaperHigherFromHtml(
+  html: string,
+  paperNumber: 1 | 2,
+  paperPageUrl: string,
+  benchmarkYears: readonly number[],
+) {
   const $ = cheerio.load(html);
-  const sessionLinks = collectSessionLinks($, "a[href*='Physics-1H/QP/']", "questionPaperUrl");
-  const markSchemes = collectSessionLinks($, "a[href*='Physics-1H/MS/']", "markSchemeUrl");
+  const prefix = `Physics-${paperNumber}H`;
+  const sessionLinks = collectSessionLinks(
+    $,
+    `a[href*='${prefix}/QP/']`,
+    "questionPaperUrl",
+    paperPageUrl,
+  );
+  const markSchemes = collectSessionLinks(
+    $,
+    `a[href*='${prefix}/MS/']`,
+    "markSchemeUrl",
+    paperPageUrl,
+  );
   const benchmarkCandidates: PmtPaperCandidate[] = [];
 
   for (const [sessionLabel, links] of markSchemes) {
@@ -272,7 +299,7 @@ export function discoverAqaPhysicsPaper1HigherFromHtml(html: string) {
     });
   }
 
-  for (const year of BENCHMARK_YEARS) {
+  for (const year of benchmarkYears) {
     const sessionLabel = `June ${year}`;
     const links = sessionLinks.get(sessionLabel);
 
@@ -281,27 +308,50 @@ export function discoverAqaPhysicsPaper1HigherFromHtml(html: string) {
     }
 
     benchmarkCandidates.push({
-      paperPageUrl: FAMILY_URL,
+      paperPageUrl,
       questionPaperUrl: links.questionPaperUrl,
       markSchemeUrl: links.markSchemeUrl,
       examBoard: "AQA",
       qualification: "GCSE Combined Science Trilogy",
       subject: "Physics",
-      paperNumber: 1,
+      paperNumber,
       tier: "Higher",
       sessionLabel,
       year,
     });
   }
 
-  assertBenchmarkContract(benchmarkCandidates);
+  assertBenchmarkContract(benchmarkCandidates, benchmarkYears, paperPageUrl);
 
   return benchmarkCandidates;
 }
 
+export function discoverAqaPhysicsPaper1HigherFromHtml(html: string) {
+  return discoverAqaPhysicsPaperHigherFromHtml(
+    html,
+    1,
+    AQA_PHYSICS_PAPER_1_URL,
+    PHYSICS_PAPER_1_BENCHMARK_YEARS,
+  );
+}
+
+export function discoverAqaPhysicsPaper2HigherFromHtml(html: string) {
+  return discoverAqaPhysicsPaperHigherFromHtml(
+    html,
+    2,
+    AQA_PHYSICS_PAPER_2_URL,
+    PHYSICS_PAPER_2_BENCHMARK_YEARS,
+  );
+}
+
 export async function discoverAqaPhysicsPaper1Higher() {
-  const html = await fetchHtml(FAMILY_URL);
+  const html = await fetchHtml(AQA_PHYSICS_PAPER_1_URL);
   return discoverAqaPhysicsPaper1HigherFromHtml(html);
+}
+
+export async function discoverAqaPhysicsPaper2Higher() {
+  const html = await fetchHtml(AQA_PHYSICS_PAPER_2_URL);
+  return discoverAqaPhysicsPaper2HigherFromHtml(html);
 }
 
 export function discoverAqaGcseComputerSciencePaper1BPythonFromHtml(html: string) {
@@ -344,6 +394,48 @@ export function discoverAqaGcseComputerSciencePaper1BPythonFromHtml(html: string
 export async function discoverAqaGcseComputerSciencePaper1BPython() {
   const html = await fetchHtml(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL);
   return discoverAqaGcseComputerSciencePaper1BPythonFromHtml(html);
+}
+
+export function discoverEdexcelAGeographyPaper1FromHtml(html: string) {
+  const $ = cheerio.load(html);
+  const candidates: PmtPaperCandidate[] = [];
+
+  for (const year of EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS) {
+    const markScheme = $(`a[href*='June ${year} MS - Paper 1 Edexcel (A) Geography GCSE.pdf']`).first();
+    const questionPaper = $(`a[href*='June ${year} QP - Paper 1 Edexcel (A) Geography GCSE.pdf']`).first();
+    const markSchemeHref = markScheme.attr("href");
+    const questionPaperHref = questionPaper.attr("href");
+
+    if (!markSchemeHref || !questionPaperHref) {
+      continue;
+    }
+
+    candidates.push({
+      paperPageUrl: EDEXCEL_A_GEOGRAPHY_PAPER_1_URL,
+      questionPaperUrl: normalizeLinkUrlForBase(questionPaperHref, EDEXCEL_A_GEOGRAPHY_PAPER_1_URL),
+      markSchemeUrl: normalizeLinkUrlForBase(markSchemeHref, EDEXCEL_A_GEOGRAPHY_PAPER_1_URL),
+      examBoard: "Edexcel",
+      qualification: "GCSE Geography A",
+      subject: "Geography",
+      paperNumber: 1,
+      tier: "The Physical Environment",
+      sessionLabel: `June ${year}`,
+      year,
+    });
+  }
+
+  if (candidates.length !== EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS.length) {
+    throw new Error(
+      `PMT benchmark discovery contract failed for ${EDEXCEL_A_GEOGRAPHY_PAPER_1_URL}: expected ${EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS.length} Paper 1 candidate, found ${candidates.length}`,
+    );
+  }
+
+  return candidates;
+}
+
+export async function discoverEdexcelAGeographyPaper1() {
+  const html = await fetchHtml(EDEXCEL_A_GEOGRAPHY_PAPER_1_URL);
+  return discoverEdexcelAGeographyPaper1FromHtml(html);
 }
 
 function discoverOcrGcseBusinessPaperFromHtml(html: string, paperNumber: 1 | 2) {

@@ -5,8 +5,12 @@ import {
   aqaCombinedScienceChemistryPaper1HigherAdapter,
   aqaCombinedScienceChemistryPaper2HigherAdapter,
 } from "@/lib/import/adapters/aqa-combined-science-biology-paper-higher";
-import { aqaCombinedSciencePhysicsPaper1HigherAdapter } from "@/lib/import/adapters/aqa-combined-science-physics-paper-1-higher";
+import {
+  aqaCombinedSciencePhysicsPaper1HigherAdapter,
+  aqaCombinedSciencePhysicsPaper2HigherAdapter,
+} from "@/lib/import/adapters/aqa-combined-science-physics-paper-1-higher";
 import { aqaGcseComputerSciencePaper1BPythonAdapter } from "@/lib/import/adapters/aqa-gcse-computer-science-paper-1b-python";
+import { edexcelAGeographyPaper1Adapter } from "@/lib/import/adapters/edexcel-a-geography-paper-1";
 import {
   ocrGcseBusinessPaper1Adapter,
   ocrGcseBusinessPaper2Adapter,
@@ -23,8 +27,11 @@ export const adapters: Record<string, PaperImportAdapter> = {
     aqaCombinedScienceChemistryPaper2HigherAdapter,
   [aqaCombinedSciencePhysicsPaper1HigherAdapter.key]:
     aqaCombinedSciencePhysicsPaper1HigherAdapter,
+  [aqaCombinedSciencePhysicsPaper2HigherAdapter.key]:
+    aqaCombinedSciencePhysicsPaper2HigherAdapter,
   [aqaGcseComputerSciencePaper1BPythonAdapter.key]:
     aqaGcseComputerSciencePaper1BPythonAdapter,
+  [edexcelAGeographyPaper1Adapter.key]: edexcelAGeographyPaper1Adapter,
   [ocrGcseBusinessPaper1Adapter.key]: ocrGcseBusinessPaper1Adapter,
   [ocrGcseBusinessPaper2Adapter.key]: ocrGcseBusinessPaper2Adapter,
 };
@@ -39,6 +46,10 @@ export {
   aqaCombinedScienceChemistryPaper1HigherAdapter,
   aqaCombinedScienceChemistryPaper2HigherAdapter,
 };
-export { aqaCombinedSciencePhysicsPaper1HigherAdapter };
+export {
+  aqaCombinedSciencePhysicsPaper1HigherAdapter,
+  aqaCombinedSciencePhysicsPaper2HigherAdapter,
+};
 export { aqaGcseComputerSciencePaper1BPythonAdapter };
+export { edexcelAGeographyPaper1Adapter };
 export { ocrGcseBusinessPaper1Adapter, ocrGcseBusinessPaper2Adapter };

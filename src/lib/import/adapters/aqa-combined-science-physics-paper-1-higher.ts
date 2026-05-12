@@ -10,6 +10,7 @@ import type { TextItem } from "@/lib/import/core/pdf-text";
 
 const QUESTION_LINE_Y_TOLERANCE = 2.5;
 const MARK_SCHEME_LINE_Y_TOLERANCE = 4;
+const MARK_SCHEME_PRELUDE_MAX_Y_GAP = 18;
 const MARK_SCHEME_START_PAGE = 7;
 const LEFT_MARGIN_MIN_X = 50;
 const LEFT_MARGIN_MAX_X = 60;
@@ -419,7 +420,7 @@ function collectMarkSchemePrelude(lines: Line[], labelIndex: number) {
       break;
     }
 
-    if (candidate.y - nextLine.y > 12) {
+    if (candidate.y - nextLine.y > MARK_SCHEME_PRELUDE_MAX_Y_GAP) {
       break;
     }
 
@@ -620,7 +621,7 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
     ? lines.some((line) => line.y < tickOneBoxLine.y - 20 && line.contentText.length > 0)
     : true;
   const needsRasterDiagramSpace = lines.some((line) =>
-    /\b(?:complete|draw|plot|show|identify)\b.*\b(?:diagram|punnett square|graph|table)\b/i.test(line.rawText),
+    /\b(?:complete|draw|plot|show|identify)\b.*\b(?:diagram|punnett square|graph|table|figure)\b/i.test(line.rawText),
   );
   const hasLikelyFigureSource =
     nextQuestionBottom === null &&
@@ -710,6 +711,9 @@ function looksLikeSetupForNextPart(line: Line) {
     /^The athlete(?:'|’)s foot fungus\b/i.test(text) ||
     /^Broken bones are sometimes repaired\b/i.test(text) ||
     /^Female reproductive hormones\b/i.test(text) ||
+    /^Calcium carbonate reacts\b/i.test(text) ||
+    /^The equation for the reaction is\b/i.test(text) ||
+    /^A bromine atom can be represented\b/i.test(text) ||
     /^The student then investigated\b/i.test(text) ||
     /^This is the method used\.?$/i.test(text)
   );
@@ -754,7 +758,28 @@ function getSegmentStartIndex(
     .slice(searchStartIndex, start.lineIndex)
     .find((line) => isPreLabelContextForStart(line, start, previousStart));
 
-  return preLabelContextLine ? filteredQuestionLines.indexOf(preLabelContextLine) : start.lineIndex;
+  if (!preLabelContextLine) {
+    return start.lineIndex;
+  }
+
+  let contextStartIndex = filteredQuestionLines.indexOf(preLabelContextLine);
+
+  while (contextStartIndex > searchStartIndex) {
+    const previousLine = filteredQuestionLines[contextStartIndex - 1];
+
+    if (
+      previousLine.pageNumber !== preLabelContextLine.pageNumber ||
+      preLabelContextLine.y - previousLine.y < -24 ||
+      !/^\d+$/.test(previousLine.contentText) ||
+      previousLine.minX < 250
+    ) {
+      break;
+    }
+
+    contextStartIndex -= 1;
+  }
+
+  return contextStartIndex;
 }
 
 function buildQuestionDrafts(
@@ -957,4 +982,8 @@ export function createAqaCombinedSciencePaperAdapter(key: string): PaperImportAd
 
 export const aqaCombinedSciencePhysicsPaper1HigherAdapter = createAqaCombinedSciencePaperAdapter(
   "aqa-combined-science-physics-paper-1-higher",
+);
+
+export const aqaCombinedSciencePhysicsPaper2HigherAdapter = createAqaCombinedSciencePaperAdapter(
+  "aqa-combined-science-physics-paper-2-higher",
 );
