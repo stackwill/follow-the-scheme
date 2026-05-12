@@ -17,6 +17,8 @@ type AnswerFormState = {
   error: string | null;
   answers?: Record<string, string>;
   results?: LocalQuestionAttempt[];
+  skippedCount?: number;
+  submitted?: boolean;
 };
 
 type AnswerFormProps = {
@@ -63,9 +65,23 @@ function shouldShowImprovement(awardedMarks: number, maxMarks: number) {
   return maxMarks > 0 && awardedMarks < maxMarks;
 }
 
+function normalizeAnswer(value: string) {
+  return value.trim();
+}
+
+function hasGoodUnchangedAttempt(attempt: LocalQuestionAttempt | null, answer: string) {
+  return (
+    attempt !== null &&
+    normalizeAnswer(answer) === normalizeAnswer(attempt.submittedAnswer) &&
+    attempt.maxMarks > 0 &&
+    attempt.awardedMarks / attempt.maxMarks >= 0.75
+  );
+}
+
 export function AnswerForm(props: AnswerFormProps) {
   const [state, formAction, pending] = useActionState(props.action, { error: null });
   const [localAttempts, setLocalAttempts] = useState<LocalPaperAttempts | null>(null);
+  const [answersByQuestionId, setAnswersByQuestionId] = useState<Record<string, string>>({});
   const latestAttemptsByQuestionId = useMemo(() => {
     const entries = props.questions.map((question) => [
       question.id,
@@ -80,9 +96,13 @@ export function AnswerForm(props: AnswerFormProps) {
     (sum, question) => sum + (latestAttemptsByQuestionId[question.id]?.awardedMarks ?? 0),
     0,
   );
-  const markedMaxMarks = markedQuestions.reduce(
-    (sum, question) => sum + (latestAttemptsByQuestionId[question.id]?.maxMarks ?? 0),
-    0,
+  const unsubmittedQuestionIds = new Set(
+    state.submitted
+      ? props.questions
+          .filter((question) => !question.paperOnlyReason)
+          .filter((question) => !normalizeAnswer(state.answers?.[question.id] ?? ""))
+          .map((question) => question.id)
+      : [],
   );
 
   useEffect(() => {
@@ -90,13 +110,21 @@ export function AnswerForm(props: AnswerFormProps) {
   }, [props.paperId]);
 
   useEffect(() => {
-    if (!state.results || state.results.length === 0) {
+    if ((!state.results || state.results.length === 0) && !state.skippedCount) {
       return;
     }
 
-    setLocalAttempts(saveLocalQuestionAttempts(props.paperId, state.results));
+    if (state.results && state.results.length > 0) {
+      setLocalAttempts(saveLocalQuestionAttempts(props.paperId, state.results));
+    }
     document.getElementById("marks")?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, [props.paperId, state.results]);
+  }, [props.paperId, state.results, state.skippedCount]);
+
+  useEffect(() => {
+    if (state.answers) {
+      setAnswersByQuestionId(state.answers);
+    }
+  }, [state.answers]);
 
   return (
     <form action={formAction} className="answer-form">
@@ -105,31 +133,31 @@ export function AnswerForm(props: AnswerFormProps) {
         <h2>{totalMarks} marks</h2>
       </div>
 
-      {markedQuestions.length > 0 ? (
+      {state.submitted || markedQuestions.length > 0 ? (
         <section
           className="mark-summary"
-          data-score={scoreTone(awardedMarks, markedMaxMarks)}
+          data-score={scoreTone(awardedMarks, totalMarks)}
           id="marks"
-          aria-label="Latest marking summary"
+          aria-label="Page marking summary"
         >
           <div>
-            <p className="eyebrow">Latest mark</p>
+            <p className="eyebrow">Page total</p>
             <h3>
-              {awardedMarks} / {markedMaxMarks} marks
+              {awardedMarks} / {totalMarks} marks
             </h3>
             <div
               aria-hidden="true"
               className="score-meter"
               style={{
-                "--score": `${Math.round((awardedMarks / Math.max(markedMaxMarks, 1)) * 100)}%`,
+                "--score": `${Math.round((awardedMarks / Math.max(totalMarks, 1)) * 100)}%`,
               } as CSSProperties}
             >
               <span />
             </div>
           </div>
           <p>
-            {markedQuestions.length} of {props.questions.length} question parts marked. Detailed examiner-style feedback is
-            shown under each marked part below.
+            {markedQuestions.length} of {props.questions.length} question parts marked. Unsubmitted answerable parts count
+            as zero in this page total.
           </p>
         </section>
       ) : null}
@@ -137,13 +165,20 @@ export function AnswerForm(props: AnswerFormProps) {
       <div className="question-group-stack">
         {props.questions.map((question) => {
           const latestAttempt = latestAttemptsByQuestionId[question.id];
+          const currentAnswer = answersByQuestionId[question.id] ?? "";
+          const canSkipRemark = hasGoodUnchangedAttempt(latestAttempt, currentAnswer);
+          const isUnsubmitted = unsubmittedQuestionIds.has(question.id);
 
           return (
-            <section className="answer-part question-part-view" key={question.id}>
+            <section className="answer-part question-part-view" data-unsubmitted={isUnsubmitted} key={question.id}>
               <div className="question-part-view__heading">
                 <h3>Question {question.questionKey}</h3>
                 <span>{question.maxMarks} marks</span>
               </div>
+
+              {canSkipRemark && latestAttempt ? (
+                <input type="hidden" name={`skip-remark-${question.id}`} value={latestAttempt.id} />
+              ) : null}
 
               {question.paperOnlyReason ? <p className="paper-only-chip">{question.paperOnlyReason}</p> : null}
 
@@ -185,7 +220,13 @@ export function AnswerForm(props: AnswerFormProps) {
                         name={`answer-${question.id}`}
                         type="radio"
                         value={option.id}
-                        defaultChecked={state.answers?.[question.id] === option.id}
+                        checked={answersByQuestionId[question.id] === option.id}
+                        onChange={(event) =>
+                          setAnswersByQuestionId((answers) => ({
+                            ...answers,
+                            [question.id]: event.target.value,
+                          }))
+                        }
                       />
                       <span>{option.label}</span>
                     </label>
@@ -195,10 +236,15 @@ export function AnswerForm(props: AnswerFormProps) {
                 <label className="field-stack answer-under-question">
                   <span>Your answer</span>
                   <textarea
-                    key={state.answers?.[question.id] ?? "empty"}
-                      name={`answer-${question.id}`}
+                    name={`answer-${question.id}`}
                     rows={6}
-                    defaultValue={state.answers?.[question.id] ?? ""}
+                    value={answersByQuestionId[question.id] ?? ""}
+                    onChange={(event) =>
+                      setAnswersByQuestionId((answers) => ({
+                        ...answers,
+                        [question.id]: event.target.value,
+                      }))
+                    }
                   />
                 </label>
               )}
