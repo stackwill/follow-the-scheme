@@ -75,7 +75,7 @@ export function PaperProgressOverview(props: PaperProgressOverviewProps) {
   return (
     <section className="question-map-panel">
       <div className="section-heading">
-        <h2>Question map</h2>
+        <h2>Questions</h2>
         <div className="section-heading__meta">
           <span
             className="total-score-chip"
@@ -84,7 +84,10 @@ export function PaperProgressOverview(props: PaperProgressOverviewProps) {
           >
             {totalScoreLabel}
           </span>
-          <span>{props.groups.length} groups | {props.questionCount} imported parts</span>
+          <span className="metric-list">
+            <span>{props.groups.length} groups</span>
+            <span>{props.questionCount} imported parts</span>
+          </span>
         </div>
       </div>
       {props.groups.length > 0 ? (
@@ -117,7 +120,11 @@ export function PaperProgressOverview(props: PaperProgressOverviewProps) {
                         ? group.questions[0].questionKey
                         : `Questions ${group.key}`}
                     </strong>
-                    <span>{group.questions.length} parts | {groupMarks} marks | {attemptCount} local attempts</span>
+                    <span className="metric-list">
+                      <span>{group.questions.length} parts</span>
+                      <span>{groupMarks} marks</span>
+                      <span>{attemptCount} local attempts</span>
+                    </span>
                   </span>
                   <span className="question-group-list__score">{scoreLabel}</span>
                   <span className="question-group-list__action">Open</span>
