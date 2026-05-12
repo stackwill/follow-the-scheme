@@ -588,102 +588,6 @@ h1 {
   padding: 10px 12px;
 }
 
-.login-shell {
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-  border-top: 8px solid var(--accent);
-  background: var(--bg);
-  padding: 24px;
-}
-
-.login-panel {
-  display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  gap: 28px;
-  width: min(720px, 100%);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--panel) 94%, transparent);
-  box-shadow: var(--shadow);
-  color: var(--text);
-  padding: 32px;
-}
-
-.login-panel__mark {
-  display: grid;
-  width: 88px;
-  height: 88px;
-  place-items: center;
-  border: 1px solid var(--text);
-  color: var(--accent);
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-}
-
-.login-panel__copy {
-  display: grid;
-  gap: 10px;
-}
-
-.login-panel h1 {
-  font-size: clamp(2.4rem, 8vw, 4.6rem);
-}
-
-.login-panel p {
-  max-width: 520px;
-  margin-bottom: 0;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-.login-form {
-  display: grid;
-  grid-column: 2;
-  gap: 14px;
-}
-
-.login-form input[type="password"] {
-  width: 100%;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: var(--panel-subtle);
-  color: var(--text);
-  padding: 14px 15px;
-}
-
-.login-form input[type="password"]:-webkit-autofill {
-  -webkit-text-fill-color: var(--text);
-  box-shadow: 0 0 0 1000px var(--panel-subtle) inset;
-}
-
-.login-form input[type="password"]:focus {
-  outline: 3px solid var(--accent-soft);
-  border-color: var(--accent);
-}
-
-.login-form button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: fit-content;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  background: var(--accent);
-  color: #ffffff;
-  cursor: pointer;
-  font-weight: 800;
-  padding: 12px 18px;
-}
-
-.login-form button:disabled {
-  border-color: var(--line);
-  background: var(--line);
-  color: var(--muted);
-  cursor: not-allowed;
-}
-
 .result-panel h2 {
   margin: 4px 0 14px;
   font-size: 2rem;
@@ -2098,16 +2002,6 @@ h1 {
     grid-column: 2;
   }
 
-  .login-panel {
-    grid-template-columns: 1fr;
-    gap: 22px;
-    padding: 24px;
-  }
-
-  .login-panel__mark,
-  .login-form {
-    grid-column: 1;
-  }
 }
 
 /* Final Cognito-inspired education UI pass */
@@ -2411,6 +2305,104 @@ h1 {
 .paper-stat-card span {
   color: var(--muted);
   line-height: 1.45;
+}
+
+.login-page {
+  min-height: 100vh;
+  align-content: start;
+}
+
+.login-hero {
+  min-height: min(560px, calc(100vh - 178px));
+  padding-top: 54px;
+}
+
+.login-access-card {
+  gap: 14px;
+  align-self: stretch;
+  align-content: start;
+}
+
+.login-access-card strong {
+  font-size: 1.16rem;
+}
+
+.login-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.login-field {
+  gap: 10px;
+}
+
+.login-field span {
+  color: var(--text);
+  font-size: 0.94rem;
+}
+
+.login-form input[type="text"] {
+  width: 100%;
+  min-height: 58px;
+  border: 2px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 1.08rem;
+  line-height: 1.2;
+  padding: 0 17px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.login-form input[type="text"]::placeholder {
+  color: color-mix(in srgb, var(--muted) 72%, transparent);
+}
+
+.login-form input[type="text"]:-webkit-autofill {
+  -webkit-text-fill-color: var(--text);
+  box-shadow: 0 0 0 1000px var(--panel) inset;
+}
+
+.login-form input[type="text"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
+  outline: 0;
+}
+
+.login-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0 18px;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
+}
+
+.login-form button:hover:not(:disabled) {
+  background: var(--accent-dark);
+  box-shadow: 0 10px 28px rgba(37, 89, 230, 0.22);
+  transform: translateY(-1px);
+}
+
+.login-form button:disabled {
+  border-color: var(--line);
+  background: var(--line);
+  color: var(--muted);
+  cursor: not-allowed;
 }
 
 .course-tabs {
