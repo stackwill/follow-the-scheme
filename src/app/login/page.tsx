@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { headers } from "next/headers";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { authCookieOptions, AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { createNodeSessionToken } from "@/lib/auth/session-node";
 import { isPasswordConfigured, verifyPassword } from "@/lib/auth/password";
@@ -77,44 +79,71 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   return (
-    <main className="login-shell">
-      <section className="login-panel" aria-labelledby="login-title">
-        <div className="login-panel__mark" aria-hidden="true">
-          FTS
+    <main className="page-shell learning-page login-page">
+      <nav className="app-topbar" aria-label="App navigation">
+        <Link className="brand-mark" href="/">
+          <span className="brand-spark" aria-hidden="true">
+            <span />
+            <span />
+          </span>
+          <strong>reallycool.lol</strong>
+        </Link>
+        <div className="app-topbar__actions">
+          <span className="xp-chip">Secure access</span>
+          <ThemeToggle />
         </div>
-        <div className="login-panel__copy">
-          <p className="eyebrow">reallycool.lol</p>
-          <h1 id="login-title">What school are you?</h1>
-          <p>Answer with the school name to continue.</p>
+      </nav>
+
+      <header className="course-hero login-hero">
+        <div className="course-hero__icon" aria-hidden="true">
+          FT
         </div>
-        <form action={signIn} className="login-form">
-          <input type="hidden" name="next" value={safeNextPath(params.next)} />
-          <label className="field-stack">
-            <span>School</span>
-            <input
-              autoComplete="organization"
-              autoFocus
-              disabled={!authReady}
-              name="school"
-              required
-              type="text"
-            />
-          </label>
-          {params.error ? (
-            <p className="form-error" role="alert">
-              {params.error}
-            </p>
-          ) : null}
-          {!authReady ? (
-            <p className="form-error" role="alert">
-              Set AUTH_SESSION_SECRET in the environment before using the app.
-            </p>
-          ) : null}
-          <button disabled={!authReady} type="submit">
-            Continue
-          </button>
-        </form>
-      </section>
+        <div className="course-hero__copy">
+          <div className="breadcrumb-line">
+            <Link href="/">Home</Link>
+            <span>/ Sign in</span>
+          </div>
+          <div className="course-title-row">
+            <h1 id="login-title">Sign in to practice</h1>
+            <span className="active-course-pill">School access</span>
+          </div>
+          <p className="page-description">
+            Enter your school name to open your past-paper workspace.
+          </p>
+        </div>
+        <aside className="study-callout login-access-card" aria-labelledby="login-title">
+          <strong>Continue with your school</strong>
+          <span>Use the same school name you were given for reallycool.lol.</span>
+          <form action={signIn} className="login-form">
+            <input type="hidden" name="next" value={safeNextPath(params.next)} />
+            <label className="field-stack login-field">
+              <span>School name</span>
+              <input
+                autoComplete="organization"
+                autoFocus
+                disabled={!authReady}
+                name="school"
+                placeholder="Type your school"
+                required
+                type="text"
+              />
+            </label>
+            {params.error ? (
+              <p className="form-error" role="alert">
+                {params.error}
+              </p>
+            ) : null}
+            {!authReady ? (
+              <p className="form-error" role="alert">
+                Set AUTH_SESSION_SECRET in the environment before using the app.
+              </p>
+            ) : null}
+            <button disabled={!authReady} type="submit">
+              Continue
+            </button>
+          </form>
+        </aside>
+      </header>
     </main>
   );
 }
