@@ -1839,6 +1839,18 @@ h1 {
   margin-top: 8px;
 }
 
+.question-part-view[data-unsubmitted="true"] .answer-under-question textarea,
+.question-part-view[data-unsubmitted="true"] .option-fieldset {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+.question-part-view[data-unsubmitted="true"] .option-fieldset {
+  border: 2px solid var(--danger);
+  border-radius: 18px;
+  padding: 14px;
+}
+
 .answer-under-question span,
 .option-fieldset legend {
   color: var(--text);

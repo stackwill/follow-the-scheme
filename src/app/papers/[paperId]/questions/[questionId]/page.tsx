@@ -13,6 +13,8 @@ type FormState = {
   error: string | null;
   answers?: Record<string, string>;
   results?: LocalQuestionAttempt[];
+  skippedCount?: number;
+  submitted?: boolean;
 };
 
 function paperHref(paperId: string) {
@@ -116,6 +118,7 @@ export default async function QuestionPage({
     try {
       const { gradeQuestionAttempt } = await import("@/lib/grading/grade-question");
       let gradedCount = 0;
+      let skippedCount = 0;
       const results: LocalQuestionAttempt[] = [];
 
       for (const groupQuestion of currentGroup.questions) {
@@ -133,6 +136,11 @@ export default async function QuestionPage({
           continue;
         }
 
+        if (formData.get(`skip-remark-${groupQuestion.id}`)) {
+          skippedCount += 1;
+          continue;
+        }
+
         const result = await gradeQuestionAttempt({
           paperId,
           questionId: groupQuestion.id,
@@ -143,10 +151,11 @@ export default async function QuestionPage({
         gradedCount += 1;
       }
 
-      if (gradedCount === 0) {
+      if (gradedCount === 0 && skippedCount === 0) {
         return {
           error: "Enter an answer for at least one answerable part before submitting.",
           answers: submittedAnswers,
+          submitted: true,
         };
       }
 
@@ -154,11 +163,14 @@ export default async function QuestionPage({
         error: null,
         answers: submittedAnswers,
         results,
+        skippedCount,
+        submitted: true,
       };
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : "Unknown grading error",
         answers: submittedAnswers,
+        submitted: true,
       };
     }
   }
