@@ -217,8 +217,8 @@ function isQuestionPaperBoilerplate(line: Line) {
     text.includes("answer in the spaces provided") ||
     text.includes("do not write on this page") ||
     /^\*\s*\d+\s*\*$/.test(text) ||
-    /^ib\/g\/jun24\/8525\/1b$/i.test(line.rawText) ||
-    (line.y > QUESTION_PAGE_TOP_LIMIT && /^\d+$/.test(line.rawText))
+    /^ib\/g\/jun\d+\/8525\/1b$/i.test(line.rawText) ||
+    ((line.y > QUESTION_PAGE_TOP_LIMIT || line.y < QUESTION_PAGE_BOTTOM_LIMIT) && /^\d+$/.test(line.rawText))
   );
 }
 
@@ -240,7 +240,7 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
     nextQuestionStartLine === null ? null : nextQuestionStartLine.y + Math.max(...nextQuestionStartLine.items.map((item) => item.height), 0) + QUESTION_START_BOTTOM_PADDING;
 
   if (visibleItems.length === 0) {
-    const bottom = nextQuestionBottom ?? QUESTION_PAGE_BOTTOM_LIMIT;
+    const bottom = Math.max(QUESTION_PAGE_BOTTOM_LIMIT, nextQuestionBottom ?? QUESTION_PAGE_BOTTOM_LIMIT);
 
     return {
       left: QUESTION_CROP_LEFT,
@@ -253,11 +253,15 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
   const maxY = Math.max(...visibleItems.map((item) => item.y + item.height));
   const minY = Math.min(...visibleItems.map((item) => item.y));
   const hasAnswerGridInstruction = lines.some((line) => /answer grid below/i.test(line.rawText));
+  const hasLabelAnswerLines = lines.some((line) =>
+    /should be written in place of the labels|will not need to use all the items/i.test(line.rawText),
+  );
   const top = Math.min(QUESTION_PAGE_TOP_LIMIT, maxY + QUESTION_TOP_PADDING);
   const bottom = Math.max(
     QUESTION_PAGE_BOTTOM_LIMIT,
     Math.min(
-      nextQuestionBottom ?? (hasAnswerGridInstruction ? QUESTION_PAGE_BOTTOM_LIMIT : minY - QUESTION_BOTTOM_PADDING),
+      nextQuestionBottom ??
+        (hasAnswerGridInstruction || hasLabelAnswerLines ? QUESTION_PAGE_BOTTOM_LIMIT : minY - QUESTION_BOTTOM_PADDING),
       top - MIN_BOX_HEIGHT,
     ),
   );
@@ -431,7 +435,7 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
 
 export const aqaGcseComputerSciencePaper1BPythonAdapter: PaperImportAdapter = {
   key: "aqa-gcse-computer-science-paper-1b-python",
-  importVersion: "2026-05-03.1",
+  importVersion: "2026-05-12.1",
   detectQuestionDrafts({ questionItems, markSchemeItems }: DetectQuestionDraftsInput) {
     const questionLines = groupItemsIntoLines(questionItems);
     const markSchemeLines = groupItemsIntoLines(markSchemeItems);

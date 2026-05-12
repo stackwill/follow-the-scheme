@@ -7,6 +7,8 @@ import {
   discoverAqaChemistryPaper2HigherFromHtml,
   discoverAqaGcseComputerSciencePaper1BPythonFromHtml,
   discoverAqaPhysicsPaper1HigherFromHtml,
+  discoverAqaPhysicsPaper2HigherFromHtml,
+  discoverEdexcelAGeographyPaper1FromHtml,
   discoverOcrGcseBusinessPaper1FromHtml,
   discoverOcrGcseBusinessPaper2FromHtml,
 } from "@/lib/import/pmt/discovery";
@@ -36,9 +38,12 @@ describe("parseSessionLabel", () => {
 });
 
 describe("discoverAqaGcseComputerSciencePaper1BPythonFromHtml", () => {
-  it("selects the current-spec June 2024 Paper 1B Python QP and shared Paper 1 mark scheme", () => {
+  it("selects the current-spec June 2023 and 2024 Paper 1B Python QP and shared Paper 1 mark scheme", () => {
     const html = `
       <main>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June 2023 MS - Paper 1 AQA Computer Science GCSE.pdf">June 2023 MS - Paper 1 AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June 2023 QP - Paper 1A AQA Computer Science GCSE.pdf">June 2023 QP - Paper 1A AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June 2023 QP - Paper 1B AQA Computer Science GCSE.pdf">June 2023 QP - Paper 1B AQA Computer Science GCSE</a>
         <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June 2024 MS - Paper 1 AQA Computer Science GCSE.pdf">June 2024 MS - Paper 1 AQA Computer Science GCSE</a>
         <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June 2024 QP - Paper 1A AQA Computer Science GCSE.pdf">June 2024 QP - Paper 1A AQA Computer Science GCSE</a>
         <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June 2024 QP - Paper 1B AQA Computer Science GCSE.pdf">June 2024 QP - Paper 1B AQA Computer Science GCSE</a>
@@ -52,6 +57,21 @@ describe("discoverAqaGcseComputerSciencePaper1BPythonFromHtml", () => {
         paperPageUrl:
           "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1",
         questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June%202023%20QP%20-%20Paper%201B%20AQA%20Computer%20Science%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June%202023%20MS%20-%20Paper%201%20AQA%20Computer%20Science%20GCSE.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Computer Science",
+        subject: "Computer Science",
+        paperNumber: 1,
+        tier: "Python",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1",
+        questionPaperUrl:
           "https://www.physicsandmathstutor.com/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June%202024%20QP%20-%20Paper%201B%20AQA%20Computer%20Science%20GCSE.pdf",
         markSchemeUrl:
           "https://www.physicsandmathstutor.com/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-1/June%202024%20MS%20-%20Paper%201%20AQA%20Computer%20Science%20GCSE.pdf",
@@ -60,6 +80,55 @@ describe("discoverAqaGcseComputerSciencePaper1BPythonFromHtml", () => {
         subject: "Computer Science",
         paperNumber: 1,
         tier: "Python",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+});
+
+describe("discoverEdexcelAGeographyPaper1FromHtml", () => {
+  it("selects Edexcel A Geography Paper 1 The Physical Environment for June 2023 and 2024", () => {
+    const html = `
+      <main>
+        <a href="/download/Geography/GCSE/Past-Papers/Edexcel-A/Paper-1/June 2023 MS - Paper 1 Edexcel (A) Geography GCSE.pdf">June 2023 MS - Paper 1 Edexcel (A) Geography GCSE</a>
+        <a href="/download/Geography/GCSE/Past-Papers/Edexcel-A/Paper-1/June 2023 QP - Paper 1 Edexcel (A) Geography GCSE.pdf">June 2023 QP - Paper 1 Edexcel (A) Geography GCSE</a>
+        <a href="/download/Geography/GCSE/Past-Papers/Edexcel-A/Paper-1/June 2023 RB - Paper 1 Edexcel (A) Geography GCSE.pdf">June 2023 RB - Paper 1 Edexcel (A) Geography GCSE</a>
+        <a href="/download/Geography/GCSE/Past-Papers/Edexcel-A/Paper-1/June 2024 MS - Paper 1 Edexcel (A) Geography GCSE.pdf">June 2024 MS - Paper 1 Edexcel (A) Geography GCSE</a>
+        <a href="/download/Geography/GCSE/Past-Papers/Edexcel-A/Paper-1/June 2024 QP - Paper 1 Edexcel (A) Geography GCSE.pdf">June 2024 QP - Paper 1 Edexcel (A) Geography GCSE</a>
+        <a href="/download/Geography/GCSE/Past-Papers/Edexcel-A/Paper-1/June 2024 IN - Paper 1 Edexcel (A) Geography GCSE.pdf">June 2024 IN - Paper 1 Edexcel (A) Geography GCSE</a>
+        <a href="/download/Geography/GCSE/Past-Papers/Edexcel-B/Paper-1/June 2024 QP - Paper 1 Edexcel (B) Geography GCSE.pdf">June 2024 QP - Paper 1 Edexcel (B) Geography GCSE</a>
+      </main>
+    `;
+
+    expect(discoverEdexcelAGeographyPaper1FromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-geography/edexcel-a-paper-1/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Geography/GCSE/Past-Papers/Edexcel-A/Paper-1/June%202023%20QP%20-%20Paper%201%20Edexcel%20(A)%20Geography%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Geography/GCSE/Past-Papers/Edexcel-A/Paper-1/June%202023%20MS%20-%20Paper%201%20Edexcel%20(A)%20Geography%20GCSE.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE Geography A",
+        subject: "Geography",
+        paperNumber: 1,
+        tier: "The Physical Environment",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-geography/edexcel-a-paper-1/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Geography/GCSE/Past-Papers/Edexcel-A/Paper-1/June%202024%20QP%20-%20Paper%201%20Edexcel%20(A)%20Geography%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Geography/GCSE/Past-Papers/Edexcel-A/Paper-1/June%202024%20MS%20-%20Paper%201%20Edexcel%20(A)%20Geography%20GCSE.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE Geography A",
+        subject: "Geography",
+        paperNumber: 1,
+        tier: "The Physical Environment",
         sessionLabel: "June 2024",
         year: 2024,
       },
@@ -344,6 +413,21 @@ describe("discoverAqaPhysicsPaper1HigherFromHtml", () => {
         paperPageUrl:
           "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-1/",
         questionPaperUrl:
+          "https://www.physicsandmathstutor.com/papers/Physics-1H/QP/2022-qp.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/papers/Physics-1H/MS/2022-ms.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Physics",
+        paperNumber: 1,
+        tier: "Higher",
+        sessionLabel: "June 2022",
+        year: 2022,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-1/",
+        questionPaperUrl:
           "https://www.physicsandmathstutor.com/papers/Physics-1H/QP/2023-qp.pdf",
         markSchemeUrl:
           "https://www.physicsandmathstutor.com/papers/Physics-1H/MS/2023-ms.pdf",
@@ -378,6 +462,8 @@ describe("discoverAqaPhysicsPaper1HigherFromHtml", () => {
       <main>
         <a href="/papers/Physics-1H/QP/2023-qp.pdf">June 2023 QP</a>
         <a href="/papers/Physics-1H/MS/2023-ms.pdf">June 2023 MS</a>
+        <a href="/papers/Physics-1H/QP/2022-qp.pdf">June 2022 QP</a>
+        <a href="/papers/Physics-1H/MS/2022-ms.pdf">June 2022 MS</a>
         <a href="/papers/Physics-1H/QP/2024-qp.pdf">June 2024 QP</a>
       </main>
     `;
@@ -396,6 +482,8 @@ describe("discoverAqaPhysicsPaper1HigherFromHtml", () => {
         <a href="/papers/Physics-1H/QP/2023-qp-a.pdf">June 2023 QP</a>
         <a href="/papers/Physics-1H/QP/2023-qp-b.pdf">June 2023 QP</a>
         <a href="/papers/Physics-1H/MS/2023-ms.pdf">June 2023 MS</a>
+        <a href="/papers/Physics-1H/QP/2022-qp.pdf">June 2022 QP</a>
+        <a href="/papers/Physics-1H/MS/2022-ms.pdf">June 2022 MS</a>
         <a href="/papers/Physics-1H/QP/2024-qp.pdf">June 2024 QP</a>
         <a href="/papers/Physics-1H/MS/2024-ms.pdf">June 2024 MS</a>
       </main>
@@ -404,5 +492,70 @@ describe("discoverAqaPhysicsPaper1HigherFromHtml", () => {
     expect(() => discoverAqaPhysicsPaper1HigherFromHtml(html)).toThrow(
       "duplicate questionPaperUrl link for June 2023",
     );
+  });
+});
+
+describe("discoverAqaPhysicsPaper2HigherFromHtml", () => {
+  it("selects the June 2022-2024 Physics Paper 2H QP and MS pairs", () => {
+    const html = `
+      <main>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Physics-2F/QP/June 2022 QP.pdf">June 2022 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Physics-2F/MS/June 2022 MS.pdf">June 2022 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Physics-2H/QP/June 2022 QP.pdf">June 2022 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Physics-2H/MS/June 2022 MS.pdf">June 2022 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Physics-2H/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Physics-2H/MS/June 2023 MS.pdf">June 2023 MS</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Physics-2H/QP/June 2024 QP.pdf">June 2024 QP</a>
+        <a href="/download/Science/GCSE/Past-Papers/AQA/Physics-2H/MS/June 2024 MS.pdf">June 2024 MS</a>
+      </main>
+    `;
+
+    expect(discoverAqaPhysicsPaper2HigherFromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Physics-2H/QP/June%202022%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Physics-2H/MS/June%202022%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Physics",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2022",
+        year: 2022,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Physics-2H/QP/June%202023%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Physics-2H/MS/June%202023%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Physics",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Physics-2H/QP/June%202024%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Science/GCSE/Past-Papers/AQA/Physics-2H/MS/June%202024%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Physics",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
   });
 });

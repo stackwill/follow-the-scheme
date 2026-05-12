@@ -6,6 +6,8 @@ import {
   discoverAqaChemistryPaper2Higher,
   discoverAqaGcseComputerSciencePaper1BPython,
   discoverAqaPhysicsPaper1Higher,
+  discoverAqaPhysicsPaper2Higher,
+  discoverEdexcelAGeographyPaper1,
   discoverOcrGcseBusinessPaper1,
   discoverOcrGcseBusinessPaper2,
 } from "@/lib/import/pmt/discovery";
@@ -16,6 +18,8 @@ export const AQA_SCIENCE_FAMILY_PAGE_URL = "https://www.physicsandmathstutor.com
 
 export const AQA_PHYSICS_PAPER_1_HIGHER_ADAPTER_KEY =
   "aqa-combined-science-physics-paper-1-higher";
+export const AQA_PHYSICS_PAPER_2_HIGHER_ADAPTER_KEY =
+  "aqa-combined-science-physics-paper-2-higher";
 export const AQA_BIOLOGY_PAPER_1_HIGHER_ADAPTER_KEY =
   "aqa-combined-science-biology-paper-1-higher";
 export const AQA_BIOLOGY_PAPER_2_HIGHER_ADAPTER_KEY =
@@ -26,23 +30,29 @@ export const AQA_CHEMISTRY_PAPER_2_HIGHER_ADAPTER_KEY =
   "aqa-combined-science-chemistry-paper-2-higher";
 export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY =
   "aqa-gcse-computer-science-paper-1b-python";
+export const EDEXCEL_A_GEOGRAPHY_PAPER_1_ADAPTER_KEY =
+  "edexcel-a-geography-paper-1-physical-environment";
 export const OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY = "ocr-gcse-business-paper-1";
 export const OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY = "ocr-gcse-business-paper-2";
 
 export type SupportedImportYear = 2021 | 2022 | 2023 | 2024;
-export type PhysicsBenchmarkYear = 2023 | 2024;
+export type PhysicsBenchmarkYear = 2022 | 2023 | 2024;
+export type PhysicsPaper2BenchmarkYear = 2022 | 2023 | 2024;
 export type BiologyBenchmarkYear = 2021 | 2022 | 2023 | 2024;
 export type ChemistryBenchmarkYear = 2023 | 2024;
-export type ComputerScienceBenchmarkYear = 2024;
+export type ComputerScienceBenchmarkYear = 2023 | 2024;
+export type EdexcelAGeographyPaper1Year = 2023 | 2024;
 export type OcrBusinessBenchmarkYear = 2023 | 2024;
 
 export type SupportedPaperCandidate =
   | Awaited<ReturnType<typeof discoverAqaPhysicsPaper1Higher>>[number]
+  | Awaited<ReturnType<typeof discoverAqaPhysicsPaper2Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaBiologyPaper1Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaBiologyPaper2Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaChemistryPaper1Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaChemistryPaper2Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaGcseComputerSciencePaper1BPython>>[number]
+  | Awaited<ReturnType<typeof discoverEdexcelAGeographyPaper1>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper1>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper2>>[number];
 
@@ -66,12 +76,25 @@ const BIOLOGY_TOTAL_MARKS: Record<BiologyBenchmarkYear, number> = {
 };
 
 const SCIENCE_TOTAL_MARKS: Record<PhysicsBenchmarkYear, number> = {
+  2022: 70,
+  2023: 70,
+  2024: 70,
+};
+
+const PHYSICS_PAPER_2_TOTAL_MARKS: Record<PhysicsPaper2BenchmarkYear, number> = {
+  2022: 70,
   2023: 70,
   2024: 70,
 };
 
 const COMPUTER_SCIENCE_TOTAL_MARKS: Record<ComputerScienceBenchmarkYear, number> = {
+  2023: 90,
   2024: 90,
+};
+
+const EDEXCEL_A_GEOGRAPHY_PAPER_1_TOTAL_MARKS: Record<EdexcelAGeographyPaper1Year, number> = {
+  2023: 102,
+  2024: 102,
 };
 
 const OCR_BUSINESS_TOTAL_MARKS: Record<OcrBusinessBenchmarkYear, number> = {
@@ -88,6 +111,16 @@ export const AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION = {
   discover: discoverAqaPhysicsPaper1Higher,
   paperDir: getPaperDir,
 } satisfies SupportedPaperDefinition<PhysicsBenchmarkYear>;
+
+export const AQA_PHYSICS_PAPER_2_HIGHER_DEFINITION = {
+  adapterKey: AQA_PHYSICS_PAPER_2_HIGHER_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-2/",
+  specCode: "8464",
+  title: (candidate) => `AQA Combined Science Trilogy Physics Paper 2 Higher ${candidate.sessionLabel}`,
+  totalMarks: PHYSICS_PAPER_2_TOTAL_MARKS,
+  discover: discoverAqaPhysicsPaper2Higher,
+  paperDir: (year) => getPaperDirForAdapter(AQA_PHYSICS_PAPER_2_HIGHER_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<PhysicsPaper2BenchmarkYear>;
 
 export const AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION = {
   adapterKey: AQA_BIOLOGY_PAPER_1_HIGHER_ADAPTER_KEY,
@@ -139,6 +172,16 @@ export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION = {
   paperDir: (year) => getPaperDirForAdapter(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<ComputerScienceBenchmarkYear>;
 
+export const EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION = {
+  adapterKey: EDEXCEL_A_GEOGRAPHY_PAPER_1_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-geography/edexcel-a-paper-1/",
+  specCode: "1GA0/01",
+  title: (candidate) => `Edexcel A GCSE Geography Paper 1: The Physical Environment ${candidate.sessionLabel}`,
+  totalMarks: EDEXCEL_A_GEOGRAPHY_PAPER_1_TOTAL_MARKS,
+  discover: discoverEdexcelAGeographyPaper1,
+  paperDir: (year) => getPaperDirForAdapter(EDEXCEL_A_GEOGRAPHY_PAPER_1_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<EdexcelAGeographyPaper1Year>;
+
 export const OCR_GCSE_BUSINESS_PAPER_1_DEFINITION = {
   adapterKey: OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY,
   sourceProvider: "OCR",
@@ -165,11 +208,13 @@ export const OCR_GCSE_BUSINESS_PAPER_2_DEFINITION = {
 
 export const supportedPaperDefinitions = [
   AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION,
+  AQA_PHYSICS_PAPER_2_HIGHER_DEFINITION,
   AQA_BIOLOGY_PAPER_1_HIGHER_DEFINITION,
   AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION,
   AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
   AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
+  EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
 ] as const;

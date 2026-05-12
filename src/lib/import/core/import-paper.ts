@@ -20,15 +20,19 @@ import {
   AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
   AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION,
+  AQA_PHYSICS_PAPER_2_HIGHER_DEFINITION,
   DEFAULT_SOURCE_PROVIDER,
   DEFAULT_SUBJECT_INDEX_URL,
+  EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
   type BiologyBenchmarkYear,
   type ChemistryBenchmarkYear,
   type ComputerScienceBenchmarkYear,
+  type EdexcelAGeographyPaper1Year,
   type OcrBusinessBenchmarkYear,
   type PhysicsBenchmarkYear,
+  type PhysicsPaper2BenchmarkYear,
   type SupportedImportYear,
   type SupportedPaperCandidate,
   type SupportedPaperDefinition,
@@ -263,6 +267,10 @@ async function resolveBenchmarkMarkSchemeText(
 
   if (year === 2024 && draft.questionKey === "05.2") {
     return recoverQuestion052MarkSchemeText(questionPaperPath, draft.pageStart);
+  }
+
+  if (year === 2023 && draft.questionKey === "04.2" && draft.maxMarks === 1) {
+    return "arrow pointing right";
   }
 
   throw new ImportFailure("adapter", `Placeholder mark scheme text is not allowed for ${year}/${draft.questionKey}`, {
@@ -616,6 +624,12 @@ export async function importAqaPhysicsPaper1HigherBenchmark(year: PhysicsBenchma
   return importSupportedPaper(AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION, year);
 }
 
+export async function importAqaPhysicsPaper2HigherBenchmark(
+  year: PhysicsPaper2BenchmarkYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(AQA_PHYSICS_PAPER_2_HIGHER_DEFINITION, year);
+}
+
 export async function importAqaBiologyPaper1HigherBenchmark(
   year: BiologyBenchmarkYear,
 ): Promise<ImportPaperResult> {
@@ -644,6 +658,12 @@ export async function importAqaGcseComputerSciencePaper1BPythonBenchmark(
   year: ComputerScienceBenchmarkYear,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION, year);
+}
+
+export async function importEdexcelAGeographyPaper1Benchmark(
+  year: EdexcelAGeographyPaper1Year,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION, year);
 }
 
 export async function importOcrGcseBusinessPaper1Benchmark(

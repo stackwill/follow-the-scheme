@@ -16,6 +16,8 @@
     "release:check": "bun run scripts/release-check.ts",
     "import:sync": "bun run scripts/sync-supported-papers.ts",
     "import:smoke": "bun run scripts/run-import-smoke.ts",
+    "crop:preview": "bun run tools/crop-preview/generate.ts",
+    "crop:manual-review": "bun run tools/manual-crop-review/generate.ts",
     "data:normalize-paths": "bun run scripts/normalize-data-paths.ts",
     "data:release": "bun run scripts/create-data-release.ts",
     "data:deploy": "bun run scripts/deploy-data-release.ts"

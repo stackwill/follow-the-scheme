@@ -13,11 +13,17 @@ import {
   importAqaChemistryPaper2HigherBenchmark,
   importAqaGcseComputerSciencePaper1BPythonBenchmark,
   importAqaPhysicsPaper1HigherBenchmark,
+  importAqaPhysicsPaper2HigherBenchmark,
+  importEdexcelAGeographyPaper1Benchmark,
   importOcrGcseBusinessPaper1Benchmark,
   importOcrGcseBusinessPaper2Benchmark,
 } from "@/lib/import/core/import-paper";
 
 const BENCHMARK_EXPECTATIONS = {
+  2022: {
+    questionCount: 27,
+    totalMarks: 70,
+  },
   2023: {
     questionCount: 31,
     totalMarks: 70,
@@ -27,9 +33,39 @@ const BENCHMARK_EXPECTATIONS = {
     totalMarks: 70,
   },
 } as const;
-const COMPUTER_SCIENCE_EXPECTATION = {
-  questionCount: 36,
-  totalMarks: 90,
+const PHYSICS_PAPER_2_EXPECTATIONS = {
+  2022: {
+    questionCount: 24,
+    totalMarks: 70,
+  },
+  2023: {
+    questionCount: 30,
+    totalMarks: 70,
+  },
+  2024: {
+    questionCount: 30,
+    totalMarks: 70,
+  },
+} as const;
+const COMPUTER_SCIENCE_EXPECTATIONS = {
+  2023: {
+    questionCount: 31,
+    totalMarks: 90,
+  },
+  2024: {
+    questionCount: 36,
+    totalMarks: 90,
+  },
+} as const;
+const EDEXCEL_A_GEOGRAPHY_PAPER_1_EXPECTATIONS = {
+  2023: {
+    questionCount: 40,
+    totalMarks: 102,
+  },
+  2024: {
+    questionCount: 39,
+    totalMarks: 102,
+  },
 } as const;
 const BIOLOGY_EXPECTATIONS = {
   paper1: {
@@ -136,7 +172,7 @@ async function getPaperSnapshot(paperId: string) {
   return paper;
 }
 
-async function assertPaperIntegrity(year: 2023 | 2024, paperId: string) {
+async function assertPaperIntegrity(year: 2022 | 2023 | 2024, paperId: string) {
   const paper = await getPaperSnapshot(paperId);
   const expectation = BENCHMARK_EXPECTATIONS[year];
 
@@ -269,7 +305,7 @@ if (dbPushExitCode !== 0) {
 
 const importedPaperIds: string[] = [];
 
-for (const year of [2023, 2024] as const) {
+for (const year of [2022, 2023, 2024] as const) {
   const initialResult = await importAqaPhysicsPaper1HigherBenchmark(year);
   importedPaperIds.push(initialResult.paperId);
   const initialPaper = await assertPaperIntegrity(year, initialResult.paperId);
@@ -302,63 +338,174 @@ for (const year of [2023, 2024] as const) {
 
 const results = await Promise.all(importedPaperIds.map((paperId) => getPaperSnapshot(paperId)));
 
-const csInitialResult = await importAqaGcseComputerSciencePaper1BPythonBenchmark(2024);
-const csInitialPaper = await getPaperSnapshot(csInitialResult.paperId);
-const csInitialQuestionIds = new Map(
-  csInitialPaper.questions.map((question) => [question.questionKey, question.id] as const),
-);
-
-assert(
-  csInitialPaper.questions.length === COMPUTER_SCIENCE_EXPECTATION.questionCount,
-  `Computer Science imported ${csInitialPaper.questions.length} questions, expected ${COMPUTER_SCIENCE_EXPECTATION.questionCount}`,
-);
-assert(
-  csInitialPaper.totalMarks === COMPUTER_SCIENCE_EXPECTATION.totalMarks,
-  `Computer Science imported ${csInitialPaper.totalMarks} total marks, expected ${COMPUTER_SCIENCE_EXPECTATION.totalMarks}`,
-);
-
-for (const question of csInitialPaper.questions) {
-  const filePath = assetFilePath(question.primaryCropPath);
-  await access(filePath);
-  const metadata = await sharp(filePath).metadata();
-
-  assert(metadata.width, `Missing crop width metadata for ${question.primaryCropPath}`);
-  assert(metadata.height, `Missing crop height metadata for ${question.primaryCropPath}`);
-  assert(
-    question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
-    `Computer Science imported invalid mark scheme text for ${question.questionKey}`,
+for (const year of [2022, 2023, 2024] as const) {
+  const expectation = PHYSICS_PAPER_2_EXPECTATIONS[year];
+  const initialResult = await importAqaPhysicsPaper2HigherBenchmark(year);
+  const initialPaper = await getPaperSnapshot(initialResult.paperId);
+  const initialQuestionIds = new Map(
+    initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
   );
+
+  assert(
+    initialPaper.questions.length === expectation.questionCount,
+    `Physics Paper 2H ${year} imported ${initialPaper.questions.length} questions, expected ${expectation.questionCount}`,
+  );
+  assert(
+    initialPaper.totalMarks === expectation.totalMarks,
+    `Physics Paper 2H ${year} imported ${initialPaper.totalMarks} total marks, expected ${expectation.totalMarks}`,
+  );
+
+  for (const question of initialPaper.questions) {
+    await access(assetFilePath(question.primaryCropPath));
+    assert(
+      question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
+      `Physics Paper 2H ${year} imported invalid mark scheme text for ${question.questionKey}`,
+    );
+  }
+
+  const repeatResult = await importAqaPhysicsPaper2HigherBenchmark(year);
+  const repeatedPaper = await getPaperSnapshot(repeatResult.paperId);
+
+  assert(
+    initialResult.paperId === repeatResult.paperId,
+    `Physics Paper 2H ${year} re-import changed paper id from ${initialResult.paperId} to ${repeatResult.paperId}`,
+  );
+  assert(
+    initialResult.questionCount === repeatResult.questionCount,
+    `Physics Paper 2H ${year} re-import changed question count from ${initialResult.questionCount} to ${repeatResult.questionCount}`,
+  );
+  assert(
+    initialResult.totalMarks === repeatResult.totalMarks,
+    `Physics Paper 2H ${year} re-import changed total marks from ${initialResult.totalMarks} to ${repeatResult.totalMarks}`,
+  );
+
+  for (const question of repeatedPaper.questions) {
+    assert(
+      initialQuestionIds.get(question.questionKey) === question.id,
+      `Physics Paper 2H ${year}/${question.questionKey} changed question id across repeat import`,
+    );
+  }
 }
 
-const csQuestion15 = csInitialPaper.questions.find((question) => question.questionKey === "15");
+const csPapers = [];
 
-assert(csQuestion15, "Missing imported Computer Science question 15");
-assert(
-  (JSON.parse(csQuestion15.supportingAssetPaths) as string[]).length > 0,
-  "Computer Science question 15 should preserve multi-page supporting crops",
-);
-
-const csRepeatResult = await importAqaGcseComputerSciencePaper1BPythonBenchmark(2024);
-const csRepeatedPaper = await getPaperSnapshot(csRepeatResult.paperId);
-
-assert(
-  csInitialResult.paperId === csRepeatResult.paperId,
-  `Computer Science re-import changed paper id from ${csInitialResult.paperId} to ${csRepeatResult.paperId}`,
-);
-assert(
-  csInitialResult.questionCount === csRepeatResult.questionCount,
-  `Computer Science re-import changed question count from ${csInitialResult.questionCount} to ${csRepeatResult.questionCount}`,
-);
-assert(
-  csInitialResult.totalMarks === csRepeatResult.totalMarks,
-  `Computer Science re-import changed total marks from ${csInitialResult.totalMarks} to ${csRepeatResult.totalMarks}`,
-);
-
-for (const question of csRepeatedPaper.questions) {
-  assert(
-    csInitialQuestionIds.get(question.questionKey) === question.id,
-    `Computer Science/${question.questionKey} changed question id across repeat import`,
+for (const year of [2023, 2024] as const) {
+  const expectation = COMPUTER_SCIENCE_EXPECTATIONS[year];
+  const csInitialResult = await importAqaGcseComputerSciencePaper1BPythonBenchmark(year);
+  const csInitialPaper = await getPaperSnapshot(csInitialResult.paperId);
+  const csInitialQuestionIds = new Map(
+    csInitialPaper.questions.map((question) => [question.questionKey, question.id] as const),
   );
+
+  assert(
+    csInitialPaper.questions.length === expectation.questionCount,
+    `Computer Science ${year} imported ${csInitialPaper.questions.length} questions, expected ${expectation.questionCount}`,
+  );
+  assert(
+    csInitialPaper.totalMarks === expectation.totalMarks,
+    `Computer Science ${year} imported ${csInitialPaper.totalMarks} total marks, expected ${expectation.totalMarks}`,
+  );
+
+  for (const question of csInitialPaper.questions) {
+    const filePath = assetFilePath(question.primaryCropPath);
+    await access(filePath);
+    const metadata = await sharp(filePath).metadata();
+
+    assert(metadata.width, `Missing crop width metadata for ${question.primaryCropPath}`);
+    assert(metadata.height, `Missing crop height metadata for ${question.primaryCropPath}`);
+    assert(
+      question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
+      `Computer Science ${year} imported invalid mark scheme text for ${question.questionKey}`,
+    );
+  }
+
+  if (year === 2024) {
+    const csQuestion15 = csInitialPaper.questions.find((question) => question.questionKey === "15");
+
+    assert(csQuestion15, "Missing imported Computer Science 2024 question 15");
+    assert(
+      (JSON.parse(csQuestion15.supportingAssetPaths) as string[]).length > 0,
+      "Computer Science 2024 question 15 should preserve multi-page supporting crops",
+    );
+  }
+
+  const csRepeatResult = await importAqaGcseComputerSciencePaper1BPythonBenchmark(year);
+  const csRepeatedPaper = await getPaperSnapshot(csRepeatResult.paperId);
+
+  assert(
+    csInitialResult.paperId === csRepeatResult.paperId,
+    `Computer Science ${year} re-import changed paper id from ${csInitialResult.paperId} to ${csRepeatResult.paperId}`,
+  );
+  assert(
+    csInitialResult.questionCount === csRepeatResult.questionCount,
+    `Computer Science ${year} re-import changed question count from ${csInitialResult.questionCount} to ${csRepeatResult.questionCount}`,
+  );
+  assert(
+    csInitialResult.totalMarks === csRepeatResult.totalMarks,
+    `Computer Science ${year} re-import changed total marks from ${csInitialResult.totalMarks} to ${csRepeatResult.totalMarks}`,
+  );
+
+  for (const question of csRepeatedPaper.questions) {
+    assert(
+      csInitialQuestionIds.get(question.questionKey) === question.id,
+      `Computer Science ${year}/${question.questionKey} changed question id across repeat import`,
+    );
+  }
+
+  csPapers.push(csRepeatedPaper);
+}
+
+const geographyPapers = [];
+
+for (const year of [2023, 2024] as const) {
+  const expectation = EDEXCEL_A_GEOGRAPHY_PAPER_1_EXPECTATIONS[year];
+  const initialResult = await importEdexcelAGeographyPaper1Benchmark(year);
+  const initialPaper = await getPaperSnapshot(initialResult.paperId);
+  const initialQuestionIds = new Map(
+    initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
+  );
+
+  assert(
+    initialPaper.questions.length === expectation.questionCount,
+    `Edexcel A Geography Paper 1 ${year} imported ${initialPaper.questions.length} questions, expected ${expectation.questionCount}`,
+  );
+  assert(
+    initialPaper.totalMarks === expectation.totalMarks,
+    `Edexcel A Geography Paper 1 ${year} imported ${initialPaper.totalMarks} total marks, expected ${expectation.totalMarks}`,
+  );
+
+  for (const question of initialPaper.questions) {
+    await access(assetFilePath(question.primaryCropPath));
+    assert(
+      question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
+      `Edexcel A Geography Paper 1 ${year} imported invalid mark scheme text for ${question.questionKey}`,
+    );
+  }
+
+  const repeatResult = await importEdexcelAGeographyPaper1Benchmark(year);
+  const repeatedPaper = await getPaperSnapshot(repeatResult.paperId);
+
+  assert(
+    initialResult.paperId === repeatResult.paperId,
+    `Edexcel A Geography Paper 1 ${year} re-import changed paper id from ${initialResult.paperId} to ${repeatResult.paperId}`,
+  );
+  assert(
+    initialResult.questionCount === repeatResult.questionCount,
+    `Edexcel A Geography Paper 1 ${year} re-import changed question count from ${initialResult.questionCount} to ${repeatResult.questionCount}`,
+  );
+  assert(
+    initialResult.totalMarks === repeatResult.totalMarks,
+    `Edexcel A Geography Paper 1 ${year} re-import changed total marks from ${initialResult.totalMarks} to ${repeatResult.totalMarks}`,
+  );
+
+  for (const question of repeatedPaper.questions) {
+    assert(
+      initialQuestionIds.get(question.questionKey) === question.id,
+      `Edexcel A Geography Paper 1 ${year}/${question.questionKey} changed question id across repeat import`,
+    );
+  }
+
+  geographyPapers.push(repeatedPaper);
 }
 
 const biologyImports = [
@@ -570,9 +717,17 @@ for (const paper of results) {
   );
 }
 
-console.log(
-  `Imported ${csRepeatedPaper.title}: ${csRepeatedPaper.questions.length} questions, ${csRepeatedPaper.totalMarks} marks, paper ${csRepeatedPaper.id}`,
-);
+for (const paper of csPapers) {
+  console.log(
+    `Imported ${paper.title}: ${paper.questions.length} questions, ${paper.totalMarks} marks, paper ${paper.id}`,
+  );
+}
+
+for (const paper of geographyPapers) {
+  console.log(
+    `Imported ${paper.title}: ${paper.questions.length} questions, ${paper.totalMarks} marks, paper ${paper.id}`,
+  );
+}
 
 for (const paper of biologyPapers) {
   console.log(
