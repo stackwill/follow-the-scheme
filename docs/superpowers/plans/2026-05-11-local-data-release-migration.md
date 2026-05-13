@@ -28,10 +28,10 @@ References checked on 2026-05-11:
 
 ## Production SSH Target
 
-- External host: `176.20.179.79`
+- External host: use the private host recorded in local `AGENTS.md`
 - SSH user: `will`
 - SSH port: `42143`
-- Updated on 2026-05-13 after the home IP changed. Verify with `ssh -p 42143 will@176.20.179.79`; the host should respond as `deployme`.
+- Verify with `ssh -p 42143 will@<host-from-local-AGENTS.md>`; the host should respond as `deployme`.
 - Use these defaults in the data-release upload script unless Will provides updated server details.
 
 ## Target Operating Model
@@ -1253,7 +1253,7 @@ Create `scripts/deploy-data-release.ts`.
 The script should require:
 
 - `DATA_RELEASE_TARBALL` or first CLI arg
-- `DEPLOY_HOST`, default `176.20.179.79`
+- `DEPLOY_HOST`, required production host
 - `DEPLOY_USER`, default `will`
 - `DEPLOY_PORT`, default `42143`
 - `APP_DIR`, default `/opt/follow-the-scheme`
@@ -1301,7 +1301,7 @@ bun run data:release
 ## Deploy data
 
 ```bash
-DEPLOY_HOST=176.20.179.79 DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
+DEPLOY_HOST=<host-from-local-AGENTS.md> DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
 ```
 
 ## Rollback
@@ -1309,7 +1309,7 @@ DEPLOY_HOST=176.20.179.79 DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun r
 SSH to the server:
 
 ```bash
-ssh -p 42143 will@176.20.179.79
+ssh -p 42143 will@<host-from-local-AGENTS.md>
 cd /opt/follow-the-scheme
 mv data data.bad
 mv data.previous data
@@ -1456,7 +1456,7 @@ Expected:
 SSH to server:
 
 ```bash
-ssh -p 42143 will@176.20.179.79
+ssh -p 42143 will@<host-from-local-AGENTS.md>
 cd /opt/follow-the-scheme
 mkdir -p data-backups
 cp -a data "data-backups/pre-local-data-release-$(date -u +%Y%m%dT%H%M%SZ)"
@@ -1477,7 +1477,7 @@ Wait for GitHub Actions to complete. Confirm the app still runs with the existin
 Run locally:
 
 ```bash
-DEPLOY_HOST=176.20.179.79 DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
+DEPLOY_HOST=<host-from-local-AGENTS.md> DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
 ```
 
 - [ ] **Step 5: Verify production manually**

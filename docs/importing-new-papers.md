@@ -181,7 +181,7 @@ bun run import:sync
 bun run import:smoke
 bun run data:normalize-paths
 bun run data:release
-DEPLOY_HOST=176.20.179.79 DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
+DEPLOY_HOST=<host-from-local-AGENTS.md> DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
 ```
 
 For an already-supported adapter/year where no code changes are needed, a data release is enough. No Git push is needed just to move newly imported local data to production.
