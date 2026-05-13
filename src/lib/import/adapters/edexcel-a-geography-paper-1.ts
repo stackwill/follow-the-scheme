@@ -426,6 +426,7 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
         adapterKey: ADAPTER_KEY,
         sourceQuestionLabel: start.label,
         sourceMarkSchemeLabel: start.label,
+        contextQuestionLabel: null,
         warnings: [],
       },
     });

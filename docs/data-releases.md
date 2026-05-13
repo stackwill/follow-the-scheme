@@ -5,7 +5,7 @@ Use this when adding past papers that the app already knows how to import.
 The production server is currently:
 
 ```bash
-ssh -p 42143 will@91.151.248.184
+ssh -p 42143 will@176.20.179.79
 ```
 
 ## Local Release
@@ -22,7 +22,7 @@ bun run data:release
 ## Deploy Data
 
 ```bash
-DEPLOY_HOST=91.151.248.184 DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
+DEPLOY_HOST=176.20.179.79 DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
 ```
 
 The deploy script uploads with `rsync`, verifies the checksum on the server, backs up the current `data/` directory, activates the new release, restores production attempts by stable paper/question identity, runs Prisma migrations, and restarts Docker Compose.
@@ -32,7 +32,7 @@ The deploy script uploads with `rsync`, verifies the checksum on the server, bac
 SSH to the server:
 
 ```bash
-ssh -p 42143 will@91.151.248.184
+ssh -p 42143 will@176.20.179.79
 cd /opt/follow-the-scheme
 docker compose down
 rm -rf data.failed

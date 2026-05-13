@@ -26,7 +26,7 @@ const PHYSICS_PAPER_1_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const PHYSICS_PAPER_2_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const BIOLOGY_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
 const CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
-const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2023, 2024] as const;
+const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS = [2023, 2024] as const;
 const OCR_BUSINESS_BENCHMARK_YEARS = [2023, 2024] as const;
 
@@ -34,10 +34,6 @@ type SessionLinks = {
   questionPaperUrl?: string;
   markSchemeUrl?: string;
 };
-
-function normalizeLinkUrl(href: string) {
-  return new URL(href, AQA_PHYSICS_PAPER_1_URL).toString();
-}
 
 function normalizeLinkUrlForBase(href: string, baseUrl: string) {
   return new URL(href, baseUrl).toString();
