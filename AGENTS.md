@@ -8,13 +8,13 @@
 
 ## Production Server
 
-- The live self-hosted server is reachable externally at `91.151.248.184`.
+- The live self-hosted server is reachable externally at `176.20.179.79`.
 - SSH user: `will`.
 - SSH port: `42143`.
-- Verified on 2026-05-11 with:
+- Updated on 2026-05-13 after the home IP changed. Verify with:
 
 ```bash
-ssh -p 42143 will@91.151.248.184
+ssh -p 42143 will@176.20.179.79
 ```
 
 - The host responded as `deployme`.

@@ -35,7 +35,7 @@ if (!releaseTarball) {
   throw new Error("Usage: bun run data:deploy <data/releases/<release>.tar.gz>");
 }
 
-const deployHost = process.env.DEPLOY_HOST ?? "91.151.248.184";
+const deployHost = process.env.DEPLOY_HOST ?? "176.20.179.79";
 const deployUser = process.env.DEPLOY_USER ?? "will";
 const deployPort = process.env.DEPLOY_PORT ?? "42143";
 const appDir = process.env.APP_DIR ?? "/opt/follow-the-scheme";

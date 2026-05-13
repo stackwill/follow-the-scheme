@@ -17,7 +17,7 @@ const QUESTION_TOP_PADDING = 14;
 const QUESTION_BOTTOM_PADDING = 28;
 const MIN_BOX_HEIGHT = 88;
 const MARK_COLUMN_MIN_X = 500;
-const MARK_COLUMN_MAX_X = 545;
+const MARK_COLUMN_MAX_X = 560;
 const EXPECTED_TOTAL_MARKS = 90;
 const MARK_RANGE_PATTERN = /^(\d+)[-\u2010-\u2015](\d+)$/;
 
@@ -121,7 +121,7 @@ function parseQuestionLabel(line: Line) {
   }
 
   const mainKey = `${digits[0]}${digits[1]}`.padStart(2, "0");
-  const partKey = hasDot && digits[2] ? digits[2] : null;
+  const partKey = (hasDot || digits.length === 3) && digits[2] ? digits[2] : null;
 
   return {
     label: formatQuestionLabel(mainKey, partKey),
@@ -131,7 +131,7 @@ function parseQuestionLabel(line: Line) {
 }
 
 function parseMarkSchemeLabel(line: Line) {
-  const questionItem = line.items.find((item) => item.x >= 55 && item.x <= 90 && /^\d{2}$/.test(item.text.trim()));
+  const questionItem = line.items.find((item) => item.x >= 45 && item.x <= 90 && /^\d{2}$/.test(item.text.trim()));
 
   if (!questionItem) {
     return null;

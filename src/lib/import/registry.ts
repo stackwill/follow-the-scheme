@@ -40,7 +40,7 @@ export type PhysicsBenchmarkYear = 2022 | 2023 | 2024;
 export type PhysicsPaper2BenchmarkYear = 2022 | 2023 | 2024;
 export type BiologyBenchmarkYear = 2021 | 2022 | 2023 | 2024;
 export type ChemistryBenchmarkYear = 2023 | 2024;
-export type ComputerScienceBenchmarkYear = 2023 | 2024;
+export type ComputerScienceBenchmarkYear = 2022 | 2023 | 2024;
 export type EdexcelAGeographyPaper1Year = 2023 | 2024;
 export type OcrBusinessBenchmarkYear = 2023 | 2024;
 
@@ -88,6 +88,7 @@ const PHYSICS_PAPER_2_TOTAL_MARKS: Record<PhysicsPaper2BenchmarkYear, number> = 
 };
 
 const COMPUTER_SCIENCE_TOTAL_MARKS: Record<ComputerScienceBenchmarkYear, number> = {
+  2022: 90,
   2023: 90,
   2024: 90,
 };
