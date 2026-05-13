@@ -108,7 +108,7 @@ Then deploy the generated release tarball to the production server.
 Default production target:
 
 ```bash
-DEPLOY_HOST=176.20.179.79 DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
+DEPLOY_HOST=<host-from-local-AGENTS.md> DEPLOY_PORT=42143 APP_DIR=/opt/follow-the-scheme bun run data:deploy data/releases/<release>.tar.gz
 ```
 
 Use the newest release artifact from `data/releases/`.
