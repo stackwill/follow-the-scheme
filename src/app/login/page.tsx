@@ -86,7 +86,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <span />
             <span />
           </span>
-          <strong>reallycool.lol</strong>
+          <strong>ihategcse</strong>
         </Link>
         <div className="app-topbar__actions">
           <span className="xp-chip">Secure access</span>
@@ -113,7 +113,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
         <aside className="study-callout login-access-card" aria-labelledby="login-title">
           <strong>Continue with your school</strong>
-          <span>Use the same school name you were given for reallycool.lol.</span>
+          <span>Use the same school name you were given for ihategcse.</span>
           <form action={signIn} className="login-form">
             <input type="hidden" name="next" value={safeNextPath(params.next)} />
             <label className="field-stack login-field">

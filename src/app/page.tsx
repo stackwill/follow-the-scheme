@@ -132,7 +132,7 @@ export default async function HomePage({
             <span />
             <span />
           </span>
-          <strong>reallycool.lol</strong>
+          <strong>ihategcse</strong>
         </Link>
         <div className="app-topbar__actions">
           <span className="xp-chip">{papers.length} papers</span>
