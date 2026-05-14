@@ -39,6 +39,37 @@ function parseSupportingAssetPaths(value: string) {
   return [];
 }
 
+function isEdexcelHistoryMedicineSourceAsset(
+  adapterKey: string,
+  questionKey: string,
+  assetPath: string,
+) {
+  return (
+    adapterKey === "edexcel-gcse-history-paper-1-medicine" &&
+    questionKey.startsWith("2.") &&
+    /\/2-[ab]-page-18\.png$/.test(assetPath)
+  );
+}
+
+function sourceMaterialImagePathsForGroup(
+  adapterKey: string,
+  groupKey: string,
+  questions: Array<{ questionKey: string; supportingAssetPaths: string }>,
+) {
+  if (adapterKey !== "edexcel-gcse-history-paper-1-medicine" || groupKey !== "2") {
+    return [];
+  }
+
+  const sourceAssets = questions.flatMap((groupQuestion) =>
+    parseSupportingAssetPaths(groupQuestion.supportingAssetPaths).filter((assetPath) =>
+      isEdexcelHistoryMedicineSourceAsset(adapterKey, groupQuestion.questionKey, assetPath),
+    ),
+  );
+  const fullSourcePage = sourceAssets.find((assetPath) => /\/2-a-page-18\.png$/.test(assetPath));
+
+  return [...new Set(fullSourcePage ? [fullSourcePage] : sourceAssets)];
+}
+
 export default async function QuestionPage({
   params,
 }: {
@@ -75,6 +106,11 @@ export default async function QuestionPage({
     notFound();
   }
 
+  const sourceMaterialImagePaths = sourceMaterialImagePathsForGroup(
+    paper.adapterKey,
+    currentGroup.key,
+    currentGroup.questions,
+  );
   const formQuestions = currentGroup.questions.map((groupQuestion) => {
     const paperOnlyQuestion = detectPaperOnlyQuestion({
       questionText: groupQuestion.extractedQuestionText,
@@ -92,7 +128,10 @@ export default async function QuestionPage({
       questionKey: groupQuestion.questionKey,
       maxMarks: groupQuestion.maxMarks,
       imagePath: groupQuestion.primaryCropPath,
-      continuationImagePaths: parseSupportingAssetPaths(groupQuestion.supportingAssetPaths),
+      continuationImagePaths: parseSupportingAssetPaths(groupQuestion.supportingAssetPaths).filter(
+        (assetPath) =>
+          !isEdexcelHistoryMedicineSourceAsset(paper.adapterKey, groupQuestion.questionKey, assetPath),
+      ),
       paperOnlyReason: paperOnlyQuestion?.reason ?? null,
       selectionQuestion: selectionQuestion
         ? {
@@ -190,6 +229,7 @@ export default async function QuestionPage({
           action={submit}
           paperId={paper.id}
           groupKey={currentGroup.key}
+          sourceMaterialImagePaths={sourceMaterialImagePaths}
           questions={formQuestions}
         />
       </div>

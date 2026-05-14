@@ -24,12 +24,14 @@ import {
   DEFAULT_SOURCE_PROVIDER,
   DEFAULT_SUBJECT_INDEX_URL,
   EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION,
+  EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
   type BiologyBenchmarkYear,
   type ChemistryBenchmarkYear,
   type ComputerScienceBenchmarkYear,
   type EdexcelAGeographyPaper1Year,
+  type EdexcelGcseHistoryPaper1MedicineYear,
   type OcrBusinessBenchmarkYear,
   type PhysicsBenchmarkYear,
   type PhysicsPaper2BenchmarkYear,
@@ -664,6 +666,12 @@ export async function importEdexcelAGeographyPaper1Benchmark(
   year: EdexcelAGeographyPaper1Year,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION, year);
+}
+
+export async function importEdexcelGcseHistoryPaper1MedicineBenchmark(
+  year: EdexcelGcseHistoryPaper1MedicineYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION, year);
 }
 
 export async function importOcrGcseBusinessPaper1Benchmark(

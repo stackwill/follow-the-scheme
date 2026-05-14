@@ -2,6 +2,7 @@ import Image from "next/image";
 
 type QuestionViewerProps = {
   groupKey: string;
+  sourceMaterialImagePaths: string[];
   questions: Array<{
     id: string;
     questionKey: string;
@@ -29,6 +30,27 @@ export function QuestionViewer(props: QuestionViewerProps) {
       <h2 id="question-heading" className="sr-only">
         Question group {props.groupKey}
       </h2>
+
+      {props.sourceMaterialImagePaths.length > 0 ? (
+        <section className="required-source-material" aria-label="Required source material">
+          <div className="required-source-material__header">
+            <p className="eyebrow">Required source material</p>
+            <h3>Use these sources for this question group</h3>
+          </div>
+          {props.sourceMaterialImagePaths.map((imagePath, index) => (
+            <figure className="question-image-frame required-source-material__figure" key={imagePath}>
+              <Image
+                src={assetUrl(imagePath)}
+                alt={`Required source material ${index + 1}`}
+                width={1400}
+                height={900}
+                sizes="(max-width: 900px) 100vw, 840px"
+                unoptimized
+              />
+            </figure>
+          ))}
+        </section>
+      ) : null}
 
       <div className="question-group-stack">
         {props.questions.map((question, questionIndex) => (

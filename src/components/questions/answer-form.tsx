@@ -25,6 +25,7 @@ type AnswerFormProps = {
   action: (state: AnswerFormState, formData: FormData) => Promise<AnswerFormState>;
   paperId: string;
   groupKey: string;
+  sourceMaterialImagePaths: string[];
   questions: Array<{
     id: string;
     questionKey: string;
@@ -159,6 +160,27 @@ export function AnswerForm(props: AnswerFormProps) {
             {markedQuestions.length} of {props.questions.length} question parts marked. Unsubmitted answerable parts count
             as zero in this page total.
           </p>
+        </section>
+      ) : null}
+
+      {props.sourceMaterialImagePaths.length > 0 ? (
+        <section className="required-source-material" aria-label="Required source material">
+          <div className="required-source-material__header">
+            <p className="eyebrow">Required source material</p>
+            <h3>Use these sources for this question group</h3>
+          </div>
+          {props.sourceMaterialImagePaths.map((imagePath, index) => (
+            <figure className="question-image-frame required-source-material__figure" key={imagePath}>
+              <Image
+                src={assetUrl(imagePath)}
+                alt={`Required source material ${index + 1}`}
+                width={1400}
+                height={900}
+                sizes="(max-width: 900px) 100vw, 980px"
+                unoptimized
+              />
+            </figure>
+          ))}
         </section>
       ) : null}
 
