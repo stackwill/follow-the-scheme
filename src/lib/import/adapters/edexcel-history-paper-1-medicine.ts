@@ -433,7 +433,13 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
         contextQuestionLabel: null,
         warnings:
           start.label === "5" || start.label === "6"
-            ? ["Official paper asks candidates to answer either Question 5 or Question 6; importer exposes both for practice."]
+            ? [
+                {
+                  stage: "adapter",
+                  message:
+                    "Official paper asks candidates to answer either Question 5 or Question 6; importer exposes both for practice.",
+                },
+              ]
             : [],
       },
     });
