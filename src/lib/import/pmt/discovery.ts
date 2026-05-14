@@ -20,6 +20,8 @@ const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1";
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-geography/edexcel-a-paper-1/";
+const EDEXCEL_GCSE_HISTORY_PAPER_1_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-1/";
 const OCR_GCSE_BUSINESS_ASSESSMENT_URL =
   "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct";
 const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_ASSESSMENT_URL =
@@ -30,6 +32,7 @@ const BIOLOGY_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
 const CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
 const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS = [2023, 2024] as const;
+const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_YEARS = [2023, 2024] as const;
 const OCR_BUSINESS_BENCHMARK_YEARS = [2023, 2024] as const;
 const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_YEARS = [2024] as const;
 
@@ -435,6 +438,48 @@ export function discoverEdexcelAGeographyPaper1FromHtml(html: string) {
 export async function discoverEdexcelAGeographyPaper1() {
   const html = await fetchHtml(EDEXCEL_A_GEOGRAPHY_PAPER_1_URL);
   return discoverEdexcelAGeographyPaper1FromHtml(html);
+}
+
+export function discoverEdexcelGcseHistoryPaper1MedicineFromHtml(html: string) {
+  const $ = cheerio.load(html);
+  const candidates: PmtPaperCandidate[] = [];
+
+  for (const year of EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_YEARS) {
+    const markScheme = $(`a[href*='June ${year} MS - Paper 1 Option 11 Edexcel History GCSE.pdf']`).first();
+    const questionPaper = $(`a[href*='June ${year} QP - Paper 1 Option 11 Edexcel History GCSE.pdf']`).first();
+    const markSchemeHref = markScheme.attr("href");
+    const questionPaperHref = questionPaper.attr("href");
+
+    if (!markSchemeHref || !questionPaperHref) {
+      continue;
+    }
+
+    candidates.push({
+      paperPageUrl: EDEXCEL_GCSE_HISTORY_PAPER_1_URL,
+      questionPaperUrl: normalizeLinkUrlForBase(questionPaperHref, EDEXCEL_GCSE_HISTORY_PAPER_1_URL),
+      markSchemeUrl: normalizeLinkUrlForBase(markSchemeHref, EDEXCEL_GCSE_HISTORY_PAPER_1_URL),
+      examBoard: "Edexcel",
+      qualification: "GCSE History",
+      subject: "History",
+      paperNumber: 1,
+      tier: "Medicine in Britain and the British sector of the Western Front",
+      sessionLabel: `June ${year}`,
+      year,
+    });
+  }
+
+  if (candidates.length !== EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_YEARS.length) {
+    throw new Error(
+      `PMT benchmark discovery contract failed for ${EDEXCEL_GCSE_HISTORY_PAPER_1_URL}: expected ${EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_YEARS.length} Paper 1 Option 11 Medicine candidate, found ${candidates.length}`,
+    );
+  }
+
+  return candidates;
+}
+
+export async function discoverEdexcelGcseHistoryPaper1Medicine() {
+  const html = await fetchHtml(EDEXCEL_GCSE_HISTORY_PAPER_1_URL);
+  return discoverEdexcelGcseHistoryPaper1MedicineFromHtml(html);
 }
 
 function discoverOcrGcseBusinessPaperFromHtml(html: string, paperNumber: 1 | 2) {

@@ -11,6 +11,7 @@ import {
   discoverAqaPhysicsPaper1Higher,
   discoverAqaPhysicsPaper2Higher,
   discoverEdexcelAGeographyPaper1,
+  discoverEdexcelGcseHistoryPaper1Medicine,
   discoverOcrGcseBusinessPaper1,
   discoverOcrGcseBusinessPaper2,
 } from "@/lib/import/pmt/discovery";
@@ -41,6 +42,8 @@ export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_ADAPTER_KEY =
   "aqa-gcse-religious-studies-short-course-themes";
 export const EDEXCEL_A_GEOGRAPHY_PAPER_1_ADAPTER_KEY =
   "edexcel-a-geography-paper-1-physical-environment";
+export const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_ADAPTER_KEY =
+  "edexcel-gcse-history-paper-1-medicine";
 export const OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY = "ocr-gcse-business-paper-1";
 export const OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY = "ocr-gcse-business-paper-2";
 
@@ -51,6 +54,7 @@ export type BiologyBenchmarkYear = 2021 | 2022 | 2023 | 2024;
 export type ChemistryBenchmarkYear = 2023 | 2024;
 export type ComputerScienceBenchmarkYear = 2022 | 2023 | 2024;
 export type EdexcelAGeographyPaper1Year = 2023 | 2024;
+export type EdexcelGcseHistoryPaper1MedicineYear = 2023 | 2024;
 export type OcrBusinessBenchmarkYear = 2023 | 2024;
 export type AqaReligiousStudiesShortCourseYear = 2024;
 
@@ -66,6 +70,7 @@ export type SupportedPaperCandidate =
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseJudaism>>[number]
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseThemes>>[number]
   | Awaited<ReturnType<typeof discoverEdexcelAGeographyPaper1>>[number]
+  | Awaited<ReturnType<typeof discoverEdexcelGcseHistoryPaper1Medicine>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper1>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper2>>[number];
 
@@ -109,6 +114,14 @@ const COMPUTER_SCIENCE_TOTAL_MARKS: Record<ComputerScienceBenchmarkYear, number>
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_TOTAL_MARKS: Record<EdexcelAGeographyPaper1Year, number> = {
   2023: 102,
   2024: 102,
+};
+
+const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_TOTAL_MARKS: Record<
+  EdexcelGcseHistoryPaper1MedicineYear,
+  number
+> = {
+  2023: 72,
+  2024: 72,
 };
 
 const OCR_BUSINESS_TOTAL_MARKS: Record<OcrBusinessBenchmarkYear, number> = {
@@ -255,6 +268,18 @@ export const EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION = {
   paperDir: (year) => getPaperDirForAdapter(EDEXCEL_A_GEOGRAPHY_PAPER_1_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<EdexcelAGeographyPaper1Year>;
 
+export const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION = {
+  adapterKey: EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-1/",
+  specCode: "1HI0/11",
+  title: (candidate) =>
+    `Edexcel GCSE History Paper 1: Medicine in Britain and the British sector of the Western Front ${candidate.sessionLabel}`,
+  totalMarks: EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_TOTAL_MARKS,
+  discover: discoverEdexcelGcseHistoryPaper1Medicine,
+  paperDir: (year) =>
+    getPaperDirForAdapter(EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<EdexcelGcseHistoryPaper1MedicineYear>;
+
 export const OCR_GCSE_BUSINESS_PAPER_1_DEFINITION = {
   adapterKey: OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY,
   sourceProvider: "OCR",
@@ -291,6 +316,7 @@ export const supportedPaperDefinitions = [
   AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_JUDAISM_DEFINITION,
   AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_DEFINITION,
   EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION,
+  EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
 ] as const;

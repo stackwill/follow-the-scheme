@@ -1250,6 +1250,30 @@ h1 {
   gap: 0;
 }
 
+.question-flow .required-source-material {
+  display: grid;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  background: #f7f9fb;
+  padding: 22px 24px 24px;
+}
+
+.required-source-material__header {
+  display: grid;
+  gap: 4px;
+}
+
+.required-source-material__header h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.1rem;
+}
+
+.required-source-material__figure {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+  background: #ffffff;
+}
+
 .question-flow .question-part-view {
   gap: 14px;
   padding: 24px;

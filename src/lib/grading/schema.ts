@@ -36,6 +36,14 @@ const PAPER_ONLY_PATTERNS: Array<[RegExp, string]> = [
   [/\bshow\s+(?:your\s+)?(?:answer|working|work|line|curve|diagram|circuit|graph|plot|points?|arrow|method)\b.*\b(on|in)\s+(figure|fig\.|the\s+diagram|the\s+graph|the\s+grid)\b/i, "Show this on the paper."],
 ];
 
+function isWrittenSourceFollowUpQuestion(questionText: string) {
+  return (
+    /\bhow could you follow up source [a-z]\b/i.test(questionText) &&
+    /\bthe question you would ask\b/i.test(questionText) &&
+    /\bthe type of source\b/i.test(questionText)
+  );
+}
+
 function normalizeAnswerText(text: string) {
   return text
     .toLowerCase()
@@ -184,6 +192,10 @@ export function detectSelectionQuestion(input: {
 
 export function detectPaperOnlyQuestion(input: { questionText: string }): PaperOnlyQuestion | null {
   const normalizedQuestion = input.questionText.replace(/\s+/g, " ").trim();
+
+  if (isWrittenSourceFollowUpQuestion(normalizedQuestion)) {
+    return null;
+  }
 
   for (const [pattern, reason] of PAPER_ONLY_PATTERNS) {
     if (pattern.test(normalizedQuestion)) {
