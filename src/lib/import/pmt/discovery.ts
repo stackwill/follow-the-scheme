@@ -22,6 +22,8 @@ const EDEXCEL_A_GEOGRAPHY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-geography/edexcel-a-paper-1/";
 const OCR_GCSE_BUSINESS_ASSESSMENT_URL =
   "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct";
+const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_ASSESSMENT_URL =
+  "https://www.aqa.org.uk/subjects/religious-studies/gcse/religious-studies-short-course-8061/assessment-resources";
 const PHYSICS_PAPER_1_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const PHYSICS_PAPER_2_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const BIOLOGY_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
@@ -29,6 +31,7 @@ const CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
 const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS = [2023, 2024] as const;
 const OCR_BUSINESS_BENCHMARK_YEARS = [2023, 2024] as const;
+const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_YEARS = [2024] as const;
 
 type SessionLinks = {
   questionPaperUrl?: string;
@@ -494,4 +497,73 @@ export async function discoverOcrGcseBusinessPaper1() {
 export async function discoverOcrGcseBusinessPaper2() {
   const html = await fetchHtml(OCR_GCSE_BUSINESS_ASSESSMENT_URL);
   return discoverOcrGcseBusinessPaper2FromHtml(html);
+}
+
+type AqaReligiousStudiesShortCourseSection = {
+  paperNumber: 2 | 4 | 5;
+  subject: string;
+  tier: string;
+  questionPaperAssetId: string;
+  markSchemeAssetId: string;
+};
+
+function aqaSanityPdfUrl(assetId: string) {
+  return `https://cdn.sanity.io/files/p28bar15/green/${assetId}.pdf`;
+}
+
+function discoverAqaReligiousStudiesShortCourseSection({
+  paperNumber,
+  subject,
+  tier,
+  questionPaperAssetId,
+  markSchemeAssetId,
+}: AqaReligiousStudiesShortCourseSection): PmtPaperCandidate[] {
+  return AQA_RELIGIOUS_STUDIES_SHORT_COURSE_YEARS.map((year) => ({
+    paperPageUrl: AQA_RELIGIOUS_STUDIES_SHORT_COURSE_ASSESSMENT_URL,
+    questionPaperUrl: aqaSanityPdfUrl(questionPaperAssetId),
+    markSchemeUrl: aqaSanityPdfUrl(markSchemeAssetId),
+    examBoard: "AQA",
+    qualification: "GCSE Religious Studies Short Course",
+    subject,
+    paperNumber,
+    tier,
+    sessionLabel: `June ${year}`,
+    year,
+  }));
+}
+
+export function discoverAqaReligiousStudiesShortCourseChristianity() {
+  return Promise.resolve(
+    discoverAqaReligiousStudiesShortCourseSection({
+      paperNumber: 2,
+      subject: "Religious Studies",
+      tier: "Section 2 Christianity",
+      questionPaperAssetId: "8727d4720aafd4b9f804670c4a5625ebe4f455cc",
+      markSchemeAssetId: "c3b7716dcce908b777e76098c07fc17db9e82bbd",
+    }),
+  );
+}
+
+export function discoverAqaReligiousStudiesShortCourseJudaism() {
+  return Promise.resolve(
+    discoverAqaReligiousStudiesShortCourseSection({
+      paperNumber: 4,
+      subject: "Religious Studies",
+      tier: "Section 4 Judaism",
+      questionPaperAssetId: "e244b5a645d88133b41b4fb69aff99478dd85deb",
+      markSchemeAssetId: "dbfc3e7880b519d98c2f3c91614d0c719bb00c36",
+    }),
+  );
+}
+
+export function discoverAqaReligiousStudiesShortCourseThemes() {
+  return Promise.resolve(
+    discoverAqaReligiousStudiesShortCourseSection({
+      paperNumber: 5,
+      subject: "Religious Studies",
+      tier: "Section 5 Themes",
+      questionPaperAssetId: "5d032019b467545bc8d9b21da9185718ee111601",
+      markSchemeAssetId: "b7d155ad43329ee031f4f37b1c507806f5a5f830",
+    }),
+  );
 }

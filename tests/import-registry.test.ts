@@ -20,7 +20,11 @@ describe("supported paper registry", () => {
     ).toEqual([
       {
         adapterKey: "aqa-combined-science-physics-paper-1-higher",
-        years: [2023, 2024],
+        years: [2022, 2023, 2024],
+      },
+      {
+        adapterKey: "aqa-combined-science-physics-paper-2-higher",
+        years: [2022, 2023, 2024],
       },
       {
         adapterKey: "aqa-combined-science-biology-paper-1-higher",
@@ -32,15 +36,31 @@ describe("supported paper registry", () => {
       },
       {
         adapterKey: "aqa-combined-science-chemistry-paper-1-higher",
-        years: [2023, 2024],
+        years: [2022, 2023, 2024],
       },
       {
         adapterKey: "aqa-combined-science-chemistry-paper-2-higher",
-        years: [2023, 2024],
+        years: [2022, 2023, 2024],
       },
       {
         adapterKey: "aqa-gcse-computer-science-paper-1b-python",
+        years: [2022, 2023, 2024],
+      },
+      {
+        adapterKey: "aqa-gcse-religious-studies-short-course-christianity",
         years: [2024],
+      },
+      {
+        adapterKey: "aqa-gcse-religious-studies-short-course-judaism",
+        years: [2024],
+      },
+      {
+        adapterKey: "aqa-gcse-religious-studies-short-course-themes",
+        years: [2024],
+      },
+      {
+        adapterKey: "edexcel-a-geography-paper-1-physical-environment",
+        years: [2023, 2024],
       },
       {
         adapterKey: "ocr-gcse-business-paper-1",
