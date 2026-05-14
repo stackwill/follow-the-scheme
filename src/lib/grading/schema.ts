@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const gradingResponseSchema = z.object({
   awardedMarks: z.number().int().min(0),
+  contentMarks: z.number().int().min(0).optional(),
+  spagMarks: z.number().int().min(0).optional(),
   reasoning: z.string().min(1),
   feedback: z.string().min(1),
   issues: z.array(z.string()).default([]),

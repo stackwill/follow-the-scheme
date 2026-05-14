@@ -9,9 +9,22 @@ const validPayload = {
   issues: [],
 };
 
+const validPayloadWithSpag = {
+  awardedMarks: 20,
+  contentMarks: 16,
+  spagMarks: 4,
+  reasoning: "Content is Level 4 for 16 marks. SPaG is high performance for 4 marks.",
+  feedback: "No improvement needed.",
+  issues: [],
+};
+
 describe("parseStructuredGradeContent", () => {
   it("parses plain JSON content", () => {
     expect(parseStructuredGradeContent(JSON.stringify(validPayload))).toEqual(validPayload);
+  });
+
+  it("parses optional content and SPaG mark breakdowns", () => {
+    expect(parseStructuredGradeContent(JSON.stringify(validPayloadWithSpag))).toEqual(validPayloadWithSpag);
   });
 
   it("parses JSON returned inside a markdown code fence", () => {

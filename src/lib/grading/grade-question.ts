@@ -8,6 +8,16 @@ import { db } from "@/lib/db";
 const MAX_ANSWER_CHARACTERS = 4_000;
 const MAX_NOTES_CHARACTERS = 1_000;
 
+function historySpagInstructionMode(input: { subject: string; markSchemeText: string }) {
+  if (input.subject !== "History") {
+    return "none";
+  }
+
+  return /\b(SPaG|spelling|punctuation|grammar|specialist terminology)\b/i.test(input.markSchemeText)
+    ? "history"
+    : "none";
+}
+
 export async function gradeQuestionAttempt(input: {
   paperId: string;
   questionId: string;
@@ -16,6 +26,9 @@ export async function gradeQuestionAttempt(input: {
 }) {
   const question = await db.question.findUniqueOrThrow({
     where: { id: input.questionId },
+    include: {
+      paper: true,
+    },
   });
 
   if (question.paperId !== input.paperId) {
@@ -51,6 +64,14 @@ export async function gradeQuestionAttempt(input: {
       })
     : await requestStructuredGrade(
         buildGradingPrompt({
+          paperTitle: question.paper.title,
+          examBoard: question.paper.examBoard,
+          qualification: question.paper.qualification,
+          subject: question.paper.subject,
+          spagInstructionMode: historySpagInstructionMode({
+            subject: question.paper.subject,
+            markSchemeText: question.markSchemeText,
+          }),
           questionKey: question.questionKey,
           maxMarks: question.maxMarks,
           questionText: question.extractedQuestionText,
@@ -58,7 +79,11 @@ export async function gradeQuestionAttempt(input: {
           answer: trimmedAnswer,
         }),
       );
-  const boundedMarks = Math.max(0, Math.min(question.maxMarks, result.awardedMarks));
+  const combinedMarks =
+    result.contentMarks !== undefined && result.spagMarks !== undefined
+      ? result.contentMarks + result.spagMarks
+      : result.awardedMarks;
+  const boundedMarks = Math.max(0, Math.min(question.maxMarks, combinedMarks));
   const submittedAnswer = selectionQuestion
     ? (selectionQuestion.options.find((option) => option.id === trimmedAnswer)?.label ?? trimmedAnswer)
     : trimmedAnswer;
