@@ -10,6 +10,11 @@ import {
   aqaCombinedSciencePhysicsPaper2HigherAdapter,
 } from "@/lib/import/adapters/aqa-combined-science-physics-paper-1-higher";
 import { aqaGcseComputerSciencePaper1BPythonAdapter } from "@/lib/import/adapters/aqa-gcse-computer-science-paper-1b-python";
+import {
+  aqaGcseReligiousStudiesShortCourseChristianityAdapter,
+  aqaGcseReligiousStudiesShortCourseJudaismAdapter,
+  aqaGcseReligiousStudiesShortCourseThemesAdapter,
+} from "@/lib/import/adapters/aqa-gcse-religious-studies-short-course";
 import { edexcelAGeographyPaper1Adapter } from "@/lib/import/adapters/edexcel-a-geography-paper-1";
 import {
   ocrGcseBusinessPaper1Adapter,
@@ -31,6 +36,12 @@ export const adapters: Record<string, PaperImportAdapter> = {
     aqaCombinedSciencePhysicsPaper2HigherAdapter,
   [aqaGcseComputerSciencePaper1BPythonAdapter.key]:
     aqaGcseComputerSciencePaper1BPythonAdapter,
+  [aqaGcseReligiousStudiesShortCourseChristianityAdapter.key]:
+    aqaGcseReligiousStudiesShortCourseChristianityAdapter,
+  [aqaGcseReligiousStudiesShortCourseJudaismAdapter.key]:
+    aqaGcseReligiousStudiesShortCourseJudaismAdapter,
+  [aqaGcseReligiousStudiesShortCourseThemesAdapter.key]:
+    aqaGcseReligiousStudiesShortCourseThemesAdapter,
   [edexcelAGeographyPaper1Adapter.key]: edexcelAGeographyPaper1Adapter,
   [ocrGcseBusinessPaper1Adapter.key]: ocrGcseBusinessPaper1Adapter,
   [ocrGcseBusinessPaper2Adapter.key]: ocrGcseBusinessPaper2Adapter,
@@ -51,5 +62,10 @@ export {
   aqaCombinedSciencePhysicsPaper2HigherAdapter,
 };
 export { aqaGcseComputerSciencePaper1BPythonAdapter };
+export {
+  aqaGcseReligiousStudiesShortCourseChristianityAdapter,
+  aqaGcseReligiousStudiesShortCourseJudaismAdapter,
+  aqaGcseReligiousStudiesShortCourseThemesAdapter,
+};
 export { edexcelAGeographyPaper1Adapter };
 export { ocrGcseBusinessPaper1Adapter, ocrGcseBusinessPaper2Adapter };

@@ -17,6 +17,24 @@ function subjectPaperHref(subject: string, paperNumber: number) {
   return `/?subject=${encodeURIComponent(subject)}&paper=${paperNumber}` as Route;
 }
 
+function paperChoiceDisplayName(subject: string, paperNumber: number) {
+  if (subject === "Religious Studies") {
+    if (paperNumber === 2) {
+      return "Christianity";
+    }
+
+    if (paperNumber === 4) {
+      return "Judaism";
+    }
+
+    if (paperNumber === 5) {
+      return "Themes";
+    }
+  }
+
+  return `Paper ${paperNumber}`;
+}
+
 function subjectDisplayParts(subject: string) {
   if (["Biology", "Chemistry", "Physics"].includes(subject)) {
     return {
@@ -175,7 +193,7 @@ export default async function HomePage({
 
                 return (
                   <Link className="paper-choice-card" href={subjectPaperHref(selectedSubject, paperNumber)} key={paperNumber}>
-                    <span>Paper {paperNumber}</span>
+                    <span>{paperChoiceDisplayName(selectedSubject, paperNumber)}</span>
                     <strong>{matchingPapers.length} papers</strong>
                     <small className="metric-list">
                       <span>latest {latestYear}</span>
@@ -193,7 +211,11 @@ export default async function HomePage({
                 Change paper
               </Link>
               <span className="metric-list">
-                <span>Paper {selectedPaperNumber}</span>
+                <span>
+                  {selectedPaperNumber === null
+                    ? "Paper"
+                    : paperChoiceDisplayName(selectedSubject, selectedPaperNumber)}
+                </span>
                 <span>{visiblePapers.length} papers</span>
               </span>
             </div>

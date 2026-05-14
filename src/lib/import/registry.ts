@@ -5,6 +5,9 @@ import {
   discoverAqaChemistryPaper1Higher,
   discoverAqaChemistryPaper2Higher,
   discoverAqaGcseComputerSciencePaper1BPython,
+  discoverAqaReligiousStudiesShortCourseChristianity,
+  discoverAqaReligiousStudiesShortCourseJudaism,
+  discoverAqaReligiousStudiesShortCourseThemes,
   discoverAqaPhysicsPaper1Higher,
   discoverAqaPhysicsPaper2Higher,
   discoverEdexcelAGeographyPaper1,
@@ -30,6 +33,12 @@ export const AQA_CHEMISTRY_PAPER_2_HIGHER_ADAPTER_KEY =
   "aqa-combined-science-chemistry-paper-2-higher";
 export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY =
   "aqa-gcse-computer-science-paper-1b-python";
+export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_ADAPTER_KEY =
+  "aqa-gcse-religious-studies-short-course-christianity";
+export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_JUDAISM_ADAPTER_KEY =
+  "aqa-gcse-religious-studies-short-course-judaism";
+export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_ADAPTER_KEY =
+  "aqa-gcse-religious-studies-short-course-themes";
 export const EDEXCEL_A_GEOGRAPHY_PAPER_1_ADAPTER_KEY =
   "edexcel-a-geography-paper-1-physical-environment";
 export const OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY = "ocr-gcse-business-paper-1";
@@ -43,6 +52,7 @@ export type ChemistryBenchmarkYear = 2023 | 2024;
 export type ComputerScienceBenchmarkYear = 2022 | 2023 | 2024;
 export type EdexcelAGeographyPaper1Year = 2023 | 2024;
 export type OcrBusinessBenchmarkYear = 2023 | 2024;
+export type AqaReligiousStudiesShortCourseYear = 2024;
 
 export type SupportedPaperCandidate =
   | Awaited<ReturnType<typeof discoverAqaPhysicsPaper1Higher>>[number]
@@ -52,6 +62,9 @@ export type SupportedPaperCandidate =
   | Awaited<ReturnType<typeof discoverAqaChemistryPaper1Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaChemistryPaper2Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaGcseComputerSciencePaper1BPython>>[number]
+  | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseChristianity>>[number]
+  | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseJudaism>>[number]
+  | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseThemes>>[number]
   | Awaited<ReturnType<typeof discoverEdexcelAGeographyPaper1>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper1>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper2>>[number];
@@ -101,6 +114,20 @@ const EDEXCEL_A_GEOGRAPHY_PAPER_1_TOTAL_MARKS: Record<EdexcelAGeographyPaper1Yea
 const OCR_BUSINESS_TOTAL_MARKS: Record<OcrBusinessBenchmarkYear, number> = {
   2023: 80,
   2024: 80,
+};
+
+const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_RELIGION_TOTAL_MARKS: Record<
+  AqaReligiousStudiesShortCourseYear,
+  number
+> = {
+  2024: 27,
+};
+
+const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_TOTAL_MARKS: Record<
+  AqaReligiousStudiesShortCourseYear,
+  number
+> = {
+  2024: 48,
 };
 
 export const AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION = {
@@ -173,6 +200,51 @@ export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION = {
   paperDir: (year) => getPaperDirForAdapter(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<ComputerScienceBenchmarkYear>;
 
+export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_DEFINITION = {
+  adapterKey: AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_ADAPTER_KEY,
+  sourceProvider: "AQA",
+  subjectIndexUrl: "https://www.aqa.org.uk/past-papers-and-mark-schemes-finder",
+  familyPageUrl:
+    "https://www.aqa.org.uk/subjects/religious-studies/gcse/religious-studies-short-course-8061/assessment-resources",
+  specCode: "8061",
+  title: (candidate) =>
+    `AQA GCSE Religious Studies Short Course Section 2 Christianity ${candidate.sessionLabel}`,
+  totalMarks: AQA_RELIGIOUS_STUDIES_SHORT_COURSE_RELIGION_TOTAL_MARKS,
+  discover: discoverAqaReligiousStudiesShortCourseChristianity,
+  paperDir: (year) =>
+    getPaperDirForAdapter(AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<AqaReligiousStudiesShortCourseYear>;
+
+export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_JUDAISM_DEFINITION = {
+  adapterKey: AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_JUDAISM_ADAPTER_KEY,
+  sourceProvider: "AQA",
+  subjectIndexUrl: "https://www.aqa.org.uk/past-papers-and-mark-schemes-finder",
+  familyPageUrl:
+    "https://www.aqa.org.uk/subjects/religious-studies/gcse/religious-studies-short-course-8061/assessment-resources",
+  specCode: "8061",
+  title: (candidate) =>
+    `AQA GCSE Religious Studies Short Course Section 4 Judaism ${candidate.sessionLabel}`,
+  totalMarks: AQA_RELIGIOUS_STUDIES_SHORT_COURSE_RELIGION_TOTAL_MARKS,
+  discover: discoverAqaReligiousStudiesShortCourseJudaism,
+  paperDir: (year) =>
+    getPaperDirForAdapter(AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_JUDAISM_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<AqaReligiousStudiesShortCourseYear>;
+
+export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_DEFINITION = {
+  adapterKey: AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_ADAPTER_KEY,
+  sourceProvider: "AQA",
+  subjectIndexUrl: "https://www.aqa.org.uk/past-papers-and-mark-schemes-finder",
+  familyPageUrl:
+    "https://www.aqa.org.uk/subjects/religious-studies/gcse/religious-studies-short-course-8061/assessment-resources",
+  specCode: "8061",
+  title: (candidate) =>
+    `AQA GCSE Religious Studies Short Course Section 5 Themes ${candidate.sessionLabel}`,
+  totalMarks: AQA_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_TOTAL_MARKS,
+  discover: discoverAqaReligiousStudiesShortCourseThemes,
+  paperDir: (year) =>
+    getPaperDirForAdapter(AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<AqaReligiousStudiesShortCourseYear>;
+
 export const EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION = {
   adapterKey: EDEXCEL_A_GEOGRAPHY_PAPER_1_ADAPTER_KEY,
   familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-geography/edexcel-a-paper-1/",
@@ -215,6 +287,9 @@ export const supportedPaperDefinitions = [
   AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
   AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
+  AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_DEFINITION,
+  AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_JUDAISM_DEFINITION,
+  AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_DEFINITION,
   EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
