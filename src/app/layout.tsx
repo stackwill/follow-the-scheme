@@ -12,7 +12,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               var savedTheme = window.localStorage.getItem("followthescheme-theme");
               var theme = savedTheme === "dark" || savedTheme === "light"
                 ? savedTheme
-                : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+                : "light";
               document.documentElement.dataset.theme = theme;
             } catch (_) {}
           `}

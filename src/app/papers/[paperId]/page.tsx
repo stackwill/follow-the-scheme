@@ -81,7 +81,7 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
             <span />
             <span />
           </span>
-          <strong>reallycool.lol</strong>
+          <strong>ihategcse</strong>
         </Link>
         <div className="app-topbar__actions">
           <span className="xp-chip">{paper.questions.length} parts</span>
