@@ -84,7 +84,7 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
           <strong>ihategcse</strong>
         </Link>
         <div className="app-topbar__actions">
-          <span className="xp-chip">{paper.questions.length} parts</span>
+          <span className="xp-chip">{paper.questions.length} question parts</span>
           <ThemeToggle />
         </div>
       </nav>
@@ -109,7 +109,7 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
           <div className="hero-actions">
             {firstQuestion ? (
               <Link className="button-link" href={questionHref(paper.id, firstQuestion.id)}>
-                Start paper
+                Start answering
               </Link>
             ) : null}
             <Link className="button-link button-link--secondary" href="/">

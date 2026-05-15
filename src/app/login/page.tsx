@@ -89,14 +89,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <strong>ihategcse</strong>
         </Link>
         <div className="app-topbar__actions">
-          <span className="xp-chip">Secure access</span>
+          <span className="xp-chip">Private beta</span>
           <ThemeToggle />
         </div>
       </nav>
 
       <header className="course-hero login-hero">
         <div className="course-hero__icon" aria-hidden="true">
-          FT
+          😡
         </div>
         <div className="course-hero__copy">
           <div className="breadcrumb-line">
@@ -104,16 +104,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <span>/ Sign in</span>
           </div>
           <div className="course-title-row">
-            <h1 id="login-title">Sign in to practice</h1>
-            <span className="active-course-pill">School access</span>
+            <h1 id="login-title">Open your GCSE workspace</h1>
+            <span className="active-course-pill">ihategcse</span>
           </div>
           <p className="page-description">
-            Enter your school name to open your past-paper workspace.
+            Sign in to open your past-paper workspace.
           </p>
         </div>
         <aside className="study-callout login-access-card" aria-labelledby="login-title">
-          <strong>Continue with your school</strong>
-          <span>Use the same school name you were given for ihategcse.</span>
+          <strong>School access</strong>
+          <span>Use the school name you were given for ihategcse.</span>
           <form action={signIn} className="login-form">
             <input type="hidden" name="next" value={safeNextPath(params.next)} />
             <label className="field-stack login-field">
