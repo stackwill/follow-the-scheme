@@ -4084,6 +4084,62 @@ h1 {
   line-height: 1;
 }
 
+.exam-countdown {
+  gap: 16px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, var(--panel) 0 68%, var(--panel-subtle) 68% 100%);
+}
+
+.exam-countdown::before {
+  display: none !important;
+}
+
+.exam-countdown__eyebrow {
+  color: var(--muted) !important;
+  font-size: 0.78rem;
+  font-weight: 780;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.exam-countdown__clock {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.exam-countdown__clock strong {
+  display: block;
+  width: 100%;
+  color: var(--text);
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  font-weight: 780;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.95;
+  white-space: nowrap;
+}
+
+.exam-countdown__details {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.exam-countdown__details strong {
+  color: var(--text);
+  font-size: 1.08rem;
+}
+
+.exam-countdown__details span,
+.exam-countdown__details small {
+  min-width: 0;
+  color: var(--muted);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 .scroll-cue {
   position: fixed;
   z-index: 20;

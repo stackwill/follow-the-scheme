@@ -1,8 +1,10 @@
 import Link from "next/link";
 import type { Route } from "next";
 
+import { ExamCountdown } from "@/components/exam-countdown";
 import { ScrollCue } from "@/components/scroll-cue";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { nextExamFromSchedule } from "@/lib/exam-schedule";
 
 export const dynamic = "force-dynamic";
 
@@ -85,50 +87,28 @@ function paperDisplayName(paper: {
   return `Paper ${paper.paperNumber}${tierLabel} ${paper.year}`;
 }
 
-function currentStudyNote() {
-  const now = new Date();
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/London",
-  }).formatToParts(now);
-  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? "0");
-  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? "0");
-  const minutesSinceMidnight = hour * 60 + minute;
-  const isNight = minutesSinceMidnight >= 22 * 60 || minutesSinceMidnight < 6 * 60 + 30;
-  const isEarly = minutesSinceMidnight >= 6 * 60 + 30 && minutesSinceMidnight < 9 * 60;
-  const isLateAfternoon = minutesSinceMidnight >= 16 * 60 && minutesSinceMidnight < 19 * 60;
+function subjectSortValue(subject: string) {
+  const preferredOrder = [
+    "English Language",
+    "English Literature",
+    "Biology",
+    "Chemistry",
+    "Physics",
+  ];
+  const preferredIndex = preferredOrder.indexOf(subject);
 
-  if (isNight) {
-    return {
-      time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
-      title: "It is late",
-      note: "Sleep is probably worth more than another rushed paper. Do a short question if you must, then stop.",
-    };
+  return preferredIndex === -1 ? Number.POSITIVE_INFINITY : preferredIndex;
+}
+
+function sortSubjects(left: string, right: string) {
+  const leftSortValue = subjectSortValue(left);
+  const rightSortValue = subjectSortValue(right);
+
+  if (leftSortValue !== rightSortValue) {
+    return leftSortValue - rightSortValue;
   }
 
-  if (isEarly) {
-    return {
-      time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
-      title: "Morning reset",
-      note: "Good time for one focused question before the day gets busy.",
-    };
-  }
-
-  if (isLateAfternoon) {
-    return {
-      time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
-      title: "After-school slot",
-      note: "Pick one paper section and get it marked before you switch off.",
-    };
-  }
-
-  return {
-    time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
-    title: "Study window",
-    note: "Choose one subject and finish a marked question group.",
-  };
+  return left.localeCompare(right);
 }
 
 export default async function HomePage({
@@ -153,9 +133,7 @@ export default async function HomePage({
     },
     orderBy: [{ year: "desc" }, { sessionLabel: "desc" }],
   });
-  const subjects = [...new Set(papers.map((paper) => paper.subject))].sort((left, right) =>
-    left.localeCompare(right),
-  );
+  const subjects = [...new Set(papers.map((paper) => paper.subject))].sort(sortSubjects);
   const visiblePapers = selectedSubject
     ? papers.filter(
         (paper) =>
@@ -170,7 +148,8 @@ export default async function HomePage({
   ].sort((left, right) => left - right);
   const shouldChoosePaperNumber = selectedSubject && selectedPaperNumber === null;
   const selectedSubjectParts = selectedSubject ? subjectDisplayParts(selectedSubject) : null;
-  const studyNote = currentStudyNote();
+  const initialNow = Date.now();
+  const nextExam = nextExamFromSchedule(new Date(initialNow));
 
   return (
     <main className="page-shell learning-page">
@@ -218,11 +197,7 @@ export default async function HomePage({
               : "Choose your subject, open a paper, and we'll use the actual mark scheme to mark your answers."}
           </p>
         </div>
-        <aside className="study-callout time-callout">
-          <span className="time-callout__time">{studyNote.time}</span>
-          <strong>{studyNote.title}</strong>
-          <span>{studyNote.note}</span>
-        </aside>
+        <ExamCountdown exam={nextExam} initialNow={initialNow} />
       </header>
 
       {!selectedSubject ? <ScrollCue targetId="subject-library" /> : null}
