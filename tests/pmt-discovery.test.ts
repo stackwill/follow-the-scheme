@@ -12,6 +12,7 @@ import {
   discoverAqaPhysicsPaper1HigherFromHtml,
   discoverAqaPhysicsPaper2HigherFromHtml,
   discoverEdexcelAGeographyPaper1FromHtml,
+  discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflictFromHtml,
   discoverOcrGcseBusinessPaper1FromHtml,
   discoverOcrGcseBusinessPaper2FromHtml,
 } from "@/lib/import/pmt/discovery";
@@ -185,6 +186,53 @@ describe("discoverEdexcelAGeographyPaper1FromHtml", () => {
         subject: "Geography",
         paperNumber: 1,
         tier: "The Physical Environment",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+});
+
+describe("discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflictFromHtml", () => {
+  it("selects Edexcel GCSE English Literature Paper 2 for June 2023 and 2024", () => {
+    const html = `
+      <main>
+        <a href="/download/English-Literature/GCSE/Past-Papers/Edexcel/Paper-2/June 2022 QP - Paper 2N Edexcel English Literature GCSE.pdf">June 2022 QP - Paper 2N Edexcel English Literature GCSE</a>
+        <a href="/download/English-Literature/GCSE/Past-Papers/Edexcel/Paper-2/June 2023 MS - Paper 2 Edexcel English Literature GCSE.pdf">June 2023 MS - Paper 2 Edexcel English Literature GCSE</a>
+        <a href="/download/English-Literature/GCSE/Past-Papers/Edexcel/Paper-2/June 2023 QP - Paper 2 Edexcel English Literature GCSE.pdf">June 2023 QP - Paper 2 Edexcel English Literature GCSE</a>
+        <a href="/download/English-Literature/GCSE/Past-Papers/Edexcel/Paper-2/June 2024 MS - Paper 2 Edexcel English Literature GCSE.pdf">June 2024 MS - Paper 2 Edexcel English Literature GCSE</a>
+        <a href="/download/English-Literature/GCSE/Past-Papers/Edexcel/Paper-2/June 2024 QP - Paper 2 Edexcel English Literature GCSE.pdf">June 2024 QP - Paper 2 Edexcel English Literature GCSE</a>
+      </main>
+    `;
+
+    expect(discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflictFromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-english-literature/edexcel-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/English-Literature/GCSE/Past-Papers/Edexcel/Paper-2/June%202023%20QP%20-%20Paper%202%20Edexcel%20English%20Literature%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/English-Literature/GCSE/Past-Papers/Edexcel/Paper-2/June%202023%20MS%20-%20Paper%202%20Edexcel%20English%20Literature%20GCSE.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE English Literature",
+        subject: "English Literature",
+        paperNumber: 2,
+        tier: "Dr Jekyll and Mr Hyde / Conflict anthology",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-english-literature/edexcel-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/English-Literature/GCSE/Past-Papers/Edexcel/Paper-2/June%202024%20QP%20-%20Paper%202%20Edexcel%20English%20Literature%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/English-Literature/GCSE/Past-Papers/Edexcel/Paper-2/June%202024%20MS%20-%20Paper%202%20Edexcel%20English%20Literature%20GCSE.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE English Literature",
+        subject: "English Literature",
+        paperNumber: 2,
+        tier: "Dr Jekyll and Mr Hyde / Conflict anthology",
         sessionLabel: "June 2024",
         year: 2024,
       },

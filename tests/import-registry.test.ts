@@ -63,6 +63,14 @@ describe("supported paper registry", () => {
         years: [2023, 2024],
       },
       {
+        adapterKey: "edexcel-gcse-english-literature-paper-2-jekyll-conflict",
+        years: [2023, 2024],
+      },
+      {
+        adapterKey: "edexcel-gcse-history-paper-1-medicine",
+        years: [2023, 2024],
+      },
+      {
         adapterKey: "ocr-gcse-business-paper-1",
         years: [2023, 2024],
       },

@@ -24,6 +24,7 @@ import {
   DEFAULT_SOURCE_PROVIDER,
   DEFAULT_SUBJECT_INDEX_URL,
   EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION,
+  EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_DEFINITION,
   EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
@@ -31,6 +32,7 @@ import {
   type ChemistryBenchmarkYear,
   type ComputerScienceBenchmarkYear,
   type EdexcelAGeographyPaper1Year,
+  type EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear,
   type EdexcelGcseHistoryPaper1MedicineYear,
   type OcrBusinessBenchmarkYear,
   type PhysicsBenchmarkYear,
@@ -666,6 +668,12 @@ export async function importEdexcelAGeographyPaper1Benchmark(
   year: EdexcelAGeographyPaper1Year,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION, year);
+}
+
+export async function importEdexcelGcseEnglishLiteraturePaper2JekyllConflictBenchmark(
+  year: EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_DEFINITION, year);
 }
 
 export async function importEdexcelGcseHistoryPaper1MedicineBenchmark(
