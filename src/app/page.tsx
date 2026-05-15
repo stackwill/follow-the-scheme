@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 
+import { ScrollCue } from "@/components/scroll-cue";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export const dynamic = "force-dynamic";
@@ -84,6 +85,52 @@ function paperDisplayName(paper: {
   return `Paper ${paper.paperNumber}${tierLabel} ${paper.year}`;
 }
 
+function currentStudyNote() {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/London",
+  }).formatToParts(now);
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? "0");
+  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? "0");
+  const minutesSinceMidnight = hour * 60 + minute;
+  const isNight = minutesSinceMidnight >= 22 * 60 || minutesSinceMidnight < 6 * 60 + 30;
+  const isEarly = minutesSinceMidnight >= 6 * 60 + 30 && minutesSinceMidnight < 9 * 60;
+  const isLateAfternoon = minutesSinceMidnight >= 16 * 60 && minutesSinceMidnight < 19 * 60;
+
+  if (isNight) {
+    return {
+      time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+      title: "It is late",
+      note: "Sleep is probably worth more than another rushed paper. Do a short question if you must, then stop.",
+    };
+  }
+
+  if (isEarly) {
+    return {
+      time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+      title: "Morning reset",
+      note: "Good time for one focused question before the day gets busy.",
+    };
+  }
+
+  if (isLateAfternoon) {
+    return {
+      time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+      title: "After-school slot",
+      note: "Pick one paper section and get it marked before you switch off.",
+    };
+  }
+
+  return {
+    time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+    title: "Study window",
+    note: "Choose one subject and finish a marked question group.",
+  };
+}
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -123,6 +170,7 @@ export default async function HomePage({
   ].sort((left, right) => left - right);
   const shouldChoosePaperNumber = selectedSubject && selectedPaperNumber === null;
   const selectedSubjectParts = selectedSubject ? subjectDisplayParts(selectedSubject) : null;
+  const studyNote = currentStudyNote();
 
   return (
     <main className="page-shell learning-page">
@@ -142,7 +190,7 @@ export default async function HomePage({
 
       <header className="course-hero">
         <div className="course-hero__icon" aria-hidden="true">
-          {selectedSubject ? selectedSubject.slice(0, 2).toUpperCase() : "Q"}
+          {selectedSubject ? selectedSubject.slice(0, 2).toUpperCase() : "😡"}
         </div>
         <div className="course-hero__copy">
           <div className="breadcrumb-line">
@@ -159,22 +207,25 @@ export default async function HomePage({
                   ) : null}
                 </>
               ) : (
-                "Past paper practice"
+                "We'll mark it for you"
               )}
             </h1>
-            <span className="active-course-pill">Active course</span>
+            <span className="active-course-pill">ihategcse</span>
           </div>
           <p className="page-description">
             {selectedSubject
-              ? "Choose a past paper, then work through it one question group at a time with page totals and examiner-style marking."
-              : "Pick a subject to start focused GCSE past-paper practice."}
+              ? "Choose a paper, answer it in chunks, and get marking that stays close to the real mark scheme."
+              : "Choose your subject, open a paper, and we'll use the actual mark scheme to mark your answers."}
           </p>
         </div>
-        <aside className="study-callout">
-          <strong>Study with the mark scheme</strong>
-          <span>Build confidence by answering first, then comparing your response with targeted feedback.</span>
+        <aside className="study-callout time-callout">
+          <span className="time-callout__time">{studyNote.time}</span>
+          <strong>{studyNote.title}</strong>
+          <span>{studyNote.note}</span>
         </aside>
       </header>
+
+      {!selectedSubject ? <ScrollCue targetId="subject-library" /> : null}
 
       {selectedSubject ? (
         shouldChoosePaperNumber ? (
@@ -267,7 +318,14 @@ export default async function HomePage({
           </section>
         )
       ) : papers.length > 0 ? (
-        <section className="subject-list-panel" aria-label="Subjects">
+        <section className="subject-list-panel" id="subject-library" aria-label="Subjects">
+          <div className="subject-library-heading">
+            <div>
+              <h2>Subject library</h2>
+              <p>Pick a course to see available papers.</p>
+            </div>
+            <span>{subjects.length} subjects</span>
+          </div>
           <ol className="subject-list">
             {subjects.map((subject) => {
               const subjectPapers = papers.filter((paper) => paper.subject === subject);
@@ -283,9 +341,9 @@ export default async function HomePage({
                         <span className="subject-list__detail"> {subjectDisplayParts(subject).detail}</span>
                       ) : null}
                     </span>
-                    <span className="subject-list__meta metric-list">
+                    <span className="subject-list__meta">
                       <span>{subjectPapers.length} papers</span>
-                      <span>latest {latestYear}</span>
+                      <span>Latest {latestYear}</span>
                       <span>{totalMarks} marks</span>
                     </span>
                     <span className="subject-list__action">Open</span>
