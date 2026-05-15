@@ -11,6 +11,7 @@ import {
   discoverAqaPhysicsPaper1Higher,
   discoverAqaPhysicsPaper2Higher,
   discoverEdexcelAGeographyPaper1,
+  discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflict,
   discoverEdexcelGcseHistoryPaper1Medicine,
   discoverOcrGcseBusinessPaper1,
   discoverOcrGcseBusinessPaper2,
@@ -44,6 +45,8 @@ export const EDEXCEL_A_GEOGRAPHY_PAPER_1_ADAPTER_KEY =
   "edexcel-a-geography-paper-1-physical-environment";
 export const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_ADAPTER_KEY =
   "edexcel-gcse-history-paper-1-medicine";
+export const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_ADAPTER_KEY =
+  "edexcel-gcse-english-literature-paper-2-jekyll-conflict";
 export const OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY = "ocr-gcse-business-paper-1";
 export const OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY = "ocr-gcse-business-paper-2";
 
@@ -55,6 +58,7 @@ export type ChemistryBenchmarkYear = 2023 | 2024;
 export type ComputerScienceBenchmarkYear = 2022 | 2023 | 2024;
 export type EdexcelAGeographyPaper1Year = 2023 | 2024;
 export type EdexcelGcseHistoryPaper1MedicineYear = 2023 | 2024;
+export type EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear = 2023 | 2024;
 export type OcrBusinessBenchmarkYear = 2023 | 2024;
 export type AqaReligiousStudiesShortCourseYear = 2024;
 
@@ -70,6 +74,7 @@ export type SupportedPaperCandidate =
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseJudaism>>[number]
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseThemes>>[number]
   | Awaited<ReturnType<typeof discoverEdexcelAGeographyPaper1>>[number]
+  | Awaited<ReturnType<typeof discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflict>>[number]
   | Awaited<ReturnType<typeof discoverEdexcelGcseHistoryPaper1Medicine>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper1>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper2>>[number];
@@ -122,6 +127,14 @@ const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_TOTAL_MARKS: Record<
 > = {
   2023: 72,
   2024: 72,
+};
+
+const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_TOTAL_MARKS: Record<
+  EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear,
+  number
+> = {
+  2023: 80,
+  2024: 80,
 };
 
 const OCR_BUSINESS_TOTAL_MARKS: Record<OcrBusinessBenchmarkYear, number> = {
@@ -280,6 +293,22 @@ export const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION = {
     getPaperDirForAdapter(EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<EdexcelGcseHistoryPaper1MedicineYear>;
 
+export const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_DEFINITION = {
+  adapterKey: EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_ADAPTER_KEY,
+  familyPageUrl:
+    "https://www.physicsandmathstutor.com/past-papers/gcse-english-literature/edexcel-paper-2/",
+  specCode: "1ET0/02",
+  title: (candidate) =>
+    `Edexcel GCSE English Literature Paper 2: Dr Jekyll and Mr Hyde, Conflict anthology, and unseen poetry ${candidate.sessionLabel}`,
+  totalMarks: EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_TOTAL_MARKS,
+  discover: discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflict,
+  paperDir: (year) =>
+    getPaperDirForAdapter(
+      EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_ADAPTER_KEY,
+      year,
+    ),
+} satisfies SupportedPaperDefinition<EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear>;
+
 export const OCR_GCSE_BUSINESS_PAPER_1_DEFINITION = {
   adapterKey: OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY,
   sourceProvider: "OCR",
@@ -316,6 +345,7 @@ export const supportedPaperDefinitions = [
   AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_JUDAISM_DEFINITION,
   AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_DEFINITION,
   EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION,
+  EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_DEFINITION,
   EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,

@@ -16,6 +16,7 @@ import {
   aqaGcseReligiousStudiesShortCourseThemesAdapter,
 } from "@/lib/import/adapters/aqa-gcse-religious-studies-short-course";
 import { edexcelAGeographyPaper1Adapter } from "@/lib/import/adapters/edexcel-a-geography-paper-1";
+import { edexcelGcseEnglishLiteraturePaper2JekyllConflictAdapter } from "@/lib/import/adapters/edexcel-english-literature-paper-2-jekyll-conflict";
 import { edexcelGcseHistoryPaper1MedicineAdapter } from "@/lib/import/adapters/edexcel-history-paper-1-medicine";
 import {
   ocrGcseBusinessPaper1Adapter,
@@ -44,6 +45,8 @@ export const adapters: Record<string, PaperImportAdapter> = {
   [aqaGcseReligiousStudiesShortCourseThemesAdapter.key]:
     aqaGcseReligiousStudiesShortCourseThemesAdapter,
   [edexcelAGeographyPaper1Adapter.key]: edexcelAGeographyPaper1Adapter,
+  [edexcelGcseEnglishLiteraturePaper2JekyllConflictAdapter.key]:
+    edexcelGcseEnglishLiteraturePaper2JekyllConflictAdapter,
   [edexcelGcseHistoryPaper1MedicineAdapter.key]: edexcelGcseHistoryPaper1MedicineAdapter,
   [ocrGcseBusinessPaper1Adapter.key]: ocrGcseBusinessPaper1Adapter,
   [ocrGcseBusinessPaper2Adapter.key]: ocrGcseBusinessPaper2Adapter,
@@ -70,5 +73,6 @@ export {
   aqaGcseReligiousStudiesShortCourseThemesAdapter,
 };
 export { edexcelAGeographyPaper1Adapter };
+export { edexcelGcseEnglishLiteraturePaper2JekyllConflictAdapter };
 export { edexcelGcseHistoryPaper1MedicineAdapter };
 export { ocrGcseBusinessPaper1Adapter, ocrGcseBusinessPaper2Adapter };

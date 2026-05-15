@@ -22,6 +22,8 @@ const EDEXCEL_A_GEOGRAPHY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-geography/edexcel-a-paper-1/";
 const EDEXCEL_GCSE_HISTORY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-1/";
+const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-english-literature/edexcel-paper-2/";
 const OCR_GCSE_BUSINESS_ASSESSMENT_URL =
   "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct";
 const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_ASSESSMENT_URL =
@@ -33,6 +35,7 @@ const CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
 const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS = [2023, 2024] as const;
 const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_YEARS = [2023, 2024] as const;
+const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_YEARS = [2023, 2024] as const;
 const OCR_BUSINESS_BENCHMARK_YEARS = [2023, 2024] as const;
 const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_YEARS = [2024] as const;
 
@@ -480,6 +483,58 @@ export function discoverEdexcelGcseHistoryPaper1MedicineFromHtml(html: string) {
 export async function discoverEdexcelGcseHistoryPaper1Medicine() {
   const html = await fetchHtml(EDEXCEL_GCSE_HISTORY_PAPER_1_URL);
   return discoverEdexcelGcseHistoryPaper1MedicineFromHtml(html);
+}
+
+export function discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflictFromHtml(html: string) {
+  const $ = cheerio.load(html);
+  const candidates: PmtPaperCandidate[] = [];
+
+  for (const year of EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_YEARS) {
+    const markScheme = $(
+      `a[href*='June ${year} MS - Paper 2 Edexcel English Literature GCSE.pdf']`,
+    ).first();
+    const questionPaper = $(
+      `a[href*='June ${year} QP - Paper 2 Edexcel English Literature GCSE.pdf']`,
+    ).first();
+    const markSchemeHref = markScheme.attr("href");
+    const questionPaperHref = questionPaper.attr("href");
+
+    if (!markSchemeHref || !questionPaperHref) {
+      continue;
+    }
+
+    candidates.push({
+      paperPageUrl: EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_URL,
+      questionPaperUrl: normalizeLinkUrlForBase(
+        questionPaperHref,
+        EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_URL,
+      ),
+      markSchemeUrl: normalizeLinkUrlForBase(
+        markSchemeHref,
+        EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_URL,
+      ),
+      examBoard: "Edexcel",
+      qualification: "GCSE English Literature",
+      subject: "English Literature",
+      paperNumber: 2,
+      tier: "Dr Jekyll and Mr Hyde / Conflict anthology",
+      sessionLabel: `June ${year}`,
+      year,
+    });
+  }
+
+  if (candidates.length !== EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_YEARS.length) {
+    throw new Error(
+      `PMT benchmark discovery contract failed for ${EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_URL}: expected ${EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_YEARS.length} Paper 2 Jekyll/Conflict candidates, found ${candidates.length}`,
+    );
+  }
+
+  return candidates;
+}
+
+export async function discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflict() {
+  const html = await fetchHtml(EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_URL);
+  return discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflictFromHtml(html);
 }
 
 function discoverOcrGcseBusinessPaperFromHtml(html: string, paperNumber: 1 | 2) {

@@ -1,6 +1,15 @@
 import "./globals.css";
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
+
+export const metadata: Metadata = {
+  title: {
+    default: "IHateGCSE",
+    template: "%s | IHateGCSE",
+  },
+  applicationName: "IHateGCSE",
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
