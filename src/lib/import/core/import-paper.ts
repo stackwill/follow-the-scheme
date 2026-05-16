@@ -18,6 +18,7 @@ import {
   AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION,
   AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
   AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
+  AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
   AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION,
   AQA_PHYSICS_PAPER_2_HIGHER_DEFINITION,
@@ -29,6 +30,7 @@ import {
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
   type BiologyBenchmarkYear,
+  type AqaGcseChemistryBenchmarkYear,
   type ChemistryBenchmarkYear,
   type ComputerScienceBenchmarkYear,
   type EdexcelAGeographyPaper1Year,
@@ -656,6 +658,12 @@ export async function importAqaChemistryPaper2HigherBenchmark(
   year: ChemistryBenchmarkYear,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION, year);
+}
+
+export async function importAqaGcseChemistryPaper1HigherBenchmark(
+  year: AqaGcseChemistryBenchmarkYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_DEFINITION, year);
 }
 
 export async function importAqaGcseComputerSciencePaper1BPythonBenchmark(

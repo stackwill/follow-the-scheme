@@ -624,6 +624,41 @@ ag E: oC = -1 B
     expect(drafts[1]?.markSchemeText).toContain("resistor at constant temperature");
   });
 
+  it("keeps low AQA tick-box options above the page footer", () => {
+    const questionItems: TextItem[] = [
+      item(7, "0", 52.7, 320.0),
+      item(7, "2", 69.4, 320.0),
+      item(7, ".", 82.4, 320.0),
+      item(7, "7", 92.6, 320.0),
+      item(7, "Which of the following describes the trends going down Group 7?", 114.8, 319.2, 360),
+      item(7, "Tick (✓) one box.", 114.8, 290.0, 120),
+      item(7, "Relative molecular mass decreases and boiling point decreases.", 114.8, 240.0, 320),
+      item(7, "Relative molecular mass decreases and boiling point increases.", 114.8, 200.0, 320),
+      item(7, "Relative molecular mass increases and boiling point decreases.", 114.8, 150.0, 320),
+      item(7, "Relative molecular mass increases and boiling point increases.", 114.8, 113.0, 320),
+      item(7, "11", 552.8, 109.0, 20),
+      item(7, "Turn over", 480.2, 60.0, 60),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(11, "02.7", 67.3, 573.7, 24),
+      item(11, "relative molecular mass increases and boiling point increases", 113.2, 573.7, 300),
+      item(11, "1", 466.2, 573.7, 8),
+      item(12, "Total Question 2 1", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2024,
+      questionItems,
+      markSchemeItems,
+    });
+
+    expect(drafts[0]?.extractedQuestionText).toContain(
+      "Relative molecular mass increases and boiling point increases",
+    );
+    expect(drafts[0]?.extractedQuestionText).not.toContain("Turn over");
+    expect(drafts[0]?.primaryPdfBox.bottom).toBeLessThanOrEqual(90);
+  });
+
   it("does not let setup for the next same-page subquestion become multiple-choice options", () => {
     const questionItems: TextItem[] = [
       item(11, "0", 52.7, 355.0),
@@ -925,6 +960,132 @@ ag E: oC = -1 B
     expect(question042?.supportingPdfBoxes).toEqual([]);
     expect(question042?.extractedQuestionText).not.toContain("A bromine atom");
     expect(question043?.extractedQuestionText).toContain("A bromine atom");
+  });
+
+  it("moves cross-page Chemistry experiment setup to the following subquestion", () => {
+    const questionItems: TextItem[] = [
+      item(11, "0", 52.7, 300.0),
+      item(11, "4", 69.4, 300.0),
+      item(11, ".", 82.4, 300.0),
+      item(11, "4", 92.6, 300.0),
+      item(11, "Complete the ionic equation for the reaction between zinc and", 114.8, 299.2, 360),
+      item(11, "copper sulfate solution.", 114.8, 280.0, 180),
+      item(11, "Include state symbols.", 114.8, 240.0, 150),
+      item(11, "[2 marks]", 491.6, 220.0, 60),
+      item(12, "A different student repeated steps 1 to 5 of the method four times using 0.50 g of", 114.8, 760.0, 440),
+      item(12, "zinc powder.", 114.8, 740.0, 90),
+      item(12, "Table 2 shows the results.", 114.8, 700.0, 180),
+      item(12, "0", 52.7, 520.0),
+      item(12, "4", 69.4, 520.0),
+      item(12, ".", 82.4, 520.0),
+      item(12, "5", 92.6, 520.0),
+      item(12, "Calculate the mean highest temperature reached.", 114.8, 519.2, 280),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(17, "04.4", 67.3, 675.7, 24),
+      item(17, "Zn + Cu2+ → Zn2+ + Cu", 113.2, 675.7, 150),
+      item(17, "2", 466.2, 675.7, 8),
+      item(17, "04.5", 67.3, 573.7, 24),
+      item(17, "37.5 ± 0.3", 113.2, 573.7, 80),
+      item(17, "3", 466.2, 573.7, 8),
+      item(18, "Total Question 4 5", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2024,
+      questionItems,
+      markSchemeItems,
+    });
+    const question044 = drafts.find((draft) => draft.questionKey === "04.4");
+    const question045 = drafts.find((draft) => draft.questionKey === "04.5");
+
+    expect(question044?.extractedQuestionText).not.toContain("A different student repeated");
+    expect(question044?.supportingPdfBoxes).toEqual([]);
+    expect(question045?.extractedQuestionText).toContain("A different student repeated");
+    expect(question045?.extractedQuestionText).toContain("Table 2 shows the results");
+  });
+
+  it("uses content text when sidebox text shares a setup line", () => {
+    const questionItems: TextItem[] = [
+      item(10, "0", 52.7, 320.0),
+      item(10, "4", 69.4, 320.0),
+      item(10, ".", 82.4, 320.0),
+      item(10, "1", 92.6, 320.0),
+      item(10, "Which expression shows the overall energy change?", 114.8, 319.2, 300),
+      item(10, "[1 mark]", 491.6, 300.0, 60),
+      item(10, "436 + 346 − (2 × 432) kJ/mol", 114.8, 220.0, 220),
+      item(11, "box", 556.6, 766.2, 12),
+      item(11, "The reaction between hydrogen and chlorine is exothermic.", 114.8, 764.5, 300),
+      item(11, "0", 52.7, 736.2),
+      item(11, "4", 69.4, 736.2),
+      item(11, ".", 82.4, 735.6),
+      item(11, "2", 92.6, 736.2),
+      item(11, "Explain why this reaction releases energy to the surroundings.", 114.8, 735.3, 330),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(17, "04.1", 67.3, 675.7, 24),
+      item(17, "436 + 346 − (2 × 432)", 113.2, 675.7, 150),
+      item(17, "1", 466.2, 675.7, 8),
+      item(17, "04.2", 67.3, 573.7, 24),
+      item(17, "Bonds made release more energy than bonds broken", 113.2, 573.7, 260),
+      item(17, "2", 466.2, 573.7, 8),
+      item(18, "Total Question 4 3", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2023,
+      questionItems,
+      markSchemeItems,
+    });
+    const question041 = drafts.find((draft) => draft.questionKey === "04.1");
+    const question042 = drafts.find((draft) => draft.questionKey === "04.2");
+
+    expect(question041?.pageEnd).toBe(10);
+    expect(question041?.supportingPdfBoxes).toEqual([]);
+    expect(question041?.extractedQuestionText).not.toContain("exothermic");
+    expect(question042?.extractedQuestionText).toContain("The reaction between hydrogen and chlorine is exothermic");
+  });
+
+  it("moves Chemistry oxide setup to the following tick-box subquestion", () => {
+    const questionItems: TextItem[] = [
+      item(22, "0", 52.7, 760.0),
+      item(22, "7", 69.4, 760.0),
+      item(22, ".", 82.4, 760.0),
+      item(22, "3", 92.6, 760.0),
+      item(22, "When iron reacts with chlorine, 0.12 mol of iron reacts with 0.18 mol of chlorine.", 114.8, 759.2, 430),
+      item(22, "Which is the correct equation for the reaction?", 114.8, 715.0, 280),
+      item(22, "Tick (✓) one box.", 114.8, 690.0, 110),
+      item(22, "Fe + Cl2 → FeCl2", 170.0, 640.0, 120),
+      item(22, "Fe + 3Cl2 → FeCl6", 170.0, 600.0, 130),
+      item(22, "2Fe + Cl2 → 2FeCl", 170.0, 560.0, 140),
+      item(22, "2Fe + 3Cl2 → 2FeCl3", 170.0, 520.0, 160),
+      item(22, "The most common oxides of iron are Fe2O3 and Fe3O4", 114.8, 460.0, 360),
+      item(22, "0", 52.7, 400.0),
+      item(22, "7", 69.4, 400.0),
+      item(22, ".", 82.4, 400.0),
+      item(22, "4", 92.6, 400.0),
+      item(22, "What is the ratio of the numbers of ions in Fe3O4?", 114.8, 399.2, 320),
+    ];
+    const markSchemeItems: TextItem[] = [
+      item(28, "07.3", 67.3, 675.7, 24),
+      item(28, "2Fe + 3Cl2 → 2FeCl3", 113.2, 675.7, 150),
+      item(28, "1", 466.2, 675.7, 8),
+      item(28, "07.4", 67.3, 573.7, 24),
+      item(28, "1 Fe2+ : 2 Fe3+ : 4 O2–", 113.2, 573.7, 160),
+      item(28, "1", 466.2, 573.7, 8),
+      item(29, "Total Question 7 2", 49.5, 75.7, 96),
+    ];
+
+    const drafts = aqaCombinedSciencePhysicsPaper1HigherAdapter.detectQuestionDrafts({
+      year: 2024,
+      questionItems,
+      markSchemeItems,
+    });
+    const question073 = drafts.find((draft) => draft.questionKey === "07.3");
+    const question074 = drafts.find((draft) => draft.questionKey === "07.4");
+
+    expect(question073?.extractedQuestionText).not.toContain("The most common oxides");
+    expect(question074?.extractedQuestionText).toContain("The most common oxides");
   });
 
   it("keeps space for Chemistry figure completion prompts", () => {

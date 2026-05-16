@@ -4,6 +4,7 @@ import {
   discoverAqaBiologyPaper2Higher,
   discoverAqaChemistryPaper1Higher,
   discoverAqaChemistryPaper2Higher,
+  discoverAqaGcseChemistryPaper1Higher,
   discoverAqaGcseComputerSciencePaper1BPython,
   discoverAqaReligiousStudiesShortCourseChristianity,
   discoverAqaReligiousStudiesShortCourseJudaism,
@@ -33,6 +34,8 @@ export const AQA_CHEMISTRY_PAPER_1_HIGHER_ADAPTER_KEY =
   "aqa-combined-science-chemistry-paper-1-higher";
 export const AQA_CHEMISTRY_PAPER_2_HIGHER_ADAPTER_KEY =
   "aqa-combined-science-chemistry-paper-2-higher";
+export const AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_ADAPTER_KEY =
+  "aqa-gcse-chemistry-paper-1-higher";
 export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY =
   "aqa-gcse-computer-science-paper-1b-python";
 export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_ADAPTER_KEY =
@@ -55,6 +58,7 @@ export type PhysicsBenchmarkYear = 2022 | 2023 | 2024;
 export type PhysicsPaper2BenchmarkYear = 2022 | 2023 | 2024;
 export type BiologyBenchmarkYear = 2021 | 2022 | 2023 | 2024;
 export type ChemistryBenchmarkYear = 2023 | 2024;
+export type AqaGcseChemistryBenchmarkYear = 2023 | 2024;
 export type ComputerScienceBenchmarkYear = 2022 | 2023 | 2024;
 export type EdexcelAGeographyPaper1Year = 2023 | 2024;
 export type EdexcelGcseHistoryPaper1MedicineYear = 2023 | 2024;
@@ -69,6 +73,7 @@ export type SupportedPaperCandidate =
   | Awaited<ReturnType<typeof discoverAqaBiologyPaper2Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaChemistryPaper1Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaChemistryPaper2Higher>>[number]
+  | Awaited<ReturnType<typeof discoverAqaGcseChemistryPaper1Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaGcseComputerSciencePaper1BPython>>[number]
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseChristianity>>[number]
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseJudaism>>[number]
@@ -100,6 +105,16 @@ const BIOLOGY_TOTAL_MARKS: Record<BiologyBenchmarkYear, number> = {
 
 const SCIENCE_TOTAL_MARKS: Record<PhysicsBenchmarkYear, number> = {
   2022: 70,
+  2023: 70,
+  2024: 70,
+};
+
+const AQA_GCSE_CHEMISTRY_TOTAL_MARKS: Record<AqaGcseChemistryBenchmarkYear, number> = {
+  2023: 100,
+  2024: 100,
+};
+
+const CHEMISTRY_TOTAL_MARKS: Record<ChemistryBenchmarkYear, number> = {
   2023: 70,
   2024: 70,
 };
@@ -201,7 +216,7 @@ export const AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION = {
   familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-chemistry-1/",
   specCode: "8464",
   title: (candidate) => `AQA Combined Science Trilogy Chemistry Paper 1 Higher ${candidate.sessionLabel}`,
-  totalMarks: SCIENCE_TOTAL_MARKS,
+  totalMarks: CHEMISTRY_TOTAL_MARKS,
   discover: discoverAqaChemistryPaper1Higher,
   paperDir: (year) => getPaperDirForAdapter(AQA_CHEMISTRY_PAPER_1_HIGHER_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<ChemistryBenchmarkYear>;
@@ -211,10 +226,20 @@ export const AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION = {
   familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-chemistry-2/",
   specCode: "8464",
   title: (candidate) => `AQA Combined Science Trilogy Chemistry Paper 2 Higher ${candidate.sessionLabel}`,
-  totalMarks: SCIENCE_TOTAL_MARKS,
+  totalMarks: CHEMISTRY_TOTAL_MARKS,
   discover: discoverAqaChemistryPaper2Higher,
   paperDir: (year) => getPaperDirForAdapter(AQA_CHEMISTRY_PAPER_2_HIGHER_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<ChemistryBenchmarkYear>;
+
+export const AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_DEFINITION = {
+  adapterKey: AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-chemistry/aqa-paper-1/",
+  specCode: "8462",
+  title: (candidate) => `AQA GCSE Chemistry Paper 1 Higher ${candidate.sessionLabel}`,
+  totalMarks: AQA_GCSE_CHEMISTRY_TOTAL_MARKS,
+  discover: discoverAqaGcseChemistryPaper1Higher,
+  paperDir: (year) => getPaperDirForAdapter(AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<AqaGcseChemistryBenchmarkYear>;
 
 export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION = {
   adapterKey: AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY,
@@ -340,6 +365,7 @@ export const supportedPaperDefinitions = [
   AQA_BIOLOGY_PAPER_2_HIGHER_DEFINITION,
   AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
   AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
+  AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
   AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_DEFINITION,
   AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_JUDAISM_DEFINITION,

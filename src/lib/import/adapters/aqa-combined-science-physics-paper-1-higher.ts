@@ -135,13 +135,18 @@ function groupItemsIntoLines(items: TextItem[], tolerance = QUESTION_LINE_Y_TOLE
 }
 
 function isQuestionPaperBoilerplate(line: Line) {
-  if (line.y < 120) {
+  if (line.y < 80) {
     return true;
   }
 
   const text = line.rawText.toLowerCase();
+  const contentText = line.contentText.trim().toLowerCase();
 
   if (!text) {
+    return true;
+  }
+
+  if (/^[+\-\u2212\s]+$/.test(contentText) && (text.includes("box") || line.y > 760)) {
     return true;
   }
 
@@ -698,9 +703,11 @@ function isQuestionMarkAllocationLine(line: Line) {
 }
 
 function looksLikeSetupForNextPart(line: Line) {
-  const text = line.rawText.trim();
+  const candidates = [line.contentText, line.rawText]
+    .map((text) => text.trim())
+    .filter((text, index, texts) => text.length > 0 && texts.indexOf(text) === index);
 
-  return (
+  return candidates.some((text) =>
     /\b(?:Figure|Table)\s+\d+\b.*\b(?:shows?|describes?|are repeated|is repeated)\b/i.test(text) ||
     /\b(?:structure|graph|table|figure|diagram|results?|data)\b.+\b(?:is|are)\s+different\b/i.test(text) ||
     /^One difference\b/i.test(text) ||
@@ -713,8 +720,12 @@ function looksLikeSetupForNextPart(line: Line) {
     /^Female reproductive hormones\b/i.test(text) ||
     /^Calcium carbonate reacts\b/i.test(text) ||
     /^The equation for the reaction is\b/i.test(text) ||
+    /^The reaction between\b.*\bis exothermic\.?$/i.test(text) ||
     /^A bromine atom can be represented\b/i.test(text) ||
     /^The student then investigated\b/i.test(text) ||
+    /^A different student repeated\b/i.test(text) ||
+    /^When hydrochloric acid dissolves\b/i.test(text) ||
+    /^The most common oxides\b/i.test(text) ||
     /^This is the method used\.?$/i.test(text)
   );
 }

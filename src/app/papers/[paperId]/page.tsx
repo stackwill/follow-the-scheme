@@ -12,11 +12,11 @@ function questionHref(paperId: string, questionId: string) {
   return `/papers/${paperId}/questions/${questionId}` as Route;
 }
 
-function subjectDisplayParts(subject: string) {
+function subjectDisplayParts(subject: string, qualification: string) {
   if (["Biology", "Chemistry", "Physics"].includes(subject)) {
     return {
       name: subject,
-      detail: "combined science",
+      detail: qualification === "GCSE Chemistry" ? "(triple award)" : "combined science",
     };
   }
 
@@ -40,8 +40,8 @@ function subjectDisplayParts(subject: string) {
   };
 }
 
-function subjectDisplayName(subject: string) {
-  const parts = subjectDisplayParts(subject);
+function subjectDisplayName(subject: string, qualification: string) {
+  const parts = subjectDisplayParts(subject, qualification);
 
   return parts.detail ? `${parts.name} ${parts.detail}` : parts.name;
 }
@@ -96,7 +96,7 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
         <div className="course-hero__copy">
           <div className="breadcrumb-line">
             <Link href="/">Home</Link>
-            <span>/ {subjectDisplayName(paper.subject)}</span>
+            <span>/ {subjectDisplayName(paper.subject, paper.qualification)}</span>
             <span>/ {paper.year}</span>
           </div>
           <p className="eyebrow">{paper.sessionLabel}</p>
