@@ -1,7 +1,7 @@
 import type { Route } from "next";
 import { notFound } from "next/navigation";
 
-import { PlausibleEvent } from "@/components/analytics/plausible-event";
+import { AnalyticsEvent } from "@/components/analytics/analytics-event";
 import { AnswerForm } from "@/components/questions/answer-form";
 import { ProgressHeader } from "@/components/questions/progress-header";
 import { detectPaperOnlyQuestion, detectSelectionQuestion } from "@/lib/grading/schema";
@@ -217,7 +217,7 @@ export default async function QuestionPage({
 
   return (
     <main className="page-shell question-shell">
-      <PlausibleEvent
+      <AnalyticsEvent
         name="Question Group Opened"
         props={{
           subject: paper.subject,

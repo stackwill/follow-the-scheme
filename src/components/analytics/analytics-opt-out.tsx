@@ -2,24 +2,26 @@
 
 import { useEffect, useState } from "react";
 
-export function PlausibleOptOut() {
+const UMAMI_DISABLED_KEY = "umami.disabled";
+
+export function AnalyticsOptOut() {
   const [excluded, setExcluded] = useState(false);
 
   useEffect(() => {
     try {
-      setExcluded(window.localStorage.getItem("plausible_ignore") === "true");
+      setExcluded(window.localStorage.getItem(UMAMI_DISABLED_KEY) === "1");
     } catch {
       setExcluded(false);
     }
   }, []);
 
   function excludeVisits() {
-    window.localStorage.setItem("plausible_ignore", "true");
+    window.localStorage.setItem(UMAMI_DISABLED_KEY, "1");
     setExcluded(true);
   }
 
   function includeVisits() {
-    window.localStorage.removeItem("plausible_ignore");
+    window.localStorage.removeItem(UMAMI_DISABLED_KEY);
     setExcluded(false);
   }
 
@@ -27,7 +29,7 @@ export function PlausibleOptOut() {
     <div className="paper-choice-panel">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Plausible Analytics</p>
+          <p className="eyebrow">Umami Analytics</p>
           <h2>{excluded ? "This browser is excluded" : "This browser is counted"}</h2>
         </div>
       </div>

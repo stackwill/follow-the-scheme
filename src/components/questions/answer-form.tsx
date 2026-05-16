@@ -5,7 +5,7 @@ import type { CSSProperties } from "react";
 import { useActionState, useEffect, useMemo, useState } from "react";
 
 import type { SelectionOption } from "@/lib/grading/schema";
-import { trackPlausibleEvent } from "@/lib/analytics/plausible";
+import { trackAnalyticsEvent } from "@/lib/analytics/umami";
 import {
   latestLocalAttempt,
   type LocalPaperAttempts,
@@ -142,7 +142,7 @@ export function AnswerForm(props: AnswerFormProps) {
     if (state.results && state.results.length > 0) {
       setLocalAttempts(saveLocalQuestionAttempts(props.paperId, state.results));
     }
-    trackPlausibleEvent("Question Group Marked", {
+    trackAnalyticsEvent("Question Group Marked", {
       ...analyticsProps,
       groupKey: props.groupKey,
       questionParts: props.questions.length,
