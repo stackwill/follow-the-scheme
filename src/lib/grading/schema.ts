@@ -49,6 +49,7 @@ function isWrittenSourceFollowUpQuestion(questionText: string) {
 function normalizeAnswerText(text: string) {
   return text
     .toLowerCase()
+    .replace(/[−–]/g, "-")
     .replace(/\u00a0/g, " ")
     .replace(/[^\p{L}\p{N}×+\-=/().\s]/gu, "")
     .replace(/\s+/g, " ")
@@ -69,6 +70,10 @@ function optionId(index: number) {
   return `option-${index + 1}`;
 }
 
+function isStandaloneChargeMarkerLine(line: string) {
+  return /[+\-−–¯]/.test(line) && /^[\d+\-−–¯\s]+$/.test(line);
+}
+
 function getOptionLines(questionText: string) {
   const matches = [...questionText.matchAll(SINGLE_SELECTION_PATTERN)];
 
@@ -81,6 +86,7 @@ function getOptionLines(questionText: string) {
       .map((line) => line.trim())
       .filter(Boolean)
       .filter((line) => !/^\[\d+\s*marks?\]$/i.test(line))
+      .filter((line) => !isStandaloneChargeMarkerLine(line))
       .slice(0, 6);
   }
 
@@ -135,6 +141,15 @@ function markSchemeSingleLetter(text: string) {
   return match?.[0] ?? null;
 }
 
+function normalizeChemistrySelectionText(text: string) {
+  return normalizeAnswerText(
+    text
+      .replace(/[−–]/g, "-")
+      .replace(/\b([A-Z][a-z]?)\d?(?:\+|-)(?=\s|$|[):;,.])/g, "$1")
+      .replace(/\be(?:\+|-)(?=\s|$|[):;,.])/gi, "e"),
+  );
+}
+
 export function detectSelectionQuestion(input: {
   maxMarks: number;
   questionText: string;
@@ -178,7 +193,20 @@ export function detectSelectionQuestion(input: {
   const matches = options.filter((option) => {
     const normalizedOption = normalizeAnswerText(option.label);
 
-    return normalizedOption === normalizedCorrectAnswer || normalizedCorrectAnswer.includes(normalizedOption);
+    if (normalizedOption === normalizedCorrectAnswer || normalizedCorrectAnswer.includes(normalizedOption)) {
+      return true;
+    }
+
+    const normalizedChemistryOption = normalizeChemistrySelectionText(option.label);
+    const normalizedChemistryAnswer = normalizeChemistrySelectionText(
+      normalizeMarkSchemeText(input.markSchemeText),
+    );
+
+    return (
+      normalizedChemistryOption.length > 0 &&
+      (normalizedChemistryOption === normalizedChemistryAnswer ||
+        normalizedChemistryAnswer.includes(normalizedChemistryOption))
+    );
   });
 
   if (matches.length !== 1) {

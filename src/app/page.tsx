@@ -12,16 +12,36 @@ function paperHref(paperId: string) {
   return `/papers/${paperId}` as const;
 }
 
-function subjectHref(subject: string) {
-  return `/?subject=${encodeURIComponent(subject)}` as Route;
+type CoursePaper = {
+  subject: string;
+  qualification: string;
+  paperNumber: number;
+  tier: string;
+  year: number;
+  totalMarks: number;
+};
+
+type Course = {
+  key: string;
+  subject: string;
+  qualification: string;
+  papers: CoursePaper[];
+};
+
+function courseKey(paper: { subject: string; qualification: string }) {
+  return `${paper.subject}::${paper.qualification}`;
 }
 
-function subjectPaperHref(subject: string, paperNumber: number) {
-  return `/?subject=${encodeURIComponent(subject)}&paper=${paperNumber}` as Route;
+function courseHref(course: Course) {
+  return `/?subject=${encodeURIComponent(course.key)}` as Route;
 }
 
-function paperChoiceDisplayName(subject: string, paperNumber: number) {
-  if (subject === "Religious Studies") {
+function coursePaperHref(course: Course, paperNumber: number) {
+  return `/?subject=${encodeURIComponent(course.key)}&paper=${paperNumber}` as Route;
+}
+
+function paperChoiceDisplayName(course: Course, paperNumber: number) {
+  if (course.subject === "Religious Studies") {
     if (paperNumber === 2) {
       return "Christianity";
     }
@@ -38,22 +58,22 @@ function paperChoiceDisplayName(subject: string, paperNumber: number) {
   return `Paper ${paperNumber}`;
 }
 
-function subjectDisplayParts(subject: string) {
-  if (["Biology", "Chemistry", "Physics"].includes(subject)) {
+function courseDisplayParts(course: { subject: string; qualification: string }) {
+  if (["Biology", "Chemistry", "Physics"].includes(course.subject)) {
     return {
-      name: subject,
-      detail: "combined science",
+      name: course.subject,
+      detail: course.qualification === "GCSE Chemistry" ? "(triple award)" : "combined science",
     };
   }
 
-  if (subject === "Computer Science") {
+  if (course.subject === "Computer Science") {
     return {
       name: "Computer Science",
       detail: null,
     };
   }
 
-  if (subject === "Business") {
+  if (course.subject === "Business") {
     return {
       name: "Business",
       detail: null,
@@ -61,13 +81,13 @@ function subjectDisplayParts(subject: string) {
   }
 
   return {
-    name: subject,
+    name: course.subject,
     detail: null,
   };
 }
 
-function subjectDisplayName(subject: string) {
-  const parts = subjectDisplayParts(subject);
+function courseDisplayName(course: { subject: string; qualification: string }) {
+  const parts = courseDisplayParts(course);
 
   return parts.detail ? `${parts.name} ${parts.detail}` : parts.name;
 }
@@ -100,15 +120,43 @@ function subjectSortValue(subject: string) {
   return preferredIndex === -1 ? Number.POSITIVE_INFINITY : preferredIndex;
 }
 
-function sortSubjects(left: string, right: string) {
-  const leftSortValue = subjectSortValue(left);
-  const rightSortValue = subjectSortValue(right);
+function sortCourses(left: Course, right: Course) {
+  const leftSortValue = subjectSortValue(left.subject);
+  const rightSortValue = subjectSortValue(right.subject);
 
   if (leftSortValue !== rightSortValue) {
     return leftSortValue - rightSortValue;
   }
 
-  return left.localeCompare(right);
+  const subjectOrder = left.subject.localeCompare(right.subject);
+
+  if (subjectOrder !== 0) {
+    return subjectOrder;
+  }
+
+  return left.qualification.localeCompare(right.qualification);
+}
+
+function buildCourses(papers: CoursePaper[]) {
+  const coursesByKey = new Map<string, Course>();
+
+  for (const paper of papers) {
+    const key = courseKey(paper);
+    const course = coursesByKey.get(key);
+
+    if (course) {
+      course.papers.push(paper);
+    } else {
+      coursesByKey.set(key, {
+        key,
+        subject: paper.subject,
+        qualification: paper.qualification,
+        papers: [paper],
+      });
+    }
+  }
+
+  return [...coursesByKey.values()].sort(sortCourses);
 }
 
 export default async function HomePage({
@@ -119,7 +167,7 @@ export default async function HomePage({
   const resolvedSearchParams = await searchParams;
   const subjectParam = resolvedSearchParams?.subject;
   const paperParam = resolvedSearchParams?.paper;
-  const selectedSubject = Array.isArray(subjectParam) ? subjectParam[0] : subjectParam;
+  const selectedCourseKey = Array.isArray(subjectParam) ? subjectParam[0] : subjectParam;
   const selectedPaperNumberValue = Array.isArray(paperParam) ? paperParam[0] : paperParam;
   const selectedPaperNumber = selectedPaperNumberValue ? Number(selectedPaperNumberValue) : null;
   const { db } = await import("@/lib/db");
@@ -133,21 +181,25 @@ export default async function HomePage({
     },
     orderBy: [{ year: "desc" }, { sessionLabel: "desc" }],
   });
-  const subjects = [...new Set(papers.map((paper) => paper.subject))].sort(sortSubjects);
-  const visiblePapers = selectedSubject
+  const courses = buildCourses(papers);
+  const selectedCourse = selectedCourseKey
+    ? courses.find((course) => course.key === selectedCourseKey) ??
+      courses.find((course) => course.subject === selectedCourseKey)
+    : null;
+  const visiblePapers = selectedCourse
     ? papers.filter(
         (paper) =>
-          paper.subject === selectedSubject &&
+          courseKey(paper) === selectedCourse.key &&
           selectedPaperNumber !== null &&
           paper.paperNumber === selectedPaperNumber,
       )
     : [];
-  const selectedSubjectPapers = selectedSubject ? papers.filter((paper) => paper.subject === selectedSubject) : [];
+  const selectedCoursePapers = selectedCourse ? papers.filter((paper) => courseKey(paper) === selectedCourse.key) : [];
   const availablePaperNumbers = [
-    ...new Set(selectedSubjectPapers.map((paper) => paper.paperNumber)),
+    ...new Set(selectedCoursePapers.map((paper) => paper.paperNumber)),
   ].sort((left, right) => left - right);
-  const shouldChoosePaperNumber = selectedSubject && selectedPaperNumber === null;
-  const selectedSubjectParts = selectedSubject ? subjectDisplayParts(selectedSubject) : null;
+  const shouldChoosePaperNumber = selectedCourse && selectedPaperNumber === null;
+  const selectedCourseParts = selectedCourse ? courseDisplayParts(selectedCourse) : null;
   const initialNow = Date.now();
   const nextExam = nextExamFromSchedule(new Date(initialNow));
 
@@ -169,20 +221,20 @@ export default async function HomePage({
 
       <header className="course-hero">
         <div className="course-hero__icon" aria-hidden="true">
-          {selectedSubject ? selectedSubject.slice(0, 2).toUpperCase() : "😡"}
+          {selectedCourse ? selectedCourse.subject.slice(0, 2).toUpperCase() : "😡"}
         </div>
         <div className="course-hero__copy">
           <div className="breadcrumb-line">
             <Link href="/">Home</Link>
-            {selectedSubject ? <span>/ {subjectDisplayName(selectedSubject)}</span> : <span>/ Past papers</span>}
+            {selectedCourse ? <span>/ {courseDisplayName(selectedCourse)}</span> : <span>/ Past papers</span>}
           </div>
           <div className="course-title-row">
             <h1>
-              {selectedSubjectParts ? (
+              {selectedCourseParts ? (
                 <>
-                  {selectedSubjectParts.name}
-                  {selectedSubjectParts.detail ? (
-                    <span className="title-muted"> {selectedSubjectParts.detail}</span>
+                  {selectedCourseParts.name}
+                  {selectedCourseParts.detail ? (
+                    <span className="title-muted"> {selectedCourseParts.detail}</span>
                   ) : null}
                 </>
               ) : (
@@ -192,7 +244,7 @@ export default async function HomePage({
             <span className="active-course-pill">ihategcse</span>
           </div>
           <p className="page-description">
-            {selectedSubject
+            {selectedCourse
               ? "Choose a paper, answer it in chunks, and get marking that stays close to the real mark scheme."
               : "Choose your subject, open a paper, and we'll use the actual mark scheme to mark your answers."}
           </p>
@@ -200,11 +252,11 @@ export default async function HomePage({
         <ExamCountdown exam={nextExam} initialNow={initialNow} />
       </header>
 
-      {!selectedSubject ? <ScrollCue targetId="subject-library" /> : null}
+      {!selectedCourse ? <ScrollCue targetId="subject-library" /> : null}
 
-      {selectedSubject ? (
+      {selectedCourse ? (
         shouldChoosePaperNumber ? (
-          <section className="paper-choice-panel" aria-label={`${subjectDisplayName(selectedSubject)} paper choices`}>
+          <section className="paper-choice-panel" aria-label={`${courseDisplayName(selectedCourse)} paper choices`}>
             <div className="library-subnav">
               <Link className="subtle-link" href="/">
                 All subjects
@@ -213,13 +265,13 @@ export default async function HomePage({
             </div>
             <div className="paper-choice-grid">
               {availablePaperNumbers.map((paperNumber) => {
-                const matchingPapers = selectedSubjectPapers.filter((paper) => paper.paperNumber === paperNumber);
+                const matchingPapers = selectedCoursePapers.filter((paper) => paper.paperNumber === paperNumber);
                 const latestYear = Math.max(...matchingPapers.map((paper) => paper.year));
                 const totalMarks = matchingPapers.reduce((sum, paper) => sum + paper.totalMarks, 0);
 
                 return (
-                  <Link className="paper-choice-card" href={subjectPaperHref(selectedSubject, paperNumber)} key={paperNumber}>
-                    <span>{paperChoiceDisplayName(selectedSubject, paperNumber)}</span>
+                  <Link className="paper-choice-card" href={coursePaperHref(selectedCourse, paperNumber)} key={paperNumber}>
+                    <span>{paperChoiceDisplayName(selectedCourse, paperNumber)}</span>
                     <strong>{matchingPapers.length} papers</strong>
                     <small className="metric-list">
                       <span>latest {latestYear}</span>
@@ -231,16 +283,16 @@ export default async function HomePage({
             </div>
           </section>
         ) : visiblePapers.length > 0 ? (
-          <section className="paper-table-wrap" aria-label={`${subjectDisplayName(selectedSubject)} papers`}>
+          <section className="paper-table-wrap" aria-label={`${courseDisplayName(selectedCourse)} papers`}>
             <div className="library-subnav">
-              <Link className="subtle-link" href={subjectHref(selectedSubject)}>
+              <Link className="subtle-link" href={courseHref(selectedCourse)}>
                 Change paper
               </Link>
               <span className="metric-list">
                 <span>
                   {selectedPaperNumber === null
                     ? "Paper"
-                    : paperChoiceDisplayName(selectedSubject, selectedPaperNumber)}
+                    : paperChoiceDisplayName(selectedCourse, selectedPaperNumber)}
                 </span>
                 <span>{visiblePapers.length} papers</span>
               </span>
@@ -285,7 +337,7 @@ export default async function HomePage({
           </section>
         ) : (
           <section className="empty-state">
-            <h2>No papers for {subjectDisplayName(selectedSubject)}</h2>
+            <h2>No papers for {courseDisplayName(selectedCourse)}</h2>
             <p>Choose a subject from the library.</p>
             <Link className="button-link" href="/">
               All subjects
@@ -299,25 +351,25 @@ export default async function HomePage({
               <h2>Subject library</h2>
               <p>Pick a course to see available papers.</p>
             </div>
-            <span>{subjects.length} subjects</span>
+            <span>{courses.length} subjects</span>
           </div>
           <ol className="subject-list">
-            {subjects.map((subject) => {
-              const subjectPapers = papers.filter((paper) => paper.subject === subject);
-              const latestYear = Math.max(...subjectPapers.map((paper) => paper.year));
-              const totalMarks = subjectPapers.reduce((sum, paper) => sum + paper.totalMarks, 0);
+            {courses.map((course) => {
+              const latestYear = Math.max(...course.papers.map((paper) => paper.year));
+              const totalMarks = course.papers.reduce((sum, paper) => sum + paper.totalMarks, 0);
+              const displayParts = courseDisplayParts(course);
 
               return (
-                <li key={subject}>
-                  <Link href={subjectHref(subject)}>
+                <li key={course.key}>
+                  <Link href={courseHref(course)}>
                     <span className="subject-list__name">
-                      {subjectDisplayParts(subject).name}
-                      {subjectDisplayParts(subject).detail ? (
-                        <span className="subject-list__detail"> {subjectDisplayParts(subject).detail}</span>
+                      {displayParts.name}
+                      {displayParts.detail ? (
+                        <span className="subject-list__detail"> {displayParts.detail}</span>
                       ) : null}
                     </span>
                     <span className="subject-list__meta">
-                      <span>{subjectPapers.length} papers</span>
+                      <span>{course.papers.length} papers</span>
                       <span>Latest {latestYear}</span>
                       <span>{totalMarks} marks</span>
                     </span>

@@ -130,6 +130,67 @@ describe("detectSelectionQuestion", () => {
       correctOptionId: "option-2",
     });
   });
+
+  it("detects AQA chemistry equation options when charge markers split onto separate lines", () => {
+    const result = detectSelectionQuestion({
+      maxMarks: 1,
+      questionText: [
+        "What is the half equation for the reaction at the positive electrode when aqueous",
+        "calcium chloride solution is electrolysed?",
+        "Tick () one box.",
+        "¯ –",
+        "2 Cl→ Cl2 + 2 e",
+        "– ¯",
+        "Cl2 + 2 e→ 2 Cl",
+        "¯ –",
+        "4 OH→ O2 + 2 H2O + 4 e",
+        "– ¯",
+        "O2 + 2 H2O + 4 e→ 4 OH",
+      ].join("\n"),
+      markSchemeText: "2 Cl– → Cl2 + 2 e–\nallow cathode for negative",
+    });
+
+    expect(result).toEqual({
+      type: "single",
+      options: [
+        { id: "option-1", label: "2 Cl→ Cl2 + 2 e" },
+        { id: "option-2", label: "Cl2 + 2 e→ 2 Cl" },
+        { id: "option-3", label: "4 OH→ O2 + 2 H2O + 4 e" },
+        { id: "option-4", label: "O2 + 2 H2O + 4 e→ 4 OH" },
+      ],
+      correctOptionId: "option-1",
+    });
+  });
+
+  it("detects AQA chemistry ratio options when ionic charges are split from formulae", () => {
+    const result = detectSelectionQuestion({
+      maxMarks: 1,
+      questionText: [
+        "What is the ratio of the numbers of ions in Fe3O4?",
+        "Tick () one box.",
+        "2+ 3+ 2–",
+        "2 Fe: 1 Fe: 4 O",
+        "2+ 3+ 2–",
+        "1 Fe: 2 Fe: 4 O",
+        "2+ 2–",
+        "3 Fe: 4 O",
+        "3+ 2–",
+        "3 Fe: 4 O",
+      ].join("\n"),
+      markSchemeText: "1 Fe2+: 2 Fe3+: 4 O2–",
+    });
+
+    expect(result).toEqual({
+      type: "single",
+      options: [
+        { id: "option-1", label: "2 Fe: 1 Fe: 4 O" },
+        { id: "option-2", label: "1 Fe: 2 Fe: 4 O" },
+        { id: "option-3", label: "3 Fe: 4 O" },
+        { id: "option-4", label: "3 Fe: 4 O" },
+      ],
+      correctOptionId: "option-2",
+    });
+  });
 });
 
 describe("gradeSelectionAnswer", () => {

@@ -15,3 +15,7 @@ export const aqaCombinedScienceChemistryPaper1HigherAdapter = createAqaCombinedS
 export const aqaCombinedScienceChemistryPaper2HigherAdapter = createAqaCombinedSciencePaperAdapter(
   "aqa-combined-science-chemistry-paper-2-higher",
 );
+
+export const aqaGcseChemistryPaper1HigherAdapter = createAqaCombinedSciencePaperAdapter(
+  "aqa-gcse-chemistry-paper-1-higher",
+);

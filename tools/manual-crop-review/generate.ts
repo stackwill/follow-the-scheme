@@ -242,7 +242,7 @@ function detectChoiceBoxResponse(text: string) {
     /\blozenge\b/i,
     /\bcross\s+in\s+a\s+box\b/i,
     /\bnew\s+answer\s+with\s+a\s+cross\b/i,
-    /\btick\s+(?:one|the|a)\s+box\b/i,
+    /\btick\s*(?:\([^)]*\)\s*)?(?:one|the|a)\s+box\b/i,
     /\bput\s+a\s+tick\b/i,
     /\bplace\s+a\s+tick\b/i,
     /\bmark\s+(?:one|the|a)\s+box\b/i,
