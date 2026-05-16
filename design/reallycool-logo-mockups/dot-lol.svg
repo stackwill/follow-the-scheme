@@ -1,0 +1,17 @@
+<svg width="840" height="260" viewBox="0 0 840 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">reallycool.lol dot lol logo mockup</title>
+  <desc id="desc">A monochrome dot-lol mark with a compact reallycool.lol wordmark.</desc>
+  <rect width="840" height="260" fill="#ffffff"/>
+  <g fill="#111111">
+    <circle cx="101" cy="152" r="18"/>
+  </g>
+  <g stroke="#111111" stroke-width="23" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M154 72v104"/>
+    <path d="M217 124c0-29.271 21.714-53 48.5-53S314 94.729 314 124s-21.714 53-48.5 53S217 153.271 217 124Z"/>
+    <path d="M367 72v104"/>
+  </g>
+  <g fill="#111111">
+    <text x="453" y="122" font-family="Avenir Next, Satoshi, Circular Std, Arial, Helvetica, sans-serif" font-size="54" font-weight="760" letter-spacing="0">reallycool</text>
+    <text x="453" y="169" font-family="Avenir Next, Satoshi, Circular Std, Arial, Helvetica, sans-serif" font-size="42" font-weight="620" letter-spacing=".5">.lol</text>
+  </g>
+</svg>

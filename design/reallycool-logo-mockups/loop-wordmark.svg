@@ -1,0 +1,17 @@
+<svg width="840" height="260" viewBox="0 0 840 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">reallycool.lol loop wordmark logo mockup</title>
+  <desc id="desc">A monochrome reallycool.lol wordmark with a linked double-o loop mark.</desc>
+  <rect width="840" height="260" fill="#ffffff"/>
+  <g fill="#111111">
+    <text x="86" y="148" font-family="Avenir Next, Satoshi, Circular Std, Arial, Helvetica, sans-serif" font-size="70" font-weight="760" letter-spacing="-1">reallyc</text>
+    <text x="505" y="148" font-family="Avenir Next, Satoshi, Circular Std, Arial, Helvetica, sans-serif" font-size="70" font-weight="760" letter-spacing="-1">l.lol</text>
+  </g>
+  <g stroke="#111111" stroke-width="17" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M347 116c0-20.435 15.222-37 34-37s34 16.565 34 37-15.222 37-34 37-34-16.565-34-37Z"/>
+    <path d="M407 116c0-20.435 15.222-37 34-37s34 16.565 34 37-15.222 37-34 37-34-16.565-34-37Z"/>
+    <path d="M407 116h8"/>
+  </g>
+  <g stroke="#111111" stroke-width="8" stroke-linecap="round">
+    <path d="M710 164h58"/>
+  </g>
+</svg>
