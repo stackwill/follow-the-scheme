@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import { useActionState, useEffect, useMemo, useState } from "react";
 
 import type { SelectionOption } from "@/lib/grading/schema";
+import { trackPlausibleEvent } from "@/lib/analytics/plausible";
 import {
   latestLocalAttempt,
   type LocalPaperAttempts,
@@ -25,6 +26,13 @@ type AnswerFormProps = {
   action: (state: AnswerFormState, formData: FormData) => Promise<AnswerFormState>;
   paperId: string;
   groupKey: string;
+  analytics: {
+    subject: string;
+    qualification: string;
+    paperNumber: number;
+    tier: string;
+    year: number;
+  };
   sourceMaterialImagePaths: string[];
   questions: Array<{
     id: string;
@@ -83,6 +91,22 @@ export function AnswerForm(props: AnswerFormProps) {
   const [state, formAction, pending] = useActionState(props.action, { error: null });
   const [localAttempts, setLocalAttempts] = useState<LocalPaperAttempts | null>(null);
   const [answersByQuestionId, setAnswersByQuestionId] = useState<Record<string, string>>({});
+  const analyticsProps = useMemo(
+    () => ({
+      subject: props.analytics.subject,
+      qualification: props.analytics.qualification,
+      paperNumber: props.analytics.paperNumber,
+      tier: props.analytics.tier,
+      year: props.analytics.year,
+    }),
+    [
+      props.analytics.subject,
+      props.analytics.qualification,
+      props.analytics.paperNumber,
+      props.analytics.tier,
+      props.analytics.year,
+    ],
+  );
   const latestAttemptsByQuestionId = useMemo(() => {
     const entries = props.questions.map((question) => [
       question.id,
@@ -118,8 +142,22 @@ export function AnswerForm(props: AnswerFormProps) {
     if (state.results && state.results.length > 0) {
       setLocalAttempts(saveLocalQuestionAttempts(props.paperId, state.results));
     }
+    trackPlausibleEvent("Question Group Marked", {
+      ...analyticsProps,
+      groupKey: props.groupKey,
+      questionParts: props.questions.length,
+      markedParts: state.results?.length ?? 0,
+      skippedParts: state.skippedCount ?? 0,
+    });
     document.getElementById("marks")?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, [props.paperId, state.results, state.skippedCount]);
+  }, [
+    analyticsProps,
+    props.groupKey,
+    props.paperId,
+    props.questions.length,
+    state.results,
+    state.skippedCount,
+  ]);
 
   useEffect(() => {
     if (state.answers) {
