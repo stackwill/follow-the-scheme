@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
 
+import { UmamiScript } from "@/components/analytics/umami-script";
+
 export const metadata: Metadata = {
   title: {
     default: "IHateGCSE",
@@ -13,7 +15,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const umamiWebsiteId = process.env.UMAMI_WEBSITE_ID ?? "f7d3a380-c96b-40e0-84c2-a9bbca6c08af";
-  const umamiScriptSrc = process.env.UMAMI_SCRIPT_SRC ?? "https://cloud.umami.is/script.js";
+  const umamiHostUrl = process.env.UMAMI_HOST_URL ?? "https://cloud.umami.is";
+  const umamiScriptSrc = process.env.UMAMI_SCRIPT_SRC ?? "/umami/script.js";
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -29,12 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             } catch (_) {}
           `}
         </Script>
-        <Script
-          data-website-id={umamiWebsiteId}
-          defer
-          src={umamiScriptSrc}
-          strategy="afterInteractive"
-        />
+        <UmamiScript hostUrl={umamiHostUrl} scriptSrc={umamiScriptSrc} websiteId={umamiWebsiteId} />
         {children}
       </body>
     </html>
