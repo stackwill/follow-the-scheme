@@ -1,0 +1,16 @@
+<svg width="840" height="260" viewBox="0 0 840 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">reallycool.lol rcl monogram logo mockup</title>
+  <desc id="desc">A monochrome rounded rcl monogram next to a reallycool.lol wordmark.</desc>
+  <rect width="840" height="260" fill="#ffffff"/>
+  <g stroke="#111111" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M97 174V85h54c24.301 0 44 19.699 44 44v45"/>
+    <path d="M117 85h46"/>
+    <path d="M229 84h-26c-27.062 0-49 21.938-49 49s21.938 49 49 49h26"/>
+    <path d="M265 68v114"/>
+  </g>
+  <g fill="#111111">
+    <text x="330" y="116" font-family="Avenir Next, Satoshi, Circular Std, Arial, Helvetica, sans-serif" font-size="58" font-weight="780" letter-spacing="0">reallycool</text>
+    <text x="330" y="168" font-family="Avenir Next, Satoshi, Circular Std, Arial, Helvetica, sans-serif" font-size="58" font-weight="520" letter-spacing="0">.lol</text>
+    <path d="M330 186h262v10H330z"/>
+  </g>
+</svg>
