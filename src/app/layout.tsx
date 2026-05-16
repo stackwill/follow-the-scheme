@@ -12,6 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const plausibleDomain = process.env.PLAUSIBLE_DOMAIN;
+  const plausibleScriptSrc = process.env.PLAUSIBLE_SCRIPT_SRC ?? "https://plausible.io/js/script.js";
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
@@ -26,6 +29,23 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             } catch (_) {}
           `}
         </Script>
+        {plausibleDomain ? (
+          <>
+            <Script id="plausible-queue" strategy="beforeInteractive">
+              {`
+                window.plausible = window.plausible || function() {
+                  (window.plausible.q = window.plausible.q || []).push(arguments);
+                };
+              `}
+            </Script>
+            <Script
+              data-domain={plausibleDomain}
+              defer
+              src={plausibleScriptSrc}
+              strategy="afterInteractive"
+            />
+          </>
+        ) : null}
         {children}
       </body>
     </html>

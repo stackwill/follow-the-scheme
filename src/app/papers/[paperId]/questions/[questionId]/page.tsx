@@ -1,6 +1,7 @@
 import type { Route } from "next";
 import { notFound } from "next/navigation";
 
+import { PlausibleEvent } from "@/components/analytics/plausible-event";
 import { AnswerForm } from "@/components/questions/answer-form";
 import { ProgressHeader } from "@/components/questions/progress-header";
 import { detectPaperOnlyQuestion, detectSelectionQuestion } from "@/lib/grading/schema";
@@ -216,6 +217,18 @@ export default async function QuestionPage({
 
   return (
     <main className="page-shell question-shell">
+      <PlausibleEvent
+        name="Question Group Opened"
+        props={{
+          subject: paper.subject,
+          qualification: paper.qualification,
+          paperNumber: paper.paperNumber,
+          tier: paper.tier,
+          year: paper.year,
+          groupKey: currentGroup.key,
+          questionParts: currentGroup.questions.length,
+        }}
+      />
       <ProgressHeader
         paperTitle={paper.title}
         paperHref={paperHref(paper.id)}
@@ -227,6 +240,13 @@ export default async function QuestionPage({
       <div className="question-flow">
         <AnswerForm
           action={submit}
+          analytics={{
+            subject: paper.subject,
+            qualification: paper.qualification,
+            paperNumber: paper.paperNumber,
+            tier: paper.tier,
+            year: paper.year,
+          }}
           paperId={paper.id}
           groupKey={currentGroup.key}
           sourceMaterialImagePaths={sourceMaterialImagePaths}

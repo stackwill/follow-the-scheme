@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { notFound } from "next/navigation";
 
+import { PlausibleEvent } from "@/components/analytics/plausible-event";
 import { PaperProgressOverview } from "@/components/questions/paper-progress-overview";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { uniqueQuestionGroups } from "@/lib/questions/groups";
@@ -75,6 +76,16 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
 
   return (
     <main className="page-shell learning-page">
+      <PlausibleEvent
+        name="Paper Opened"
+        props={{
+          subject: paper.subject,
+          qualification: paper.qualification,
+          paperNumber: paper.paperNumber,
+          tier: paper.tier,
+          year: paper.year,
+        }}
+      />
       <nav className="app-topbar" aria-label="App navigation">
         <Link className="brand-mark" href="/">
           <span className="brand-spark" aria-hidden="true">
