@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { PlausibleOptOut } from "@/components/analytics/plausible-opt-out";
+import { AnalyticsOptOut } from "@/components/analytics/analytics-opt-out";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export const dynamic = "force-dynamic";
@@ -36,12 +36,12 @@ export default function AnalyticsOptOutPage() {
             <span className="active-course-pill">internal</span>
           </div>
           <p className="page-description">
-            Sets the Plausible local browser opt-out flag so Will testing does not count as real usage.
+            Sets the Umami local browser opt-out flag so Will testing does not count as real usage.
           </p>
         </div>
       </header>
 
-      <PlausibleOptOut />
+      <AnalyticsOptOut />
     </main>
   );
 }

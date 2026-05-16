@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const plausibleDomain = process.env.PLAUSIBLE_DOMAIN;
-  const plausibleScriptSrc = process.env.PLAUSIBLE_SCRIPT_SRC ?? "https://plausible.io/js/script.js";
+  const umamiWebsiteId = process.env.UMAMI_WEBSITE_ID ?? "f7d3a380-c96b-40e0-84c2-a9bbca6c08af";
+  const umamiScriptSrc = process.env.UMAMI_SCRIPT_SRC ?? "https://cloud.umami.is/script.js";
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -29,23 +29,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             } catch (_) {}
           `}
         </Script>
-        {plausibleDomain ? (
-          <>
-            <Script id="plausible-queue" strategy="beforeInteractive">
-              {`
-                window.plausible = window.plausible || function() {
-                  (window.plausible.q = window.plausible.q || []).push(arguments);
-                };
-              `}
-            </Script>
-            <Script
-              data-domain={plausibleDomain}
-              defer
-              src={plausibleScriptSrc}
-              strategy="afterInteractive"
-            />
-          </>
-        ) : null}
+        <Script
+          data-website-id={umamiWebsiteId}
+          defer
+          src={umamiScriptSrc}
+          strategy="afterInteractive"
+        />
         {children}
       </body>
     </html>
