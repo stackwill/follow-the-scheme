@@ -1,26 +1,53 @@
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { AUTH_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
+import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase/config";
 
-const PUBLIC_PATHS = new Set(["/icon.svg", "/login", "/umami/script.js"]);
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/auth/callback",
+  "/forgot-password",
+  "/icon.svg",
+  "/login",
+  "/register",
+  "/umami/script.js",
+]);
 
 function isPublicPath(pathname: string) {
-  return PUBLIC_PATHS.has(pathname);
+  return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/fonts/");
 }
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const authenticated = await verifySessionToken(
-    request.cookies.get(AUTH_COOKIE_NAME)?.value,
-    process.env.AUTH_SESSION_SECRET,
-  );
+  let response = NextResponse.next({
+    request,
+  });
+  const supabase = createServerClient(supabaseUrl(), supabasePublishableKey(), {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => {
+          request.cookies.set(name, value);
+        });
 
-  if (authenticated && pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+        response = NextResponse.next({
+          request,
+        });
 
-  if (authenticated || isPublicPath(pathname)) {
-    return NextResponse.next();
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user || isPublicPath(pathname)) {
+    return response;
   }
 
   const loginUrl = new URL("/login", request.url);

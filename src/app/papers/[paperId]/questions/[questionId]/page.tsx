@@ -7,6 +7,7 @@ import { ProgressHeader } from "@/components/questions/progress-header";
 import { detectPaperOnlyQuestion, detectSelectionQuestion } from "@/lib/grading/schema";
 import type { LocalQuestionAttempt } from "@/lib/questions/local-attempts";
 import { questionGroupKey, uniqueQuestionGroups } from "@/lib/questions/groups";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -148,12 +149,24 @@ export default async function QuestionPage({
   async function submit(_state: FormState, formData: FormData): Promise<FormState> {
     "use server";
 
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     const submittedAnswers = Object.fromEntries(
       currentGroup.questions.map((groupQuestion) => [
         groupQuestion.id,
         String(formData.get(`answer-${groupQuestion.id}`) ?? ""),
       ]),
     );
+
+    if (!user) {
+      return {
+        error: "Log in before submitting answers for marking.",
+        answers: submittedAnswers,
+        submitted: true,
+      };
+    }
 
     try {
       const { gradeQuestionAttempt } = await import("@/lib/grading/grade-question");
