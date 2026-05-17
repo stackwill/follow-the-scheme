@@ -23,6 +23,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/node_modules/@libsql/isomorphic-ws ./node_modules/@libsql/isomorphic-ws
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
