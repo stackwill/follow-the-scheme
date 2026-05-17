@@ -6,7 +6,7 @@ export const gradingResponseSchema = z.object({
   spagMarks: z.number().int().min(0).optional(),
   reasoning: z.string().min(1),
   feedback: z.string().min(1),
-  issues: z.array(z.string()).default([]),
+  issues: z.preprocess((value) => value ?? [], z.array(z.string())),
 });
 
 export type GradingResponse = z.infer<typeof gradingResponseSchema>;
