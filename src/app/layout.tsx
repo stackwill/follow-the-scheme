@@ -7,7 +7,6 @@ import "./styles/education-ui-pass.css";
 import "./styles/overdrive-paper-picker.css";
 import "./styles/ihategcse-refresh.css";
 import "./styles/home-directory-overrides.css";
-import "./styles/auth-pages.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";

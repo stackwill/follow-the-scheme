@@ -1,4 +1,5 @@
 import type { Route } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { AnalyticsEvent } from "@/components/analytics/analytics-event";
@@ -7,7 +8,7 @@ import { ProgressHeader } from "@/components/questions/progress-header";
 import { detectPaperOnlyQuestion, detectSelectionQuestion } from "@/lib/grading/schema";
 import type { LocalQuestionAttempt } from "@/lib/questions/local-attempts";
 import { questionGroupKey, uniqueQuestionGroups } from "@/lib/questions/groups";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { checkRateLimit, clientRateLimitKeyFromHeaders, rateLimitMessage } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -149,10 +150,6 @@ export default async function QuestionPage({
   async function submit(_state: FormState, formData: FormData): Promise<FormState> {
     "use server";
 
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
     const submittedAnswers = Object.fromEntries(
       currentGroup.questions.map((groupQuestion) => [
         groupQuestion.id,
@@ -160,15 +157,18 @@ export default async function QuestionPage({
       ]),
     );
 
-    if (!user) {
-      return {
-        error: "Log in before submitting answers for marking.",
-        answers: submittedAnswers,
-        submitted: true,
-      };
-    }
-
     try {
+      const requestHeaders = await headers();
+      const rateLimitResult = checkRateLimit(clientRateLimitKeyFromHeaders(requestHeaders));
+
+      if (!rateLimitResult.allowed) {
+        return {
+          error: rateLimitMessage(rateLimitResult),
+          answers: submittedAnswers,
+          submitted: true,
+        };
+      }
+
       const { gradeQuestionAttempt } = await import("@/lib/grading/grade-question");
       let gradedCount = 0;
       let skippedCount = 0;
