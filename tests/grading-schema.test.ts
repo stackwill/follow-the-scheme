@@ -20,6 +20,22 @@ describe("gradingResponseSchema", () => {
     ).toBeTruthy();
   });
 
+  it("normalizes null issues from model JSON responses to an empty list", () => {
+    expect(
+      gradingResponseSchema.parse({
+        awardedMarks: 3,
+        reasoning: "Matched three mark points.",
+        feedback: "Good explanation.",
+        issues: null,
+      }),
+    ).toEqual({
+      awardedMarks: 3,
+      reasoning: "Matched three mark points.",
+      feedback: "Good explanation.",
+      issues: [],
+    });
+  });
+
   it("rejects non-integer marks", () => {
     expect(() =>
       gradingResponseSchema.parse({
