@@ -36,6 +36,37 @@ function emptyPaperAttempts(): LocalPaperAttempts {
   };
 }
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isLocalQuestionAttempt(value: unknown): value is LocalQuestionAttempt {
+  return (
+    isObject(value) &&
+    typeof value.id === "string" &&
+    typeof value.questionId === "string" &&
+    typeof value.questionKey === "string" &&
+    typeof value.submittedAnswer === "string" &&
+    typeof value.awardedMarks === "number" &&
+    Number.isFinite(value.awardedMarks) &&
+    typeof value.maxMarks === "number" &&
+    Number.isFinite(value.maxMarks) &&
+    typeof value.reasoning === "string" &&
+    typeof value.feedback === "string" &&
+    typeof value.createdAt === "string"
+  );
+}
+
+function isLocalPaperAttempts(value: unknown): value is LocalPaperAttempts {
+  if (!isObject(value) || value.version !== 1 || !isObject(value.questions)) {
+    return false;
+  }
+
+  return Object.values(value.questions).every(
+    (entry) => isObject(entry) && Array.isArray(entry.attempts) && entry.attempts.every(isLocalQuestionAttempt),
+  );
+}
+
 export function readLocalPaperAttempts(paperId: string): LocalPaperAttempts {
   if (typeof window === "undefined") {
     return emptyPaperAttempts();
@@ -48,9 +79,9 @@ export function readLocalPaperAttempts(paperId: string): LocalPaperAttempts {
   }
 
   try {
-    const parsed = JSON.parse(rawValue) as LocalPaperAttempts;
+    const parsed = JSON.parse(rawValue) as unknown;
 
-    if (parsed.version === 1 && parsed.questions && typeof parsed.questions === "object") {
+    if (isLocalPaperAttempts(parsed)) {
       return parsed;
     }
   } catch {

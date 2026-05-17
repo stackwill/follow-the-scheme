@@ -1,0 +1,199 @@
+/* Overdrive brand + simplified paper picker */
+.brand-spark {
+  --liquid-turn: 0deg;
+  position: relative;
+  isolation: isolate;
+  width: 36px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 52% 48% 58% 42% / 44% 62% 38% 56%;
+  background:
+    radial-gradient(circle at 28% 26%, rgba(255, 255, 255, 0.95) 0 8%, transparent 9%),
+    radial-gradient(circle at 70% 72%, rgba(255, 255, 255, 0.42) 0 10%, transparent 11%),
+    conic-gradient(from var(--liquid-turn), #147ad6, #50aa5f, #8a63e8, #14a6d6, #147ad6);
+  box-shadow:
+    0 10px 24px rgba(20, 122, 214, 0.22),
+    inset 0 -7px 14px rgba(19, 45, 88, 0.22),
+    inset 0 5px 12px rgba(255, 255, 255, 0.36);
+  animation:
+    liquid-turn 4.8s linear infinite,
+    liquid-shape 5.6s ease-in-out infinite;
+}
+
+.brand-spark::before,
+.brand-spark::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+  border-radius: inherit;
+  inset: 2px;
+  background: inherit;
+  filter: blur(7px);
+  opacity: 0.45;
+  transform: scale(0.86) translateX(4px);
+}
+
+.brand-spark::after {
+  z-index: 1;
+  inset: 9px 11px 8px 12px;
+  background: rgba(255, 255, 255, 0.82);
+  filter: none;
+  opacity: 1;
+  transform: none;
+}
+
+.brand-spark span:first-child,
+.brand-spark span:last-child {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  transform: none;
+}
+
+.brand-spark span:first-child {
+  width: 5px;
+  height: 5px;
+  top: 7px;
+  left: 10px;
+}
+
+.brand-spark span:last-child {
+  width: 4px;
+  height: 4px;
+  right: 9px;
+  bottom: 8px;
+  border: 0;
+}
+
+.brand-mark strong,
+.subject-list__name,
+.paper-choice-card span,
+.paper-choice-card strong {
+  font-weight: 650;
+}
+
+.title-muted,
+.subject-list__detail {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.title-muted {
+  font-size: 0.82em;
+}
+
+.paper-choice-panel {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 10px 26px rgba(31, 54, 82, 0.05);
+}
+
+.paper-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  padding: 22px;
+}
+
+.paper-choice-card {
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  align-content: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 72%, transparent), transparent 58%),
+    var(--panel);
+  color: var(--text);
+  padding: 24px;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.paper-choice-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  box-shadow: 0 16px 34px rgba(31, 54, 82, 0.1);
+  transform: translateY(-2px);
+}
+
+.paper-choice-card span {
+  color: var(--accent-dark);
+  font-size: 1.4rem;
+}
+
+.paper-choice-card strong {
+  font-size: 1.05rem;
+}
+
+.paper-choice-card small {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.metric-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 7px 11px;
+  align-items: center;
+  font-size: 0.96rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.metric-list > span {
+  display: inline-flex;
+  align-items: center;
+  font-weight: inherit;
+}
+
+.metric-list > span + span::before {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-right: 11px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 48%, transparent);
+  content: "";
+}
+
+@keyframes liquid-turn {
+  to {
+    --liquid-turn: 360deg;
+  }
+}
+
+@keyframes liquid-shape {
+  0%,
+  100% {
+    border-radius: 52% 48% 58% 42% / 44% 62% 38% 56%;
+    transform: translateZ(0) rotate(-2deg);
+  }
+
+  35% {
+    border-radius: 42% 58% 44% 56% / 58% 38% 62% 42%;
+    transform: translateZ(0) rotate(3deg) scale(1.04);
+  }
+
+  70% {
+    border-radius: 58% 42% 52% 48% / 36% 58% 42% 64%;
+    transform: translateZ(0) rotate(1deg) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-spark,
+  .paper-choice-card {
+    animation: none;
+    transition-duration: 0.01ms;
+  }
+}
+
+/* ihategcse layout refresh */

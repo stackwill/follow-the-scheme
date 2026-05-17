@@ -1,15 +1,35 @@
 import Link from "next/link";
 import type { Route } from "next";
+import { redirect } from "next/navigation";
 
 import { ExamCountdown } from "@/components/exam-countdown";
 import { ScrollCue } from "@/components/scroll-cue";
+import { SubjectPreferencesModal } from "@/components/subjects/subject-preferences-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { nextExamFromSchedule } from "@/lib/exam-schedule";
+import {
+  buildSubjectPreferenceOptions,
+  selectedCourseKeysFromPreferenceIds,
+  selectedSubjectPreferenceIds,
+  subjectPreferenceMetadata,
+  subjectPreferencesCompleted,
+} from "@/lib/subjects/preferences";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 function paperHref(paperId: string) {
   return `/papers/${paperId}` as const;
+}
+
+function loginHref(nextPath?: string) {
+  const suffix = nextPath ? `?next=${encodeURIComponent(nextPath)}` : "";
+
+  return `/login${suffix}` as Route;
+}
+
+function gatedHref(path: string, authenticated: boolean) {
+  return (authenticated ? path : loginHref(path)) as Route;
 }
 
 type CoursePaper = {
@@ -159,6 +179,22 @@ function buildCourses(papers: CoursePaper[]) {
   return [...coursesByKey.values()].sort(sortCourses);
 }
 
+function firstNameFromUser(user: {
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+} | null) {
+  const metadataName =
+    typeof user?.user_metadata?.name === "string"
+      ? user.user_metadata.name
+      : typeof user?.user_metadata?.full_name === "string"
+        ? user.user_metadata.full_name
+        : null;
+  const fallbackName = user?.email?.split("@")[0] ?? "there";
+  const name = metadataName?.trim() || fallbackName;
+
+  return name.split(/\s+/)[0] || "there";
+}
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -171,6 +207,11 @@ export default async function HomePage({
   const selectedPaperNumberValue = Array.isArray(paperParam) ? paperParam[0] : paperParam;
   const selectedPaperNumber = selectedPaperNumberValue ? Number(selectedPaperNumberValue) : null;
   const { db } = await import("@/lib/db");
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const authenticated = Boolean(user);
   const papers = await db.paper.findMany({
     include: {
       _count: {
@@ -182,6 +223,17 @@ export default async function HomePage({
     orderBy: [{ year: "desc" }, { sessionLabel: "desc" }],
   });
   const courses = buildCourses(papers);
+  const subjectPreferenceOptions = buildSubjectPreferenceOptions(courses);
+  const selectedPreferenceIds = selectedSubjectPreferenceIds(user?.user_metadata);
+  const selectedCourseKeys = selectedCourseKeysFromPreferenceIds(selectedPreferenceIds, subjectPreferenceOptions);
+  const hasCompletedSubjectPreferences = subjectPreferencesCompleted(user?.user_metadata);
+  const shouldFilterSubjects = authenticated && hasCompletedSubjectPreferences && selectedCourseKeys.size > 0;
+  const coursesForHome = shouldFilterSubjects
+    ? courses.filter((course) => selectedCourseKeys.has(course.key))
+    : courses;
+  const papersForHome = shouldFilterSubjects
+    ? papers.filter((paper) => selectedCourseKeys.has(courseKey(paper)))
+    : papers;
   const selectedCourse = selectedCourseKey
     ? courses.find((course) => course.key === selectedCourseKey) ??
       courses.find((course) => course.subject === selectedCourseKey)
@@ -203,6 +255,37 @@ export default async function HomePage({
   const initialNow = Date.now();
   const nextExam = nextExamFromSchedule(new Date(initialNow));
 
+  async function saveSubjectPreferences(formData: FormData) {
+    "use server";
+
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect(loginHref("/") as Route);
+    }
+
+    const preferenceIds = formData
+      .getAll("preferenceIds")
+      .map((value) => String(value))
+      .filter((value) => subjectPreferenceOptions.some((option) => option.id === value));
+
+    if (preferenceIds.length === 0) {
+      return;
+    }
+
+    await supabase.auth.updateUser({
+      data: {
+        ...user.user_metadata,
+        ...subjectPreferenceMetadata(preferenceIds),
+      },
+    });
+
+    redirect("/" as Route);
+  }
+
   return (
     <main className="page-shell learning-page">
       <nav className="app-topbar" aria-label="App navigation">
@@ -214,8 +297,19 @@ export default async function HomePage({
           <strong>ihategcse</strong>
         </Link>
         <div className="app-topbar__actions">
-          <span className="xp-chip">{papers.length} papers</span>
+          {authenticated ? (
+            <SubjectPreferencesModal
+              action={saveSubjectPreferences}
+              initialOpen={!hasCompletedSubjectPreferences}
+              initialSelectedIds={selectedPreferenceIds}
+              options={subjectPreferenceOptions}
+            />
+          ) : null}
+          <span className="xp-chip">{papersForHome.length} papers</span>
           <ThemeToggle />
+          <Link className="auth-nav-link" href={authenticated ? "/logout" : loginHref()}>
+            {authenticated ? "Log out" : "Log in"}
+          </Link>
         </div>
       </nav>
 
@@ -238,10 +332,9 @@ export default async function HomePage({
                   ) : null}
                 </>
               ) : (
-                "We'll mark it for you"
+                authenticated ? `Hey, ${firstNameFromUser(user)}` : "We'll mark it for you"
               )}
             </h1>
-            <span className="active-course-pill">ihategcse</span>
           </div>
           <p className="page-description">
             {selectedCourse
@@ -270,7 +363,11 @@ export default async function HomePage({
                 const totalMarks = matchingPapers.reduce((sum, paper) => sum + paper.totalMarks, 0);
 
                 return (
-                  <Link className="paper-choice-card" href={coursePaperHref(selectedCourse, paperNumber)} key={paperNumber}>
+                  <Link
+                    className="paper-choice-card"
+                    href={gatedHref(coursePaperHref(selectedCourse, paperNumber), authenticated)}
+                    key={paperNumber}
+                  >
                     <span>{paperChoiceDisplayName(selectedCourse, paperNumber)}</span>
                     <strong>{matchingPapers.length} papers</strong>
                     <small className="metric-list">
@@ -326,7 +423,7 @@ export default async function HomePage({
                     <td>{paper._count.questions}</td>
                     <td>{paper.totalMarks}</td>
                     <td>
-                      <Link className="table-action" href={paperHref(paper.id)}>
+                      <Link className="table-action" href={gatedHref(paperHref(paper.id), authenticated)}>
                         Open
                       </Link>
                     </td>
@@ -351,17 +448,17 @@ export default async function HomePage({
               <h2>Subject library</h2>
               <p>Pick a course to see available papers.</p>
             </div>
-            <span>{courses.length} subjects</span>
+            <span>{coursesForHome.length} subjects</span>
           </div>
           <ol className="subject-list">
-            {courses.map((course) => {
+            {coursesForHome.map((course) => {
               const latestYear = Math.max(...course.papers.map((paper) => paper.year));
               const totalMarks = course.papers.reduce((sum, paper) => sum + paper.totalMarks, 0);
               const displayParts = courseDisplayParts(course);
 
               return (
                 <li key={course.key}>
-                  <Link href={courseHref(course)}>
+                  <Link href={gatedHref(courseHref(course), authenticated)}>
                     <span className="subject-list__name">
                       {displayParts.name}
                       {displayParts.detail ? (
