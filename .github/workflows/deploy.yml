@@ -100,6 +100,7 @@ jobs:
           username: ${{ env.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ env.DEPLOY_PORT }}
+          command_timeout: 30m
           envs: APP_BIND,APP_DIR,APP_PORT,CONTAINER_NAME,REMOTE_TMP_DIR,IMAGE_REPOSITORY,IMAGE_TAG,GHCR_PULL_USERNAME,GHCR_PULL_TOKEN
           script: |
             set -eu
@@ -141,7 +142,7 @@ jobs:
             docker system df || true
 
             docker compose pull
-            docker compose run --rm app bunx prisma migrate deploy
+            docker compose run --rm app bunx prisma@6.19.3 migrate deploy
             echo "Code deploy only: paper data is managed by local data releases."
             docker compose up -d --force-recreate --remove-orphans
             docker image prune -f

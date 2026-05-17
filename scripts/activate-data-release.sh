@@ -59,9 +59,9 @@ if [ -d "$APP_DIR/data" ]; then
 fi
 mv "$STAGING_DIR" "$APP_DIR/data"
 
-if ! docker compose run --rm app bunx prisma migrate deploy; then
-  docker compose run --rm app bunx prisma migrate resolve --applied 0001_init
-  docker compose run --rm app bunx prisma migrate deploy
+if ! docker compose run --rm app bunx prisma@6.19.3 migrate deploy; then
+  docker compose run --rm app bunx prisma@6.19.3 migrate resolve --applied 0001_init
+  docker compose run --rm app bunx prisma@6.19.3 migrate deploy
 fi
 
 if [ -f "$APP_DIR/data/$(basename "$ATTEMPTS_BACKUP")" ]; then
