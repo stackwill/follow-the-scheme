@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { notFound } from "next/navigation";
+
 import { ImportStatusTable } from "@/components/dev/import-status-table";
 import { importBenchmarkPaper } from "@/app/dev/imports/actions";
 import { logsRoot } from "@/lib/paths";
@@ -29,6 +31,10 @@ async function readFailureDiagnostics(year: (typeof BENCHMARK_YEARS)[number]) {
 }
 
 export default async function DevImportsPage() {
+  if (process.env.NODE_ENV === "production" && process.env.ENABLE_DEV_IMPORTS !== "true") {
+    notFound();
+  }
+
   const { db } = await import("@/lib/db");
   const [sources, failureDiagnostics] = await Promise.all([
     db.paperSource.findMany({
