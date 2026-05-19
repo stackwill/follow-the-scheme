@@ -6,6 +6,7 @@ import {
   discoverAqaChemistryPaper2Higher,
   discoverAqaGcseChemistryPaper1Higher,
   discoverAqaGcseComputerSciencePaper1BPython,
+  discoverAqaGcseComputerSciencePaper2,
   discoverAqaReligiousStudiesShortCourseChristianity,
   discoverAqaReligiousStudiesShortCourseJudaism,
   discoverAqaReligiousStudiesShortCourseThemes,
@@ -38,6 +39,8 @@ export const AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_ADAPTER_KEY =
   "aqa-gcse-chemistry-paper-1-higher";
 export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY =
   "aqa-gcse-computer-science-paper-1b-python";
+export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_ADAPTER_KEY =
+  "aqa-gcse-computer-science-paper-2";
 export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_ADAPTER_KEY =
   "aqa-gcse-religious-studies-short-course-christianity";
 export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_JUDAISM_ADAPTER_KEY =
@@ -60,11 +63,12 @@ export type BiologyBenchmarkYear = 2021 | 2022 | 2023 | 2024;
 export type ChemistryBenchmarkYear = 2023 | 2024;
 export type AqaGcseChemistryBenchmarkYear = 2023 | 2024;
 export type ComputerScienceBenchmarkYear = 2022 | 2023 | 2024;
+export type ComputerSciencePaper2BenchmarkYear = 2023 | 2024;
 export type EdexcelAGeographyPaper1Year = 2023 | 2024;
 export type EdexcelGcseHistoryPaper1MedicineYear = 2023 | 2024;
 export type EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear = 2023 | 2024;
 export type OcrBusinessBenchmarkYear = 2023 | 2024;
-export type AqaReligiousStudiesShortCourseYear = 2024;
+export type AqaReligiousStudiesShortCourseYear = 2022 | 2023 | 2024;
 
 export type SupportedPaperCandidate =
   | Awaited<ReturnType<typeof discoverAqaPhysicsPaper1Higher>>[number]
@@ -75,6 +79,7 @@ export type SupportedPaperCandidate =
   | Awaited<ReturnType<typeof discoverAqaChemistryPaper2Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaGcseChemistryPaper1Higher>>[number]
   | Awaited<ReturnType<typeof discoverAqaGcseComputerSciencePaper1BPython>>[number]
+  | Awaited<ReturnType<typeof discoverAqaGcseComputerSciencePaper2>>[number]
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseChristianity>>[number]
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseJudaism>>[number]
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseThemes>>[number]
@@ -131,6 +136,14 @@ const COMPUTER_SCIENCE_TOTAL_MARKS: Record<ComputerScienceBenchmarkYear, number>
   2024: 90,
 };
 
+const COMPUTER_SCIENCE_PAPER_2_TOTAL_MARKS: Record<
+  ComputerSciencePaper2BenchmarkYear,
+  number
+> = {
+  2023: 90,
+  2024: 90,
+};
+
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_TOTAL_MARKS: Record<EdexcelAGeographyPaper1Year, number> = {
   2023: 102,
   2024: 102,
@@ -161,6 +174,8 @@ const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_RELIGION_TOTAL_MARKS: Record<
   AqaReligiousStudiesShortCourseYear,
   number
 > = {
+  2022: 27,
+  2023: 27,
   2024: 27,
 };
 
@@ -168,6 +183,8 @@ const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_TOTAL_MARKS: Record<
   AqaReligiousStudiesShortCourseYear,
   number
 > = {
+  2022: 48,
+  2023: 48,
   2024: 48,
 };
 
@@ -250,6 +267,16 @@ export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION = {
   discover: discoverAqaGcseComputerSciencePaper1BPython,
   paperDir: (year) => getPaperDirForAdapter(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<ComputerScienceBenchmarkYear>;
+
+export const AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_DEFINITION = {
+  adapterKey: AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-2",
+  specCode: "8525",
+  title: (candidate) => `AQA GCSE Computer Science Paper 2 Computing concepts ${candidate.sessionLabel}`,
+  totalMarks: COMPUTER_SCIENCE_PAPER_2_TOTAL_MARKS,
+  discover: discoverAqaGcseComputerSciencePaper2,
+  paperDir: (year) => getPaperDirForAdapter(AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<ComputerSciencePaper2BenchmarkYear>;
 
 export const AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_DEFINITION = {
   adapterKey: AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_ADAPTER_KEY,
@@ -367,6 +394,7 @@ export const supportedPaperDefinitions = [
   AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
   AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
+  AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_DEFINITION,
   AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_CHRISTIANITY_DEFINITION,
   AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_JUDAISM_DEFINITION,
   AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_DEFINITION,

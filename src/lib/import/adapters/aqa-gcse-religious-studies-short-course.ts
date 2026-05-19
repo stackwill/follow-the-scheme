@@ -224,9 +224,9 @@ function isQuestionPaperBoilerplate(line: Line) {
     text.includes("candidate signature") ||
     text.includes("i declare this is my own work") ||
     text.includes("for examiner") ||
-    /^\*\s*\d+\s*\*$/.test(text) ||
+    /^\*\s*\d+\s*\*$/.test(text.replace(/\s+/g, "")) ||
     /^\*jun\d+\*$/.test(text) ||
-    /^ib\/m\/jun24\/8061\//.test(text) ||
+    /^ib\/[a-z]\/jun\d+\/8061\//.test(text) ||
     /^\d+$/.test(text)
   );
 }
@@ -396,7 +396,7 @@ function createAqaReligiousStudiesShortCourseAdapter(
 ): PaperImportAdapter {
   return {
     key: config.key,
-    importVersion: "2026-05-14.1",
+    importVersion: "2026-05-19.1",
     detectQuestionDrafts({ questionItems, markSchemeItems }: DetectQuestionDraftsInput) {
       const questionLines = groupItemsIntoLines(questionItems);
       const markSchemeLines = groupItemsIntoLines(markSchemeItems);

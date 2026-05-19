@@ -47,9 +47,15 @@ fi
 mkdir -p "$STAGING_DIR/logs" "$STAGING_DIR/renders" "$STAGING_DIR/sources"
 
 if [ -f "$APP_DIR/data/app.db" ]; then
-  docker compose run --rm app bun run scripts/export-attempts.ts "/app/data/$(basename "$ATTEMPTS_BACKUP")"
-  if [ -f "$ATTEMPTS_BACKUP" ]; then
-    cp "$ATTEMPTS_BACKUP" "$STAGING_DIR/$(basename "$ATTEMPTS_BACKUP")"
+  ATTEMPT_COUNT="$(
+    docker compose run --rm app bun -e 'import { Database } from "bun:sqlite"; const db = new Database("/app/data/app.db", { readonly: true }); console.log(db.query("select count(*) as count from Attempt").get().count); db.close();'
+  )"
+
+  if [ "$ATTEMPT_COUNT" != "0" ]; then
+    docker compose run --rm app bun run scripts/export-attempts.ts "/app/data/$(basename "$ATTEMPTS_BACKUP")"
+    if [ -f "$ATTEMPTS_BACKUP" ]; then
+      cp "$ATTEMPTS_BACKUP" "$STAGING_DIR/$(basename "$ATTEMPTS_BACKUP")"
+    fi
   fi
 fi
 

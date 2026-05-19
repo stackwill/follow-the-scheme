@@ -1,12 +1,4 @@
-import "./styles/foundation.css";
-import "./styles/focused-practice.css";
-import "./styles/library-refresh.css";
-import "./styles/practice-flow.css";
-import "./styles/apple-clean-pass.css";
-import "./styles/education-ui-pass.css";
-import "./styles/overdrive-paper-picker.css";
-import "./styles/ihategcse-refresh.css";
-import "./styles/home-directory-overrides.css";
+import "./styles/globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";

@@ -21,6 +21,13 @@ const MARK_COLUMN_MAX_X = 560;
 const EXPECTED_TOTAL_MARKS = 90;
 const MARK_RANGE_PATTERN = /^(\d+)[-\u2010-\u2015](\d+)$/;
 
+type ComputerScienceAdapterOptions = {
+  key: string;
+  importVersion: string;
+  paperCodePattern: RegExp;
+  failureLabel: string;
+};
+
 type Line = {
   pageNumber: number;
   y: number;
@@ -131,13 +138,19 @@ function parseQuestionLabel(line: Line) {
 }
 
 function parseMarkSchemeLabel(line: Line) {
-  const questionItem = line.items.find((item) => item.x >= 45 && item.x <= 90 && /^\d{2}$/.test(item.text.trim()));
+  if (line.y < 70 || line.y > QUESTION_PAGE_TOP_LIMIT) {
+    return null;
+  }
+
+  const questionItem = line.items.find((item) => item.x >= 40 && item.x <= 90 && /^\d{2}$/.test(item.text.trim()));
 
   if (!questionItem) {
     return null;
   }
 
-  const partItem = line.items.find((item) => item.x >= 105 && item.x <= 135 && /^\d+$/.test(item.text.trim()));
+  const partItem = line.items.find(
+    (item) => item.x > questionItem.x && item.x <= 135 && /^\d+$/.test(item.text.trim()),
+  );
   const mainKey = questionItem.text.trim();
   const partKey = partItem?.text.trim() ?? null;
 
@@ -206,7 +219,7 @@ function buildMarkSchemeBlocks(lines: Line[]) {
   };
 }
 
-function isQuestionPaperBoilerplate(line: Line) {
+function isQuestionPaperBoilerplate(line: Line, paperCodePattern: RegExp) {
   const text = line.rawText.toLowerCase();
 
   return (
@@ -217,14 +230,14 @@ function isQuestionPaperBoilerplate(line: Line) {
     text.includes("answer in the spaces provided") ||
     text.includes("do not write on this page") ||
     /^\*\s*\d+\s*\*$/.test(text) ||
-    /^ib\/g\/jun\d+\/8525\/1b$/i.test(line.rawText) ||
+    paperCodePattern.test(line.rawText) ||
     ((line.y > QUESTION_PAGE_TOP_LIMIT || line.y < QUESTION_PAGE_BOTTOM_LIMIT) && /^\d+$/.test(line.rawText))
   );
 }
 
-function buildQuestionText(lines: Line[]) {
+function buildQuestionText(lines: Line[], paperCodePattern: RegExp) {
   return lines
-    .filter((line) => !isQuestionPaperBoilerplate(line))
+    .filter((line) => !isQuestionPaperBoilerplate(line, paperCodePattern))
     .map((line) => line.contentText)
     .filter(Boolean)
     .join("\n")
@@ -256,12 +269,19 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
   const hasLabelAnswerLines = lines.some((line) =>
     /should be written in place of the labels|will not need to use all the items/i.test(line.rawText),
   );
+  const hasVisualAnswerArea = lines.some((line) =>
+    /figure \d+ has been included again below|complete the logic circuit|logic gate in each empty box/i.test(
+      line.rawText,
+    ),
+  );
   const top = Math.min(QUESTION_PAGE_TOP_LIMIT, maxY + QUESTION_TOP_PADDING);
   const bottom = Math.max(
     QUESTION_PAGE_BOTTOM_LIMIT,
     Math.min(
       nextQuestionBottom ??
-        (hasAnswerGridInstruction || hasLabelAnswerLines ? QUESTION_PAGE_BOTTOM_LIMIT : minY - QUESTION_BOTTOM_PADDING),
+        (hasAnswerGridInstruction || hasLabelAnswerLines || hasVisualAnswerArea
+          ? QUESTION_PAGE_BOTTOM_LIMIT
+          : minY - QUESTION_BOTTOM_PADDING),
       top - MIN_BOX_HEIGHT,
     ),
   );
@@ -274,7 +294,12 @@ function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null =
   };
 }
 
-function findPreLabelContextStartIndex(questionLines: Line[], start: QuestionLabel, previousLabel: QuestionLabel | null) {
+function findPreLabelContextStartIndex(
+  questionLines: Line[],
+  start: QuestionLabel,
+  previousLabel: QuestionLabel | null,
+  paperCodePattern: RegExp,
+) {
   if (!previousLabel || start.partKey === null || previousLabel.mainKey !== start.mainKey) {
     return start.index;
   }
@@ -290,7 +315,7 @@ function findPreLabelContextStartIndex(questionLines: Line[], start: QuestionLab
         line.pageNumber === start.line.pageNumber &&
         line.y > start.line.y &&
         line.contentText.length > 0 &&
-        !isQuestionPaperBoilerplate(line),
+        !isQuestionPaperBoilerplate(line, paperCodePattern),
     );
 
   return samePagePreludeLines[0]
@@ -298,7 +323,11 @@ function findPreLabelContextStartIndex(questionLines: Line[], start: QuestionLab
     : start.index;
 }
 
-function buildDraftStarts(labels: QuestionLabel[], questionLines: Line[]) {
+function buildDraftStarts(
+  labels: QuestionLabel[],
+  questionLines: Line[],
+  paperCodePattern: RegExp,
+) {
   const rawDraftStarts = labels.filter((label, index) => {
     if (label.partKey !== null) {
       return true;
@@ -319,7 +348,12 @@ function buildDraftStarts(labels: QuestionLabel[], questionLines: Line[]) {
     const previousDraftSameMain = rawDraftStarts
       .slice(0, index)
       .some((draftStart) => draftStart.mainKey === start.mainKey);
-    const preLabelContextStartIndex = findPreLabelContextStartIndex(questionLines, start, previousLabel);
+    const preLabelContextStartIndex = findPreLabelContextStartIndex(
+      questionLines,
+      start,
+      previousLabel,
+      paperCodePattern,
+    );
     const shouldIncludeMainContext = start.partKey && previousMainContext && !previousDraftSameMain;
     const textStartIndex = shouldIncludeMainContext ? previousMainContext.index : preLabelContextStartIndex;
     const visualStartIndex = shouldIncludeMainContext ? previousMainContext.index : preLabelContextStartIndex;
@@ -332,7 +366,11 @@ function buildDraftStarts(labels: QuestionLabel[], questionLines: Line[]) {
   });
 }
 
-function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string, MarkSchemeBlock>) {
+function buildQuestionDrafts(
+  questionLines: Line[],
+  markSchemeBlocks: Map<string, MarkSchemeBlock>,
+  options: ComputerScienceAdapterOptions,
+) {
   const labels = questionLines
     .map((line, index) => {
       const label = parseQuestionLabel(line);
@@ -340,7 +378,7 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
       return label ? { ...label, line, index } : null;
     })
     .filter((entry): entry is QuestionLabel => entry !== null);
-  const draftStarts = buildDraftStarts(labels, questionLines);
+  const draftStarts = buildDraftStarts(labels, questionLines, options.paperCodePattern);
   const fatalErrors: string[] = [];
   const consumedMarkSchemeLabels = new Set<string>();
   const drafts: QuestionDraft[] = [];
@@ -355,7 +393,11 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
     const textLines = questionLines.slice(start.textStartIndex, nextBoundaryIndex);
     const visualLines = questionLines
       .slice(start.visualStartIndex, nextBoundaryIndex)
-      .filter((line) => line.contentText.length > 0 && !isQuestionPaperBoilerplate(line));
+      .filter(
+        (line) =>
+          line.contentText.length > 0 &&
+          !isQuestionPaperBoilerplate(line, options.paperCodePattern),
+      );
     const markSchemeBlock = markSchemeBlocks.get(start.label);
 
     if (!markSchemeBlock) {
@@ -395,7 +437,7 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
       questionKey: start.label,
       displayOrder: displayIndex + 1,
       maxMarks: markSchemeBlock.maxMarks,
-      extractedQuestionText: buildQuestionText(textLines),
+      extractedQuestionText: buildQuestionText(textLines, options.paperCodePattern),
       markSchemeText: markSchemeBlock.markSchemeText,
       markSchemeNotes: "",
       pageStart,
@@ -403,7 +445,7 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
       primaryPdfBox: buildPageBandPdfBox(primaryLines, nextBoundaryLine?.pageNumber === pageStart ? nextBoundaryLine : null),
       supportingPdfBoxes,
       importDiagnostics: {
-        adapterKey: aqaGcseComputerSciencePaper1BPythonAdapter.key,
+        adapterKey: options.key,
         sourceQuestionLabel: start.label,
         sourceMarkSchemeLabel: start.label,
         contextQuestionLabel: previousMainContext?.label ?? null,
@@ -425,7 +467,7 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
   }
 
   if (fatalErrors.length > 0) {
-    throw new ImportFailure("adapter", "AQA GCSE Computer Science Paper 1B extraction failed", {
+    throw new ImportFailure("adapter", `${options.failureLabel} extraction failed`, {
       problems: fatalErrors,
     });
   }
@@ -433,20 +475,39 @@ function buildQuestionDrafts(questionLines: Line[], markSchemeBlocks: Map<string
   return drafts;
 }
 
-export const aqaGcseComputerSciencePaper1BPythonAdapter: PaperImportAdapter = {
-  key: "aqa-gcse-computer-science-paper-1b-python",
-  importVersion: "2026-05-12.1",
-  detectQuestionDrafts({ questionItems, markSchemeItems }: DetectQuestionDraftsInput) {
-    const questionLines = groupItemsIntoLines(questionItems);
-    const markSchemeLines = groupItemsIntoLines(markSchemeItems);
-    const { blocks, fatalErrors } = buildMarkSchemeBlocks(markSchemeLines);
+function createAqaGcseComputerScienceAdapter(
+  options: ComputerScienceAdapterOptions,
+): PaperImportAdapter {
+  return {
+    key: options.key,
+    importVersion: options.importVersion,
+    detectQuestionDrafts({ questionItems, markSchemeItems }: DetectQuestionDraftsInput) {
+      const questionLines = groupItemsIntoLines(questionItems);
+      const markSchemeLines = groupItemsIntoLines(markSchemeItems);
+      const { blocks, fatalErrors } = buildMarkSchemeBlocks(markSchemeLines);
 
-    if (fatalErrors.length > 0) {
-      throw new ImportFailure("adapter", "AQA GCSE Computer Science mark scheme extraction failed", {
-        problems: fatalErrors,
-      });
-    }
+      if (fatalErrors.length > 0) {
+        throw new ImportFailure("adapter", "AQA GCSE Computer Science mark scheme extraction failed", {
+          problems: fatalErrors,
+        });
+      }
 
-    return buildQuestionDrafts(questionLines, blocks);
-  },
-};
+      return buildQuestionDrafts(questionLines, blocks, options);
+    },
+  };
+}
+
+export const aqaGcseComputerSciencePaper1BPythonAdapter =
+  createAqaGcseComputerScienceAdapter({
+    key: "aqa-gcse-computer-science-paper-1b-python",
+    importVersion: "2026-05-12.1",
+    paperCodePattern: /^ib\/g\/jun\d+\/8525\/1b$/i,
+    failureLabel: "AQA GCSE Computer Science Paper 1B",
+  });
+
+export const aqaGcseComputerSciencePaper2Adapter = createAqaGcseComputerScienceAdapter({
+  key: "aqa-gcse-computer-science-paper-2",
+  importVersion: "2026-05-17.1",
+  paperCodePattern: /^ib\/g\/jun\d+\/8525\/2$/i,
+  failureLabel: "AQA GCSE Computer Science Paper 2",
+});

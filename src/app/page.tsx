@@ -256,34 +256,28 @@ export default async function HomePage({
       {selectedCourse ? (
         shouldChoosePaperNumber ? (
           <section className="paper-choice-panel" aria-label={`${courseDisplayName(selectedCourse)} paper choices`}>
-            <div className="library-subnav">
-              <Link className="subtle-link" href="/">
-                All subjects
-              </Link>
-              <span>Choose a paper</span>
+            <div className="paper-choice-heading">
+              <div>
+                <Link className="subtle-link" href="/">
+                  All subjects
+                </Link>
+                <h2>Choose a paper</h2>
+              </div>
             </div>
-            <div className="paper-choice-grid">
+            <ol className="paper-choice-list">
               {availablePaperNumbers.map((paperNumber) => {
-                const matchingPapers = selectedCoursePapers.filter((paper) => paper.paperNumber === paperNumber);
-                const latestYear = Math.max(...matchingPapers.map((paper) => paper.year));
-                const totalMarks = matchingPapers.reduce((sum, paper) => sum + paper.totalMarks, 0);
-
                 return (
-                  <Link
-                    className="paper-choice-card"
-                    href={coursePaperHref(selectedCourse, paperNumber)}
-                    key={paperNumber}
-                  >
-                    <span>{paperChoiceDisplayName(selectedCourse, paperNumber)}</span>
-                    <strong>{matchingPapers.length} papers</strong>
-                    <small className="metric-list">
-                      <span>latest {latestYear}</span>
-                      <span>{totalMarks} marks</span>
-                    </small>
-                  </Link>
+                  <li key={paperNumber}>
+                    <Link className="paper-choice-row" href={coursePaperHref(selectedCourse, paperNumber)}>
+                      <span className="paper-choice-row__title">
+                        <strong>{paperChoiceDisplayName(selectedCourse, paperNumber)}</strong>
+                      </span>
+                      <span className="paper-choice-row__action">Open</span>
+                    </Link>
+                  </li>
                 );
               })}
-            </div>
+            </ol>
           </section>
         ) : visiblePapers.length > 0 ? (
           <section className="paper-table-wrap" aria-label={`${courseDisplayName(selectedCourse)} papers`}>

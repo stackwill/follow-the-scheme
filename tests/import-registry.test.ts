@@ -51,16 +51,20 @@ describe("supported paper registry", () => {
         years: [2022, 2023, 2024],
       },
       {
+        adapterKey: "aqa-gcse-computer-science-paper-2",
+        years: [2023, 2024],
+      },
+      {
         adapterKey: "aqa-gcse-religious-studies-short-course-christianity",
-        years: [2024],
+        years: [2022, 2023, 2024],
       },
       {
         adapterKey: "aqa-gcse-religious-studies-short-course-judaism",
-        years: [2024],
+        years: [2022, 2023, 2024],
       },
       {
         adapterKey: "aqa-gcse-religious-studies-short-course-themes",
-        years: [2024],
+        years: [2022, 2023, 2024],
       },
       {
         adapterKey: "edexcel-a-geography-paper-1-physical-environment",

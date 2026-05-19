@@ -262,6 +262,7 @@ export default async function QuestionPage({
           }}
           paperId={paper.id}
           groupKey={currentGroup.key}
+          nextHref={nextGroup ? questionHref(paper.id, nextGroup.firstQuestion.id) : null}
           sourceMaterialImagePaths={sourceMaterialImagePaths}
           questions={formQuestions}
         />
