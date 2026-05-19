@@ -20,6 +20,8 @@ const AQA_GCSE_CHEMISTRY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-chemistry/aqa-paper-1/";
 const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1";
+const AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-2";
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-geography/edexcel-a-paper-1/";
 const EDEXCEL_GCSE_HISTORY_PAPER_1_URL =
@@ -36,11 +38,12 @@ const BIOLOGY_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
 const CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
 const AQA_GCSE_CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
 const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
+const COMPUTER_SCIENCE_PAPER_2_BENCHMARK_YEARS = [2023, 2024] as const;
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS = [2023, 2024] as const;
 const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_YEARS = [2023, 2024] as const;
 const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_YEARS = [2023, 2024] as const;
 const OCR_BUSINESS_BENCHMARK_YEARS = [2023, 2024] as const;
-const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_YEARS = [2024] as const;
+const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_YEARS = [2022, 2023, 2024] as const;
 
 type SessionLinks = {
   questionPaperUrl?: string;
@@ -462,6 +465,48 @@ export async function discoverAqaGcseComputerSciencePaper1BPython() {
   return discoverAqaGcseComputerSciencePaper1BPythonFromHtml(html);
 }
 
+export function discoverAqaGcseComputerSciencePaper2FromHtml(html: string) {
+  const $ = cheerio.load(html);
+  const candidates: PmtPaperCandidate[] = [];
+
+  for (const year of COMPUTER_SCIENCE_PAPER_2_BENCHMARK_YEARS) {
+    const markScheme = $(`a[href*='June ${year} MS - Paper 2 AQA Computer Science GCSE.pdf']`).first();
+    const questionPaper = $(`a[href*='June ${year} QP - Paper 2 AQA Computer Science GCSE.pdf']`).first();
+    const markSchemeHref = markScheme.attr("href");
+    const questionPaperHref = questionPaper.attr("href");
+
+    if (!markSchemeHref || !questionPaperHref) {
+      continue;
+    }
+
+    candidates.push({
+      paperPageUrl: AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_URL,
+      questionPaperUrl: normalizeLinkUrlForBase(questionPaperHref, AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_URL),
+      markSchemeUrl: normalizeLinkUrlForBase(markSchemeHref, AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_URL),
+      examBoard: "AQA",
+      qualification: "GCSE Computer Science",
+      subject: "Computer Science",
+      paperNumber: 2,
+      tier: "Computing concepts",
+      sessionLabel: `June ${year}`,
+      year,
+    });
+  }
+
+  if (candidates.length !== COMPUTER_SCIENCE_PAPER_2_BENCHMARK_YEARS.length) {
+    throw new Error(
+      `PMT benchmark discovery contract failed for ${AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_URL}: expected ${COMPUTER_SCIENCE_PAPER_2_BENCHMARK_YEARS.length} Paper 2 candidate, found ${candidates.length}`,
+    );
+  }
+
+  return candidates;
+}
+
+export async function discoverAqaGcseComputerSciencePaper2() {
+  const html = await fetchHtml(AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_URL);
+  return discoverAqaGcseComputerSciencePaper2FromHtml(html);
+}
+
 export function discoverEdexcelAGeographyPaper1FromHtml(html: string) {
   const $ = cheerio.load(html);
   const candidates: PmtPaperCandidate[] = [];
@@ -664,8 +709,13 @@ type AqaReligiousStudiesShortCourseSection = {
   paperNumber: 2 | 4 | 5;
   subject: string;
   tier: string;
-  questionPaperAssetId: string;
-  markSchemeAssetId: string;
+  assetIdsByYear: Record<
+    (typeof AQA_RELIGIOUS_STUDIES_SHORT_COURSE_YEARS)[number],
+    {
+      questionPaperAssetId: string;
+      markSchemeAssetId: string;
+    }
+  >;
 };
 
 function aqaSanityPdfUrl(assetId: string) {
@@ -676,21 +726,24 @@ function discoverAqaReligiousStudiesShortCourseSection({
   paperNumber,
   subject,
   tier,
-  questionPaperAssetId,
-  markSchemeAssetId,
+  assetIdsByYear,
 }: AqaReligiousStudiesShortCourseSection): PmtPaperCandidate[] {
-  return AQA_RELIGIOUS_STUDIES_SHORT_COURSE_YEARS.map((year) => ({
-    paperPageUrl: AQA_RELIGIOUS_STUDIES_SHORT_COURSE_ASSESSMENT_URL,
-    questionPaperUrl: aqaSanityPdfUrl(questionPaperAssetId),
-    markSchemeUrl: aqaSanityPdfUrl(markSchemeAssetId),
-    examBoard: "AQA",
-    qualification: "GCSE Religious Studies Short Course",
-    subject,
-    paperNumber,
-    tier,
-    sessionLabel: `June ${year}`,
-    year,
-  }));
+  return AQA_RELIGIOUS_STUDIES_SHORT_COURSE_YEARS.map((year) => {
+    const { questionPaperAssetId, markSchemeAssetId } = assetIdsByYear[year];
+
+    return {
+      paperPageUrl: AQA_RELIGIOUS_STUDIES_SHORT_COURSE_ASSESSMENT_URL,
+      questionPaperUrl: aqaSanityPdfUrl(questionPaperAssetId),
+      markSchemeUrl: aqaSanityPdfUrl(markSchemeAssetId),
+      examBoard: "AQA",
+      qualification: "GCSE Religious Studies Short Course",
+      subject,
+      paperNumber,
+      tier,
+      sessionLabel: `June ${year}`,
+      year,
+    };
+  });
 }
 
 export function discoverAqaReligiousStudiesShortCourseChristianity() {
@@ -699,8 +752,20 @@ export function discoverAqaReligiousStudiesShortCourseChristianity() {
       paperNumber: 2,
       subject: "Religious Studies",
       tier: "Section 2 Christianity",
-      questionPaperAssetId: "8727d4720aafd4b9f804670c4a5625ebe4f455cc",
-      markSchemeAssetId: "c3b7716dcce908b777e76098c07fc17db9e82bbd",
+      assetIdsByYear: {
+        2022: {
+          questionPaperAssetId: "f87e463fbfe81a16022e8cfe5a3285707be6a518",
+          markSchemeAssetId: "dc89bc33a5ba3182ec052574cc73082632d488ec",
+        },
+        2023: {
+          questionPaperAssetId: "c4c13c5e78768ed19d01cd025a7ea68d34d8a0ea",
+          markSchemeAssetId: "50d49e040d8b382150926649aa7735a5eabfc187",
+        },
+        2024: {
+          questionPaperAssetId: "8727d4720aafd4b9f804670c4a5625ebe4f455cc",
+          markSchemeAssetId: "c3b7716dcce908b777e76098c07fc17db9e82bbd",
+        },
+      },
     }),
   );
 }
@@ -711,8 +776,20 @@ export function discoverAqaReligiousStudiesShortCourseJudaism() {
       paperNumber: 4,
       subject: "Religious Studies",
       tier: "Section 4 Judaism",
-      questionPaperAssetId: "e244b5a645d88133b41b4fb69aff99478dd85deb",
-      markSchemeAssetId: "dbfc3e7880b519d98c2f3c91614d0c719bb00c36",
+      assetIdsByYear: {
+        2022: {
+          questionPaperAssetId: "79e8cddfa2fa54d8d02cf6d19f298f5af835a03f",
+          markSchemeAssetId: "6f538332bbba54d6da0b13886e8c7724163901bf",
+        },
+        2023: {
+          questionPaperAssetId: "3fafff9726cc7b7c8a7e4cdebd07ad0f321ebfd5",
+          markSchemeAssetId: "1c8a2f7d411b50d3bec1f8b3d09b718a72bc0f85",
+        },
+        2024: {
+          questionPaperAssetId: "e244b5a645d88133b41b4fb69aff99478dd85deb",
+          markSchemeAssetId: "dbfc3e7880b519d98c2f3c91614d0c719bb00c36",
+        },
+      },
     }),
   );
 }
@@ -723,8 +800,20 @@ export function discoverAqaReligiousStudiesShortCourseThemes() {
       paperNumber: 5,
       subject: "Religious Studies",
       tier: "Section 5 Themes",
-      questionPaperAssetId: "5d032019b467545bc8d9b21da9185718ee111601",
-      markSchemeAssetId: "b7d155ad43329ee031f4f37b1c507806f5a5f830",
+      assetIdsByYear: {
+        2022: {
+          questionPaperAssetId: "5b0c2fa702bebb7e25fe269f000d741a331834d2",
+          markSchemeAssetId: "55ca740a81aa95fccd3d6253a62a78d7b6bb52c4",
+        },
+        2023: {
+          questionPaperAssetId: "15533e66a6bc585983115ee80215021774eca497",
+          markSchemeAssetId: "638e5f5207df4d3ee4a3abc77eaa7f287bcb056d",
+        },
+        2024: {
+          questionPaperAssetId: "5d032019b467545bc8d9b21da9185718ee111601",
+          markSchemeAssetId: "b7d155ad43329ee031f4f37b1c507806f5a5f830",
+        },
+      },
     }),
   );
 }

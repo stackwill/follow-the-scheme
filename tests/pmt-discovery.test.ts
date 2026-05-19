@@ -7,6 +7,7 @@ import {
   discoverAqaChemistryPaper2HigherFromHtml,
   discoverAqaGcseChemistryPaper1HigherFromHtml,
   discoverAqaGcseComputerSciencePaper1BPythonFromHtml,
+  discoverAqaGcseComputerSciencePaper2FromHtml,
   discoverAqaReligiousStudiesShortCourseChristianity,
   discoverAqaReligiousStudiesShortCourseJudaism,
   discoverAqaReligiousStudiesShortCourseThemes,
@@ -110,9 +111,74 @@ describe("discoverAqaGcseComputerSciencePaper1BPythonFromHtml", () => {
   });
 });
 
+describe("discoverAqaGcseComputerSciencePaper2FromHtml", () => {
+  it("selects the current-spec June 2023 and 2024 Paper 2 QP and mark scheme", () => {
+    const html = `
+      <main>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-2/June 2022 MS - Paper 2 AQA Computer Science GCSE.pdf">June 2022 MS - Paper 2 AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-2/June 2022 QP - Paper 2 AQA Computer Science GCSE.pdf">June 2022 QP - Paper 2 AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-2/June 2023 MS - Paper 2 AQA Computer Science GCSE.pdf">June 2023 MS - Paper 2 AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-2/June 2023 QP - Paper 2 AQA Computer Science GCSE.pdf">June 2023 QP - Paper 2 AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-2/June 2024 MS - Paper 2 AQA Computer Science GCSE.pdf">June 2024 MS - Paper 2 AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-2/June 2024 QP - Paper 2 AQA Computer Science GCSE.pdf">June 2024 QP - Paper 2 AQA Computer Science GCSE</a>
+        <a href="/download/Computer-Science/GCSE/Past-Papers/AQA/Paper-2/June 2020 QP - Paper 2 AQA Computer Science GCSE.pdf">June 2020 QP - Paper 2 AQA Computer Science GCSE</a>
+      </main>
+    `;
+
+    expect(discoverAqaGcseComputerSciencePaper2FromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-2",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-2/June%202023%20QP%20-%20Paper%202%20AQA%20Computer%20Science%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-2/June%202023%20MS%20-%20Paper%202%20AQA%20Computer%20Science%20GCSE.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Computer Science",
+        subject: "Computer Science",
+        paperNumber: 2,
+        tier: "Computing concepts",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-2",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-2/June%202024%20QP%20-%20Paper%202%20AQA%20Computer%20Science%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Computer-Science/GCSE/Past-Papers/AQA/New-Spec/Paper-2/June%202024%20MS%20-%20Paper%202%20AQA%20Computer%20Science%20GCSE.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Computer Science",
+        subject: "Computer Science",
+        paperNumber: 2,
+        tier: "Computing concepts",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+});
+
 describe("discoverAqaReligiousStudiesShortCourse", () => {
-  it("selects the AQA June 2024 Christianity, Judaism, and Themes short-course sections", async () => {
+  it("selects the AQA June 2022-2024 Christianity, Judaism, and Themes short-course sections", async () => {
     await expect(discoverAqaReligiousStudiesShortCourseChristianity()).resolves.toEqual([
+      expect.objectContaining({
+        examBoard: "AQA",
+        qualification: "GCSE Religious Studies Short Course",
+        paperNumber: 2,
+        tier: "Section 2 Christianity",
+        sessionLabel: "June 2022",
+        year: 2022,
+      }),
+      expect.objectContaining({
+        examBoard: "AQA",
+        qualification: "GCSE Religious Studies Short Course",
+        paperNumber: 2,
+        tier: "Section 2 Christianity",
+        sessionLabel: "June 2023",
+        year: 2023,
+      }),
       expect.objectContaining({
         examBoard: "AQA",
         qualification: "GCSE Religious Studies Short Course",
@@ -128,11 +194,43 @@ describe("discoverAqaReligiousStudiesShortCourse", () => {
         qualification: "GCSE Religious Studies Short Course",
         paperNumber: 4,
         tier: "Section 4 Judaism",
+        sessionLabel: "June 2022",
+        year: 2022,
+      }),
+      expect.objectContaining({
+        examBoard: "AQA",
+        qualification: "GCSE Religious Studies Short Course",
+        paperNumber: 4,
+        tier: "Section 4 Judaism",
+        sessionLabel: "June 2023",
+        year: 2023,
+      }),
+      expect.objectContaining({
+        examBoard: "AQA",
+        qualification: "GCSE Religious Studies Short Course",
+        paperNumber: 4,
+        tier: "Section 4 Judaism",
         sessionLabel: "June 2024",
         year: 2024,
       }),
     ]);
     await expect(discoverAqaReligiousStudiesShortCourseThemes()).resolves.toEqual([
+      expect.objectContaining({
+        examBoard: "AQA",
+        qualification: "GCSE Religious Studies Short Course",
+        paperNumber: 5,
+        tier: "Section 5 Themes",
+        sessionLabel: "June 2022",
+        year: 2022,
+      }),
+      expect.objectContaining({
+        examBoard: "AQA",
+        qualification: "GCSE Religious Studies Short Course",
+        paperNumber: 5,
+        tier: "Section 5 Themes",
+        sessionLabel: "June 2023",
+        year: 2023,
+      }),
       expect.objectContaining({
         examBoard: "AQA",
         qualification: "GCSE Religious Studies Short Course",

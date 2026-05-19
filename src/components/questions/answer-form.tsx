@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import type { Route } from "next";
 import type { CSSProperties } from "react";
 import { useActionState, useEffect, useMemo, useState } from "react";
 
@@ -26,6 +28,7 @@ type AnswerFormProps = {
   action: (state: AnswerFormState, formData: FormData) => Promise<AnswerFormState>;
   paperId: string;
   groupKey: string;
+  nextHref: Route | null;
   analytics: {
     subject: string;
     qualification: string;
@@ -129,6 +132,10 @@ export function AnswerForm(props: AnswerFormProps) {
           .map((question) => question.id)
       : [],
   );
+  const hasSuccessfulSubmission =
+    state.submitted === true &&
+    !state.error &&
+    ((state.results?.length ?? 0) > 0 || (state.skippedCount ?? 0) > 0);
 
   useEffect(() => {
     setLocalAttempts(readLocalPaperAttempts(props.paperId));
@@ -358,15 +365,22 @@ export function AnswerForm(props: AnswerFormProps) {
         })}
       </div>
 
-      <div className="submit-row">
+      <div className="submit-row" data-marked={hasSuccessfulSubmission}>
         {state.error ? (
           <p className="form-error" role="alert">
             {state.error}
           </p>
         ) : null}
-        <button type="submit" disabled={pending}>
-          {pending ? "Marking..." : "Submit and mark"}
-        </button>
+        <div className="submit-row__actions">
+          <button type="submit" disabled={pending}>
+            {pending ? "Marking..." : "Submit and mark"}
+          </button>
+          {hasSuccessfulSubmission && props.nextHref ? (
+            <Link className="submit-row__next" href={props.nextHref}>
+              Next
+            </Link>
+          ) : null}
+        </div>
       </div>
     </form>
   );

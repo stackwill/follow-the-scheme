@@ -10,7 +10,10 @@ import {
   aqaCombinedSciencePhysicsPaper1HigherAdapter,
   aqaCombinedSciencePhysicsPaper2HigherAdapter,
 } from "@/lib/import/adapters/aqa-combined-science-physics-paper-1-higher";
-import { aqaGcseComputerSciencePaper1BPythonAdapter } from "@/lib/import/adapters/aqa-gcse-computer-science-paper-1b-python";
+import {
+  aqaGcseComputerSciencePaper1BPythonAdapter,
+  aqaGcseComputerSciencePaper2Adapter,
+} from "@/lib/import/adapters/aqa-gcse-computer-science-paper-1b-python";
 import {
   aqaGcseReligiousStudiesShortCourseChristianityAdapter,
   aqaGcseReligiousStudiesShortCourseJudaismAdapter,
@@ -40,6 +43,7 @@ export const adapters: Record<string, PaperImportAdapter> = {
     aqaCombinedSciencePhysicsPaper2HigherAdapter,
   [aqaGcseComputerSciencePaper1BPythonAdapter.key]:
     aqaGcseComputerSciencePaper1BPythonAdapter,
+  [aqaGcseComputerSciencePaper2Adapter.key]: aqaGcseComputerSciencePaper2Adapter,
   [aqaGcseReligiousStudiesShortCourseChristianityAdapter.key]:
     aqaGcseReligiousStudiesShortCourseChristianityAdapter,
   [aqaGcseReligiousStudiesShortCourseJudaismAdapter.key]:
@@ -69,7 +73,7 @@ export {
   aqaCombinedSciencePhysicsPaper1HigherAdapter,
   aqaCombinedSciencePhysicsPaper2HigherAdapter,
 };
-export { aqaGcseComputerSciencePaper1BPythonAdapter };
+export { aqaGcseComputerSciencePaper1BPythonAdapter, aqaGcseComputerSciencePaper2Adapter };
 export {
   aqaGcseReligiousStudiesShortCourseChristianityAdapter,
   aqaGcseReligiousStudiesShortCourseJudaismAdapter,

@@ -20,6 +20,7 @@ import {
   AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
   AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
+  AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_DEFINITION,
   AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION,
   AQA_PHYSICS_PAPER_2_HIGHER_DEFINITION,
   DEFAULT_SOURCE_PROVIDER,
@@ -33,6 +34,7 @@ import {
   type AqaGcseChemistryBenchmarkYear,
   type ChemistryBenchmarkYear,
   type ComputerScienceBenchmarkYear,
+  type ComputerSciencePaper2BenchmarkYear,
   type EdexcelAGeographyPaper1Year,
   type EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear,
   type EdexcelGcseHistoryPaper1MedicineYear,
@@ -670,6 +672,12 @@ export async function importAqaGcseComputerSciencePaper1BPythonBenchmark(
   year: ComputerScienceBenchmarkYear,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION, year);
+}
+
+export async function importAqaGcseComputerSciencePaper2Benchmark(
+  year: ComputerSciencePaper2BenchmarkYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_DEFINITION, year);
 }
 
 export async function importEdexcelAGeographyPaper1Benchmark(
