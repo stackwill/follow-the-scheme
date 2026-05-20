@@ -4888,3 +4888,250 @@ h1 {
     flex-basis: auto;
   }
 }
+
+/* Three.js post-mark examiner scan */
+.mark-submit-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.mark-submit-button__label {
+  position: relative;
+  z-index: 2;
+}
+
+.mark-submit-button__scanner {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.24), transparent 42%);
+  opacity: 0;
+  transform: translateX(-140%) skewX(-18deg);
+}
+
+.mark-submit-button[aria-busy="true"] {
+  background: color-mix(in srgb, var(--accent) 84%, #06182e);
+  cursor: wait;
+}
+
+.mark-submit-button[aria-busy="true"] .mark-submit-button__scanner {
+  animation: submit-scan 820ms cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  opacity: 1;
+}
+
+.mark-submit-button[aria-busy="true"]::after {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  width: 0.42em;
+  overflow: hidden;
+  animation: marking-dots 1s steps(4, end) infinite;
+  content: "...";
+  text-align: left;
+}
+
+@keyframes submit-scan {
+  0% {
+    transform: translateX(-140%) skewX(-18deg);
+  }
+
+  100% {
+    transform: translateX(140%) skewX(-18deg);
+  }
+}
+
+@keyframes marking-dots {
+  0% {
+    width: 0;
+  }
+
+  100% {
+    width: 1.1em;
+  }
+}
+
+.marking-spectacle {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 48% 42%, rgba(170, 222, 255, 0.16), transparent 31%),
+    radial-gradient(circle at 54% 54%, rgba(48, 209, 88, 0.1), transparent 26%),
+    linear-gradient(180deg, rgba(3, 7, 13, 0.98), rgba(0, 0, 0, 0.99));
+  color: #f6fbff;
+  pointer-events: none;
+  animation: spectacle-shell 6400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.marking-spectacle__canvas,
+.marking-spectacle__vignette,
+.marking-spectacle__scan {
+  position: absolute;
+  inset: 0;
+}
+
+.marking-spectacle__canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.marking-spectacle__vignette {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.78), transparent 20%, transparent 80%, rgba(0, 0, 0, 0.78)),
+    radial-gradient(circle at 50% 48%, transparent 24%, rgba(0, 0, 0, 0.72));
+}
+
+.marking-spectacle__scan {
+  background:
+    linear-gradient(90deg, transparent 0 45%, rgba(164, 221, 255, 0.12) 49%, rgba(216, 245, 255, 0.32) 50%, rgba(164, 221, 255, 0.12) 51%, transparent 55%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 16px);
+  mix-blend-mode: screen;
+  opacity: 0.48;
+  transform: translateX(-34%);
+  animation: spectacle-scanline 2600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.marking-spectacle__hud {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  width: min(520px, calc(100% - 40px));
+  padding-top: min(28vh, 210px);
+  text-align: center;
+  text-shadow: 0 18px 48px rgba(0, 0, 0, 0.72);
+  transform: translateY(24px) scale(0.96);
+  animation: spectacle-hud 6400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.marking-spectacle__hud .eyebrow {
+  color: rgba(218, 244, 255, 0.78);
+}
+
+.marking-spectacle__score {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: center;
+  font-size: clamp(4.2rem, 14vw, 9rem);
+  font-weight: 820;
+  letter-spacing: -0.072em;
+  line-height: 0.86;
+}
+
+.marking-spectacle__score span {
+  color: rgba(214, 244, 255, 0.72);
+  font-size: 0.28em;
+  font-weight: 760;
+  letter-spacing: -0.035em;
+}
+
+.marking-spectacle__hud > p:last-child {
+  max-width: 34ch;
+  margin: 0;
+  color: rgba(231, 246, 255, 0.78);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+@keyframes spectacle-shell {
+  0% {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+
+  9%,
+  82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes spectacle-scanline {
+  0% {
+    opacity: 0;
+    transform: translateX(-44%);
+  }
+
+  18% {
+    opacity: 0.52;
+  }
+
+  74% {
+    opacity: 0.28;
+    transform: translateX(44%);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(58%);
+  }
+}
+
+@keyframes spectacle-hud {
+  0%,
+  42% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.94);
+  }
+
+  54%,
+  82% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-18px) scale(1.04);
+  }
+}
+
+@media (max-width: 640px) {
+  .marking-spectacle__hud {
+    padding-top: min(26vh, 170px);
+  }
+
+  .marking-spectacle__score {
+    letter-spacing: -0.065em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark-submit-button[aria-busy="true"] .mark-submit-button__scanner,
+  .mark-submit-button[aria-busy="true"]::after,
+  .marking-spectacle,
+  .marking-spectacle__scan,
+  .marking-spectacle__hud {
+    animation: none;
+  }
+
+  .marking-spectacle {
+    opacity: 1;
+    transform: none;
+  }
+
+  .marking-spectacle__scan {
+    opacity: 0.14;
+    transform: none;
+  }
+
+  .marking-spectacle__hud {
+    opacity: 1;
+    transform: none;
+  }
+}

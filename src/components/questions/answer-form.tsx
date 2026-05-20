@@ -4,10 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import type { CSSProperties } from "react";
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useCallback, useEffect, useMemo, useState } from "react";
 
 import type { SelectionOption } from "@/lib/grading/schema";
 import { trackAnalyticsEvent } from "@/lib/analytics/umami";
+import { MarkingSpectacle } from "@/components/questions/marking-spectacle";
 import {
   latestLocalAttempt,
   type LocalPaperAttempts,
@@ -49,6 +50,13 @@ type AnswerFormProps = {
       options: SelectionOption[];
     } | null;
   }>;
+};
+
+type CompletionSpectacle = {
+  awardedMarks: number;
+  key: number;
+  markedCount: number;
+  totalMarks: number;
 };
 
 function assetUrl(assetPath: string) {
@@ -94,6 +102,7 @@ export function AnswerForm(props: AnswerFormProps) {
   const [state, formAction, pending] = useActionState(props.action, { error: null });
   const [localAttempts, setLocalAttempts] = useState<LocalPaperAttempts | null>(null);
   const [answersByQuestionId, setAnswersByQuestionId] = useState<Record<string, string>>({});
+  const [completionSpectacle, setCompletionSpectacle] = useState<CompletionSpectacle | null>(null);
   const analyticsProps = useMemo(
     () => ({
       subject: props.analytics.subject,
@@ -136,19 +145,26 @@ export function AnswerForm(props: AnswerFormProps) {
     state.submitted === true &&
     !state.error &&
     ((state.results?.length ?? 0) > 0 || (state.skippedCount ?? 0) > 0);
+  const completeSpectacle = useCallback(() => {
+    setCompletionSpectacle(null);
+    document.getElementById("marks")?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, []);
 
   useEffect(() => {
     setLocalAttempts(readLocalPaperAttempts(props.paperId));
   }, [props.paperId]);
 
   useEffect(() => {
-    if ((!state.results || state.results.length === 0) && !state.skippedCount) {
+    if (!hasSuccessfulSubmission) {
       return;
     }
 
-    if (state.results && state.results.length > 0) {
-      setLocalAttempts(saveLocalQuestionAttempts(props.paperId, state.results));
-    }
+    const nextLocalAttempts =
+      state.results && state.results.length > 0
+        ? saveLocalQuestionAttempts(props.paperId, state.results)
+        : readLocalPaperAttempts(props.paperId);
+    setLocalAttempts(nextLocalAttempts);
+
     trackAnalyticsEvent("Question Group Marked", {
       ...analyticsProps,
       groupKey: props.groupKey,
@@ -156,14 +172,35 @@ export function AnswerForm(props: AnswerFormProps) {
       markedParts: state.results?.length ?? 0,
       skippedParts: state.skippedCount ?? 0,
     });
-    document.getElementById("marks")?.scrollIntoView({ block: "start", behavior: "smooth" });
+
+    const finalAttemptsByQuestionId = Object.fromEntries(
+      props.questions.map((question) => [
+        question.id,
+        nextLocalAttempts ? latestLocalAttempt(nextLocalAttempts, question.id) : null,
+      ]),
+    ) as Record<string, LocalQuestionAttempt | null>;
+    const finalAwardedMarks = props.questions.reduce(
+      (sum, question) => sum + (finalAttemptsByQuestionId[question.id]?.awardedMarks ?? 0),
+      0,
+    );
+    const finalMarkedCount = props.questions.filter((question) => finalAttemptsByQuestionId[question.id]).length;
+
+    setCompletionSpectacle({
+      awardedMarks: finalAwardedMarks,
+      key: Date.now(),
+      markedCount: finalMarkedCount,
+      totalMarks,
+    });
   }, [
     analyticsProps,
+    hasSuccessfulSubmission,
     props.groupKey,
     props.paperId,
+    props.questions,
     props.questions.length,
     state.results,
     state.skippedCount,
+    totalMarks,
   ]);
 
   useEffect(() => {
@@ -174,6 +211,15 @@ export function AnswerForm(props: AnswerFormProps) {
 
   return (
     <form action={formAction} className="answer-form">
+      {completionSpectacle ? (
+        <MarkingSpectacle
+          awardedMarks={completionSpectacle.awardedMarks}
+          markedCount={completionSpectacle.markedCount}
+          onComplete={completeSpectacle}
+          runId={completionSpectacle.key}
+          totalMarks={completionSpectacle.totalMarks}
+        />
+      ) : null}
       <div className="answer-form__header">
         <p className="eyebrow">Question group {props.groupKey}</p>
         <h2>{totalMarks} marks</h2>
@@ -372,8 +418,9 @@ export function AnswerForm(props: AnswerFormProps) {
           </p>
         ) : null}
         <div className="submit-row__actions">
-          <button type="submit" disabled={pending}>
-            {pending ? "Marking..." : "Submit and mark"}
+          <button className="mark-submit-button" type="submit" disabled={pending} aria-busy={pending}>
+            <span className="mark-submit-button__label">{pending ? "Marking" : "Submit and mark"}</span>
+            <span className="mark-submit-button__scanner" aria-hidden="true" />
           </button>
           {hasSuccessfulSubmission && props.nextHref ? (
             <Link className="submit-row__next" href={props.nextHref}>
