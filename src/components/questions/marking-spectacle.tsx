@@ -1,6 +1,8 @@
 "use client";
 
+import robPickenImage from "../../../Rob_Picken-1896-optimized.webp";
 import type { BufferGeometry, Material, Object3D } from "three";
+import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
 
 type MarkingSpectacleProps = {
@@ -16,8 +18,42 @@ type DisposableObject = Object3D & {
   material?: Material | Material[];
 };
 
-const SPECTACLE_DURATION_MS = 6400;
-const REDUCED_MOTION_DURATION_MS = 1100;
+const SPECTACLE_DURATION_MS = 7200;
+const REDUCED_MOTION_DURATION_MS = 1300;
+const STAPLER_MODEL_PATH = "/models/stapler.glb";
+const PICKEN_IMAGE_SRC = robPickenImage.src;
+
+const CONFETTI_PIECES = Array.from({ length: 96 }, (_, index) => {
+  const lane = (index * 37) % 101;
+  const size = 7 + ((index * 11) % 10);
+  const delay = (index * 83) % 2400;
+  const duration = 3600 + ((index * 71) % 1200);
+  const drift = -110 + ((index * 47) % 221);
+  const spin = 180 + ((index * 131) % 620);
+  const colors = ["#1d7f42", "#30d158", "#0071e3", "#ffd60a", "#ffffff", "#a1a1a6"];
+
+  return {
+    color: colors[index % colors.length],
+    delay,
+    drift,
+    duration,
+    lane,
+    size,
+    spin,
+  };
+});
+
+function confettiStyle(piece: (typeof CONFETTI_PIECES)[number]) {
+  return {
+    "--confetti-color": piece.color,
+    "--confetti-delay": `${piece.delay}ms`,
+    "--confetti-drift": `${piece.drift}px`,
+    "--confetti-duration": `${piece.duration}ms`,
+    "--confetti-size": `${piece.size}px`,
+    "--confetti-spin": `${piece.spin}deg`,
+    "--confetti-x": `${piece.lane}%`,
+  } as CSSProperties;
+}
 
 function clamp(value: number, min = 0, max = 1) {
   return Math.min(max, Math.max(min, value));
@@ -33,8 +69,35 @@ function easeInOut(value: number) {
   return nextValue < 0.5 ? 4 * nextValue * nextValue * nextValue : 1 - Math.pow(-2 * nextValue + 2, 3) / 2;
 }
 
-function easeOutCubic(value: number) {
-  return 1 - Math.pow(1 - clamp(value), 3);
+async function loadPaperImage(src: string) {
+  const image = new Image();
+  image.decoding = "async";
+  image.src = src;
+
+  try {
+    await image.decode();
+    return image;
+  } catch {
+    return null;
+  }
+}
+
+function scoreTone(awardedMarks: number, totalMarks: number) {
+  if (totalMarks <= 0) {
+    return "partial";
+  }
+
+  const ratio = awardedMarks / totalMarks;
+
+  if (ratio >= 0.75) {
+    return "good";
+  }
+
+  if (ratio >= 0.45) {
+    return "partial";
+  }
+
+  return "low";
 }
 
 export function MarkingSpectacle({
@@ -45,13 +108,19 @@ export function MarkingSpectacle({
   totalMarks,
 }: MarkingSpectacleProps) {
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
+  const scoreRef = useRef<HTMLSpanElement | null>(null);
+  const tone = scoreTone(awardedMarks, totalMarks);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timeout = window.setTimeout(
+    let timeout = window.setTimeout(
       onComplete,
-      reducedMotion ? REDUCED_MOTION_DURATION_MS : SPECTACLE_DURATION_MS,
+      reducedMotion ? REDUCED_MOTION_DURATION_MS : SPECTACLE_DURATION_MS + 4200,
     );
+
+    if (scoreRef.current) {
+      scoreRef.current.textContent = reducedMotion ? String(awardedMarks) : "0";
+    }
 
     if (reducedMotion) {
       return () => window.clearTimeout(timeout);
@@ -70,221 +139,231 @@ export function MarkingSpectacle({
       }
 
       const THREE = await import("three");
+      const { GLTFLoader } = await import("three/examples/jsm/loaders/GLTFLoader.js");
 
       if (cancelled || !canvasHostRef.current) {
         return;
       }
 
       const scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x020408, 0.044);
+      scene.fog = new THREE.Fog(0xf7f5ef, 8, 22);
 
-      const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 95);
-      camera.position.set(0, 0.36, 10.8);
+      const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 80);
+      camera.position.set(0, 3.8, 8.8);
 
-      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
-      renderer.setClearColor(0x020408, 0);
+      const renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: true,
+      });
+      renderer.setClearColor(0xf7f5ef, 0);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.08;
+      renderer.toneMappingExposure = 1.06;
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       host.appendChild(renderer.domElement);
 
-      const examinerRig = new THREE.Group();
-      scene.add(examinerRig);
+      const root = new THREE.Group();
+      scene.add(root);
 
-      const pageTextureCanvas = document.createElement("canvas");
-      pageTextureCanvas.width = 512;
-      pageTextureCanvas.height = 720;
-      const textureContext = pageTextureCanvas.getContext("2d");
+      const deskMaterial = new THREE.MeshStandardMaterial({
+        color: 0xf2f0e8,
+        roughness: 0.82,
+      });
+      const desk = new THREE.Mesh(new THREE.PlaneGeometry(12, 8), deskMaterial);
+      desk.receiveShadow = true;
+      desk.rotation.x = -Math.PI / 2;
+      desk.position.y = -1.08;
+      root.add(desk);
 
-      if (textureContext) {
-        textureContext.fillStyle = "#fbfbf6";
-        textureContext.fillRect(0, 0, pageTextureCanvas.width, pageTextureCanvas.height);
-        textureContext.strokeStyle = "rgba(32, 48, 70, 0.12)";
-        textureContext.lineWidth = 2;
+      const paperTextureCanvas = document.createElement("canvas");
+      paperTextureCanvas.width = 1024;
+      paperTextureCanvas.height = 720;
+      const paperContext = paperTextureCanvas.getContext("2d");
+      const paperPhoto = await loadPaperImage(PICKEN_IMAGE_SRC);
 
-        for (let y = 96; y < 620; y += 44) {
-          textureContext.beginPath();
-          textureContext.moveTo(58, y);
-          textureContext.lineTo(454, y);
-          textureContext.stroke();
+      if (cancelled) {
+        return;
+      }
+
+      if (paperContext) {
+        paperContext.fillStyle = "#fffefa";
+        paperContext.fillRect(0, 0, 1024, 720);
+        paperContext.save();
+        paperContext.shadowColor = "rgba(29, 29, 31, 0.16)";
+        paperContext.shadowBlur = 18;
+        paperContext.shadowOffsetY = 10;
+        paperContext.fillStyle = "#ffffff";
+        paperContext.roundRect(590, 84, 340, 420, 22);
+        paperContext.fill();
+        paperContext.restore();
+
+        if (paperPhoto) {
+          const frameX = 610;
+          const frameY = 104;
+          const frameWidth = 300;
+          const frameHeight = 380;
+          const sourceRatio = paperPhoto.width / paperPhoto.height;
+          const targetRatio = frameWidth / frameHeight;
+          const sourceWidth = sourceRatio > targetRatio ? paperPhoto.height * targetRatio : paperPhoto.width;
+          const sourceHeight = sourceRatio > targetRatio ? paperPhoto.height : paperPhoto.width / targetRatio;
+          const sourceX = (paperPhoto.width - sourceWidth) / 2;
+          const sourceY = Math.max(0, (paperPhoto.height - sourceHeight) * 0.08);
+
+          paperContext.save();
+          paperContext.beginPath();
+          paperContext.roundRect(frameX, frameY, frameWidth, frameHeight, 18);
+          paperContext.clip();
+          paperContext.drawImage(paperPhoto, sourceX, sourceY, sourceWidth, sourceHeight, frameX, frameY, frameWidth, frameHeight);
+          paperContext.restore();
         }
 
-        textureContext.strokeStyle = "rgba(0, 113, 227, 0.24)";
-        textureContext.lineWidth = 3;
-        textureContext.strokeRect(44, 58, 424, 604);
-        textureContext.fillStyle = "rgba(12, 20, 32, 0.26)";
-        textureContext.fillRect(64, 82, 190, 10);
-        textureContext.fillRect(64, 124, 340, 8);
-        textureContext.fillRect(64, 168, 260, 8);
-        textureContext.strokeStyle = "rgba(29, 127, 66, 0.56)";
-        textureContext.lineWidth = 10;
-        textureContext.lineCap = "round";
-        textureContext.beginPath();
-        textureContext.moveTo(326, 538);
-        textureContext.lineTo(374, 588);
-        textureContext.lineTo(462, 470);
-        textureContext.stroke();
+        paperContext.strokeStyle = "rgba(29, 29, 31, 0.1)";
+        paperContext.lineWidth = 3;
+        paperContext.strokeRect(48, 48, 928, 624);
+        paperContext.fillStyle = "rgba(29, 29, 31, 0.82)";
+        paperContext.font = "700 34px Inter, system-ui, sans-serif";
+        paperContext.fillText("Marked script", 82, 112);
+        paperContext.fillStyle = "rgba(29, 29, 31, 0.7)";
+        paperContext.font = "600 22px Inter, system-ui, sans-serif";
+        paperContext.fillText(`${awardedMarks} / ${totalMarks} marks`, 82, 154);
+        paperContext.fillStyle = "rgba(110, 110, 115, 0.24)";
+
+        for (let y = 210; y < 584; y += 42) {
+          paperContext.fillRect(82, y, y % 84 === 0 ? 430 : 340, 8);
+        }
+
+        paperContext.strokeStyle = "rgba(0, 113, 227, 0.28)";
+        paperContext.lineWidth = 6;
+        paperContext.beginPath();
+        paperContext.moveTo(82, 626);
+        paperContext.lineTo(560, 626);
+        paperContext.stroke();
       }
 
-      const pageTexture = new THREE.CanvasTexture(pageTextureCanvas);
-      pageTexture.colorSpace = THREE.SRGBColorSpace;
-      pageTexture.anisotropy = 4;
+      const paperTexture = new THREE.CanvasTexture(paperTextureCanvas);
+      paperTexture.colorSpace = THREE.SRGBColorSpace;
+      paperTexture.anisotropy = 4;
 
-      const corridor = new THREE.Group();
-      scene.add(corridor);
-
-      const corridorFrames: Array<{
-        frame: InstanceType<typeof THREE.LineSegments>;
-        index: number;
-      }> = [];
-      const corridorGeometry = new THREE.EdgesGeometry(new THREE.PlaneGeometry(7.4, 5.1));
-
-      for (let index = 0; index < 18; index += 1) {
-        const frame = new THREE.LineSegments(
-          corridorGeometry,
-          new THREE.LineBasicMaterial({
-            blending: THREE.AdditiveBlending,
-            color: index % 3 === 0 ? 0x7ebdff : 0x416f9f,
-            opacity: 0.13,
-            transparent: true,
-          }),
-        );
-        frame.position.z = -7 - index * 2.15;
-        frame.rotation.z = index * 0.035;
-        corridor.add(frame);
-        corridorFrames.push({ frame, index });
-      }
-
-      const pages: Array<{
-        edge: InstanceType<typeof THREE.LineSegments>;
-        mesh: InstanceType<typeof THREE.Mesh>;
-        offset: number;
-      }> = [];
-      const pageGeometry = new THREE.PlaneGeometry(3.4, 4.8, 10, 14);
-      const edgeGeometry = new THREE.EdgesGeometry(pageGeometry);
-
-      for (let index = 0; index < 8; index += 1) {
-        const material = new THREE.MeshStandardMaterial({
-          color: index % 2 === 0 ? 0xfffffb : 0xf3f7ff,
-          emissive: 0x0b1a32,
-          emissiveIntensity: 0.035,
-          map: pageTexture,
-          metalness: 0.08,
-          opacity: 0.78,
-          roughness: 0.72,
-          side: THREE.DoubleSide,
-          transparent: true,
-        });
-        const mesh = new THREE.Mesh(pageGeometry, material);
-        mesh.position.set((index - 3.5) * 0.52, (index % 2 === 0 ? 0.2 : -0.18) + index * 0.025, -22 - index * 1.25);
-        mesh.rotation.set(-0.1 + index * 0.013, -0.55 + index * 0.14, 0.12 - index * 0.022);
-
-        const edge = new THREE.LineSegments(
-          edgeGeometry,
-          new THREE.LineBasicMaterial({ color: 0xc6deff, opacity: 0.18, transparent: true }),
-        );
-        edge.position.copy(mesh.position);
-        edge.rotation.copy(mesh.rotation);
-
-        examinerRig.add(mesh, edge);
-        pages.push({ edge, mesh, offset: index * 0.055 });
-      }
-
-      const beam = new THREE.Mesh(
-        new THREE.PlaneGeometry(8.8, 0.07),
-        new THREE.MeshBasicMaterial({
-          blending: THREE.AdditiveBlending,
-          color: 0xa9e1ff,
-          depthWrite: false,
-          opacity: 0.7,
-          transparent: true,
-        }),
-      );
-      beam.position.set(0, -2.75, 1.15);
-      examinerRig.add(beam);
-
-      const beamGlow = new THREE.Mesh(
-        new THREE.PlaneGeometry(9.2, 0.74),
-        new THREE.MeshBasicMaterial({
-          blending: THREE.AdditiveBlending,
-          color: 0x6ec7ff,
-          depthWrite: false,
-          opacity: 0.13,
-          transparent: true,
-        }),
-      );
-      beamGlow.position.copy(beam.position);
-      examinerRig.add(beamGlow);
-
-      const rings = [0, 1, 2].map((index) => {
-        const material = new THREE.MeshBasicMaterial({
-          blending: THREE.AdditiveBlending,
-          color: index === 0 ? 0xcff5ff : index === 1 ? 0x7cbcff : 0x30d158,
-          opacity: 0,
-          transparent: true,
-        });
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(1.16 + index * 0.34, 0.012 + index * 0.004, 16, 180), material);
-        ring.position.set(0, 0, 2.2 - index * 0.05);
-        ring.rotation.x = index * 0.38;
-        examinerRig.add(ring);
-
-        return { material, ring };
+      const paperMaterial = new THREE.MeshStandardMaterial({
+        color: 0xfffdf7,
+        roughness: 0.68,
       });
+      const paperTopMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        map: paperTexture,
+        roughness: 0.68,
+      });
+      const paper = new THREE.Group();
+      paper.position.set(-0.2, -0.82, 0.02);
+      paper.rotation.y = -0.08;
+      root.add(paper);
 
-      const resultCore = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(0.5, 4),
-        new THREE.MeshBasicMaterial({
-          blending: THREE.AdditiveBlending,
-          color: 0xdaf8ff,
-          opacity: 0,
+      const paperBody = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.045, 4.1), paperMaterial);
+      paperBody.castShadow = true;
+      paperBody.receiveShadow = true;
+      paper.add(paperBody);
+
+      const paperTop = new THREE.Mesh(new THREE.PlaneGeometry(5.72, 4.02), paperTopMaterial);
+      paperTop.position.y = 0.026;
+      paperTop.rotation.x = -Math.PI / 2;
+      paperTop.receiveShadow = true;
+      paper.add(paperTop);
+
+      const scorePlate = new THREE.Group();
+      scorePlate.position.set(2.08, 0.06, 0.92);
+      scorePlate.rotation.set(0, 0, 0.08);
+      paper.add(scorePlate);
+
+      const sealColor = tone === "good" ? 0x1d7f42 : tone === "partial" ? 0x936100 : 0x8e8e93;
+      const seal = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.52, 0.52, 0.026, 72),
+        new THREE.MeshStandardMaterial({
+          color: sealColor,
+          opacity: tone === "low" ? 0.22 : 0.34,
+          roughness: 0.5,
           transparent: true,
-          wireframe: true,
         }),
       );
-      resultCore.position.set(0, 0, 2.2);
-      examinerRig.add(resultCore);
+      seal.castShadow = true;
+      seal.scale.setScalar(0.01);
+      scorePlate.add(seal);
 
-      const particleCount = 1250;
-      const particlePositions = new Float32Array(particleCount * 3);
-      const particleSeeds = new Float32Array(particleCount * 4);
+      const stapleMaterial = new THREE.MeshStandardMaterial({ color: 0xc9ccd1, roughness: 0.25, metalness: 0.72 });
+      const stapleGroup = new THREE.Group();
+      stapleGroup.position.set(-2.34, 0.07, -1.42);
+      stapleGroup.visible = false;
+      paper.add(stapleGroup);
 
-      for (let index = 0; index < particleCount; index += 1) {
-        const radius = 3.5 + Math.random() * 10;
-        const angle = Math.random() * Math.PI * 2;
-        const height = (Math.random() - 0.5) * 6.2;
-        particleSeeds[index * 4] = Math.cos(angle) * radius;
-        particleSeeds[index * 4 + 1] = height;
-        particleSeeds[index * 4 + 2] = Math.sin(angle) * radius - 8;
-        particleSeeds[index * 4 + 3] = Math.random() * Math.PI * 2;
-        particlePositions[index * 3] = particleSeeds[index * 4];
-        particlePositions[index * 3 + 1] = particleSeeds[index * 4 + 1];
-        particlePositions[index * 3 + 2] = particleSeeds[index * 4 + 2];
+      const stapleBridge = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.018, 0.04), stapleMaterial);
+      const stapleLegLeft = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.022, 0.3), stapleMaterial);
+      const stapleLegRight = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.022, 0.3), stapleMaterial);
+      stapleLegLeft.position.x = -0.21;
+      stapleLegRight.position.x = 0.21;
+      stapleGroup.add(stapleBridge, stapleLegLeft, stapleLegRight);
+
+      const staplerGroup = new THREE.Group();
+      staplerGroup.position.set(-3.7, 0.15, 1.1);
+      staplerGroup.rotation.set(0.12, -0.8, -0.08);
+      root.add(staplerGroup);
+
+      const fallbackStapler = () => {
+        const baseMaterial = new THREE.MeshStandardMaterial({ color: 0x1d1d1f, roughness: 0.42, metalness: 0.16 });
+        const topMaterial = new THREE.MeshStandardMaterial({ color: 0x6e6e73, roughness: 0.38, metalness: 0.2 });
+        const base = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.22, 0.68), baseMaterial);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(2.05, 0.28, 0.62), topMaterial);
+        base.position.y = -0.14;
+        top.position.set(0.04, 0.15, 0);
+        top.rotation.z = -0.08;
+        base.castShadow = true;
+        top.castShadow = true;
+        staplerGroup.add(base, top);
+      };
+
+      try {
+        const gltf = await new GLTFLoader().loadAsync(STAPLER_MODEL_PATH);
+
+        if (cancelled) {
+          return;
+        }
+
+        const model = gltf.scene;
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        const center = new THREE.Vector3();
+        box.getSize(size);
+        box.getCenter(center);
+        model.position.sub(center);
+        model.scale.setScalar(2.2 / Math.max(size.x, size.y, size.z, 0.01));
+        model.rotation.set(0, Math.PI, 0);
+        model.traverse((object) => {
+          if ("castShadow" in object) {
+            object.castShadow = true;
+          }
+          if ("receiveShadow" in object) {
+            object.receiveShadow = true;
+          }
+        });
+        staplerGroup.add(model);
+      } catch {
+        fallbackStapler();
       }
 
-      const particleGeometry = new THREE.BufferGeometry();
-      particleGeometry.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
-      const particleMaterial = new THREE.PointsMaterial({
-        blending: THREE.AdditiveBlending,
-        color: 0xb8e6ff,
-        depthWrite: false,
-        opacity: 0.68,
-        size: 0.022,
-        transparent: true,
-      });
-      const particles = new THREE.Points(particleGeometry, particleMaterial);
-      scene.add(particles);
-
-      const ambientLight = new THREE.AmbientLight(0x446a8a, 0.78);
+      const ambientLight = new THREE.HemisphereLight(0xffffff, 0xd7d0c2, 1.35);
       scene.add(ambientLight);
 
-      const frontLight = new THREE.PointLight(0x9fdcff, 11, 24);
-      frontLight.position.set(-3.2, 2.4, 5.6);
-      scene.add(frontLight);
+      const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+      keyLight.position.set(-3.2, 5.5, 4.4);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.set(1024, 1024);
+      scene.add(keyLight);
 
-      const markLight = new THREE.PointLight(0x30d158, 0, 10);
-      markLight.position.set(2.2, -0.8, 3);
-      scene.add(markLight);
+      const rimLight = new THREE.PointLight(0x8bc8ff, 2.2, 14);
+      rimLight.position.set(3.8, 2.2, 4.8);
+      scene.add(rimLight);
 
       resize = () => {
         const { innerHeight, innerWidth } = window;
@@ -296,107 +375,52 @@ export function MarkingSpectacle({
       window.addEventListener("resize", resize);
 
       const startedAt = performance.now();
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(onComplete, SPECTACLE_DURATION_MS);
+
       const animate = (now: number) => {
         const progress = clamp((now - startedAt) / SPECTACLE_DURATION_MS);
-        const scanProgress = easeInOut(clamp(progress / 0.48));
-        const resolveProgress = easeOutQuint(clamp((progress - 0.43) / 0.28));
-        const holdProgress = easeOutCubic(clamp((progress - 0.64) / 0.18));
-        const exitProgress = easeInOut(clamp((progress - 0.84) / 0.16));
-        const fade = 1 - exitProgress;
+        const enter = easeOutQuint(clamp(progress / 0.2));
+        const travel = easeInOut(clamp((progress - 0.12) / 0.36));
+        const press = easeInOut(clamp((progress - 0.48) / 0.12));
+        const count = easeOutQuint(clamp((progress - 0.54) / 0.24));
+        const burst = easeOutQuint(clamp((progress - 0.62) / 0.18));
+        const settle = easeOutQuint(clamp((progress - 0.74) / 0.12));
+        const exit = easeInOut(clamp((progress - 0.88) / 0.12));
+        const pressed = Math.sin(press * Math.PI);
 
-        corridor.rotation.z = progress * 0.16;
-        corridorFrames.forEach(({ frame, index }) => {
-          const material = frame.material as InstanceType<typeof THREE.LineBasicMaterial>;
-          const framePhase = (progress * 16 + index) % 18;
-          frame.position.z = 8 - framePhase * 2.15;
-          frame.rotation.z = progress * 0.22 + index * 0.035;
-          frame.scale.setScalar(1 + scanProgress * 0.2 + holdProgress * 0.08);
-          material.opacity = (0.045 + Math.pow(1 - Math.abs(framePhase - 4) / 14, 2) * 0.18) * fade;
-        });
+        root.position.y = -0.1 + enter * 0.3 - exit * 0.2 + Math.sin(progress * Math.PI * 5) * 0.018;
+        root.rotation.y = -0.1 + Math.sin(progress * Math.PI * 1.45) * 0.07;
 
-        examinerRig.rotation.y = Math.sin(progress * Math.PI * 1.45) * 0.1 + resolveProgress * 0.08;
-        examinerRig.rotation.x = -0.1 + resolveProgress * 0.08;
-        examinerRig.position.z = -1.25 + resolveProgress * 1.05 + holdProgress * 0.28 + exitProgress * 2.6;
+        staplerGroup.position.x = -3.85 + travel * 1.48 + settle * 0.18;
+        staplerGroup.position.y = 0.18 + Math.sin(travel * Math.PI) * 1.28 - pressed * 0.62 + burst * 0.08;
+        staplerGroup.position.z = 1.35 - travel * 2.78 + settle * 0.1;
+        staplerGroup.rotation.y = -0.72 + travel * (Math.PI * 2.32) + settle * 0.18;
+        staplerGroup.rotation.x = 0.16 + Math.sin(travel * Math.PI) * 0.72 - pressed * 0.62;
+        staplerGroup.rotation.z = -0.12 + Math.sin(travel * Math.PI * 2.4) * 0.18 + pressed * 0.1;
+        staplerGroup.scale.setScalar(0.82 + enter * 0.2 + burst * 0.035);
 
-        pages.forEach((page, index) => {
-          const pageProgress = easeOutQuint(clamp((progress - page.offset) / 0.62));
-          const resolveLift = easeOutQuint(clamp((progress - 0.58 - page.offset * 0.3) / 0.22));
-          const orbit = Math.sin(progress * 5.8 + index) * 0.05;
-          page.mesh.position.z = -22 - index * 1.25 + pageProgress * (22.2 + index * 0.88) + exitProgress * 4.6;
-          page.mesh.position.x = (index - 3.5) * (0.52 + resolveLift * 0.12) + orbit;
-          page.mesh.position.y = (index % 2 === 0 ? 0.2 : -0.18) + index * 0.025 + Math.cos(progress * 4 + index) * 0.035;
-          page.mesh.rotation.y = -0.55 + index * 0.14 + pageProgress * 0.34 + resolveLift * 0.26;
-          page.mesh.rotation.z = 0.12 - index * 0.022 + Math.sin(progress * 7.5 + index) * 0.016;
-          page.mesh.scale.setScalar(1 + resolveLift * 0.13 + holdProgress * 0.03);
-          page.edge.position.copy(page.mesh.position);
-          page.edge.rotation.copy(page.mesh.rotation);
-          page.edge.scale.copy(page.mesh.scale);
+        paper.position.y = -0.82 + Math.sin(press * Math.PI) * -0.055;
+        paper.rotation.z = -0.015 + settle * 0.035 + pressed * 0.018;
+        paper.rotation.x = pressed * -0.018 + burst * 0.012;
 
-          const material = page.mesh.material as InstanceType<typeof THREE.MeshStandardMaterial>;
-          material.opacity = (0.08 + pageProgress * 0.72 - exitProgress * 0.16) * fade;
-          material.emissiveIntensity = 0.035 + resolveLift * 0.045;
-          const edgeMaterial = page.edge.material as InstanceType<typeof THREE.LineBasicMaterial>;
-          edgeMaterial.opacity = (0.08 + pageProgress * 0.22 + resolveLift * 0.28) * fade;
-        });
+        seal.scale.setScalar(0.01 + easeOutQuint(clamp((progress - 0.52) / 0.16)) * (0.82 + settle * 0.05));
+        seal.rotation.z = -0.4 + easeOutQuint(clamp((progress - 0.52) / 0.22)) * 0.4;
+        stapleGroup.visible = progress > 0.535;
+        stapleGroup.scale.setScalar(0.01 + easeOutQuint(clamp((progress - 0.535) / 0.07)) * (1 + burst * 0.08));
+        stapleGroup.rotation.y = Math.sin(burst * Math.PI) * 0.08;
 
-        beam.position.y = -2.7 + ((progress * 3.55) % 1) * 5.4;
-        beam.rotation.z = Math.sin(progress * 4.2) * 0.04;
-        beamGlow.position.y = beam.position.y;
-        beamGlow.rotation.z = beam.rotation.z;
-        beam.material.opacity = (0.7 - resolveProgress * 0.28) * fade;
-        beamGlow.material.opacity = (0.14 + Math.sin(progress * 28) * 0.025) * fade;
-
-        rings.forEach(({ material, ring }, index) => {
-          const ringResolve = easeOutQuint(clamp((progress - 0.44 - index * 0.035) / 0.28));
-          ring.scale.setScalar(0.16 + ringResolve * (2.2 + index * 0.42) + holdProgress * 0.18 + exitProgress * 0.36);
-          ring.rotation.x = index * 0.38 + progress * (0.85 + index * 0.24);
-          ring.rotation.y = progress * (1.1 - index * 0.16);
-          ring.rotation.z = progress * Math.PI * (1.2 + index * 0.36);
-          material.opacity = (ringResolve * (0.46 + index * 0.08) - exitProgress * 0.4) * fade;
-        });
-
-        resultCore.scale.setScalar(0.34 + resolveProgress * 1.74 + holdProgress * 0.22);
-        resultCore.rotation.set(progress * 2.6, progress * 3.9, progress * 1.85);
-        (resultCore.material as InstanceType<typeof THREE.MeshBasicMaterial>).opacity = (resolveProgress * 0.34) * fade;
-        markLight.intensity = (resolveProgress * 11 + holdProgress * 3) * fade;
-
-        const attract = easeInOut(clamp((progress - 0.16) / 0.64));
-        const release = easeInOut(clamp((progress - 0.79) / 0.12));
-        const positions = particleGeometry.attributes.position.array as Float32Array;
-
-        for (let index = 0; index < particleCount; index += 1) {
-          const seedIndex = index * 4;
-          const posIndex = index * 3;
-          const seedAngle = particleSeeds[seedIndex + 3] + progress * (2.2 + (index % 7) * 0.075);
-          const targetRadius = 1.28 + Math.sin(seedAngle * 2.1) * 0.12;
-          const targetX = Math.cos(seedAngle) * targetRadius;
-          const targetY = Math.sin(seedAngle) * targetRadius;
-          const targetZ = 1.8 + Math.sin(seedAngle * 1.7) * 0.32;
-          const releaseScale = 1 + release * 3.8;
-
-          positions[posIndex] =
-            particleSeeds[seedIndex] * (1 - attract) +
-            targetX * attract * releaseScale +
-            Math.sin(progress * 13 + index) * 0.018;
-          positions[posIndex + 1] =
-            particleSeeds[seedIndex + 1] * (1 - attract) +
-            targetY * attract * releaseScale +
-            Math.cos(progress * 11 + index) * 0.018;
-          positions[posIndex + 2] =
-            particleSeeds[seedIndex + 2] * (1 - attract) +
-            targetZ * attract +
-            release * (index % 5) * 0.55;
+        if (scoreRef.current) {
+          scoreRef.current.textContent = String(Math.round(awardedMarks * count));
         }
 
-        particleGeometry.attributes.position.needsUpdate = true;
-        particleMaterial.opacity = (0.7 - exitProgress * 0.58) * fade;
-        particleMaterial.size = 0.018 + resolveProgress * 0.014 + release * 0.014;
+        const cameraDrift = Math.sin(progress * Math.PI * 1.3);
+        camera.position.x = -0.15 + cameraDrift * 0.28 + burst * 0.12;
+        camera.position.y = 3.8 - enter * 0.5 + settle * 0.16 + exit * 0.3;
+        camera.position.z = 8.8 - enter * 0.7 + Math.sin(progress * Math.PI * 2.2) * 0.18 + exit * 0.8;
+        camera.lookAt(0.05, -0.48, -0.12);
 
-        camera.position.z = 10.8 - scanProgress * 2.05 + holdProgress * 0.18 + exitProgress * 2.9;
-        camera.position.x = Math.sin(progress * Math.PI * 1.16) * 0.32;
-        camera.position.y = 0.36 + Math.sin(progress * Math.PI * 1.8) * 0.1 + resolveProgress * 0.12;
-        camera.lookAt(Math.sin(progress * 2.4) * 0.18, resolveProgress * 0.08, 0);
-
+        renderer.domElement.style.opacity = String(1 - exit);
         renderer.render(scene, camera);
 
         if (progress < 1 && !cancelled) {
@@ -438,6 +462,7 @@ export function MarkingSpectacle({
             materials.forEach(disposeMaterial);
           }
         });
+        paperTexture.dispose();
         renderer.dispose();
         renderer.domElement.remove();
       };
@@ -450,21 +475,32 @@ export function MarkingSpectacle({
       window.clearTimeout(timeout);
       dispose?.();
     };
-  }, [onComplete, runId]);
+  }, [awardedMarks, onComplete, runId, tone, totalMarks]);
 
   return (
-    <div className="marking-spectacle" role="status" aria-live="polite">
+    <div className="marking-spectacle" data-tone={tone} role="status" aria-live="polite">
       <div ref={canvasHostRef} className="marking-spectacle__canvas" aria-hidden="true" />
-      <div className="marking-spectacle__vignette" aria-hidden="true" />
+      <div className="marking-spectacle__paper-light" aria-hidden="true" />
+      <div className="marking-spectacle__confetti" aria-hidden="true">
+        {CONFETTI_PIECES.map((piece, index) => (
+          <span key={index} className="marking-spectacle__confetti-piece" style={confettiStyle(piece)} />
+        ))}
+      </div>
       <div className="marking-spectacle__hud">
-        <p className="eyebrow">Examiner scan complete</p>
+        <p className="eyebrow">{tone === "good" ? "Marked and filed" : tone === "partial" ? "Marked carefully" : "Marked for review"}</p>
         <div className="marking-spectacle__score">
-          {awardedMarks}
+          <span ref={scoreRef}>0</span>
           <span>/ {totalMarks}</span>
         </div>
-        <p>{markedCount} marked part{markedCount === 1 ? "" : "s"} resolved against the scheme.</p>
+        <p>
+          {tone === "good"
+            ? "Strong answer. The scheme is happy."
+            : tone === "partial"
+              ? "Some good points landed. A few marks are still on the table."
+              : "Not your best one. The next attempt gets a cleaner shot."}
+        </p>
+        <small>{markedCount} part{markedCount === 1 ? "" : "s"} checked</small>
       </div>
-      <div className="marking-spectacle__scan" aria-hidden="true" />
     </div>
   );
 }

@@ -4941,7 +4941,7 @@ h1 {
   }
 }
 
-/* Three.js post-mark examiner scan */
+/* Three.js post-mark desk scene */
 .mark-submit-button {
   position: relative;
   isolation: isolate;
@@ -5013,17 +5013,16 @@ h1 {
   place-items: center;
   overflow: hidden;
   background:
-    radial-gradient(circle at 48% 42%, rgba(170, 222, 255, 0.16), transparent 31%),
-    radial-gradient(circle at 54% 54%, rgba(48, 209, 88, 0.1), transparent 26%),
-    linear-gradient(180deg, rgba(3, 7, 13, 0.98), rgba(0, 0, 0, 0.99));
-  color: #f6fbff;
+    radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.96), transparent 34%),
+    radial-gradient(circle at 48% 56%, rgba(0, 113, 227, 0.08), transparent 30%),
+    linear-gradient(180deg, rgba(250, 249, 245, 0.98), rgba(239, 236, 228, 0.99));
+  color: #1d1d1f;
   pointer-events: none;
-  animation: spectacle-shell 6400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: spectacle-shell 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .marking-spectacle__canvas,
-.marking-spectacle__vignette,
-.marking-spectacle__scan {
+.marking-spectacle__paper-light {
   position: absolute;
   inset: 0;
 }
@@ -5034,65 +5033,100 @@ h1 {
   height: 100%;
 }
 
-.marking-spectacle__vignette {
+.marking-spectacle__paper-light {
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.78), transparent 20%, transparent 80%, rgba(0, 0, 0, 0.78)),
-    radial-gradient(circle at 50% 48%, transparent 24%, rgba(0, 0, 0, 0.72));
+    linear-gradient(90deg, rgba(29, 29, 31, 0.08), transparent 18%, transparent 82%, rgba(29, 29, 31, 0.08)),
+    radial-gradient(circle at 50% 50%, transparent 34%, rgba(29, 29, 31, 0.08)),
+    repeating-linear-gradient(0deg, rgba(29, 29, 31, 0.028) 0 1px, transparent 1px 18px);
+  opacity: 0.9;
 }
 
-.marking-spectacle__scan {
-  background:
-    linear-gradient(90deg, transparent 0 45%, rgba(164, 221, 255, 0.12) 49%, rgba(216, 245, 255, 0.32) 50%, rgba(164, 221, 255, 0.12) 51%, transparent 55%),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 16px);
-  mix-blend-mode: screen;
-  opacity: 0.48;
-  transform: translateX(-34%);
-  animation: spectacle-scanline 2600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.marking-spectacle__confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.marking-spectacle__confetti-piece {
+  position: absolute;
+  top: -12vh;
+  left: var(--confetti-x);
+  width: var(--confetti-size);
+  height: calc(var(--confetti-size) * 0.42);
+  border-radius: 1px;
+  background: var(--confetti-color);
+  box-shadow: 0 3px 9px rgba(29, 29, 31, 0.12);
+  opacity: 0;
+  transform: translate3d(0, -10vh, 0) rotate(0deg);
+  animation: spectacle-confetti var(--confetti-duration) cubic-bezier(0.22, 1, 0.36, 1) var(--confetti-delay) infinite;
 }
 
 .marking-spectacle__hud {
   position: relative;
   z-index: 2;
   display: grid;
-  gap: 10px;
-  justify-items: center;
-  width: min(520px, calc(100% - 40px));
-  padding-top: min(28vh, 210px);
-  text-align: center;
-  text-shadow: 0 18px 48px rgba(0, 0, 0, 0.72);
-  transform: translateY(24px) scale(0.96);
-  animation: spectacle-hud 6400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  justify-self: end;
+  align-self: center;
+  gap: 8px;
+  width: min(360px, calc(100% - 40px));
+  margin-right: max(24px, calc((100vw - 1120px) / 2));
+  text-align: left;
+  transform: translateY(18px);
+  animation: spectacle-hud 7200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .marking-spectacle__hud .eyebrow {
-  color: rgba(218, 244, 255, 0.78);
+  color: #6e6e73;
 }
 
 .marking-spectacle__score {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: baseline;
-  justify-content: center;
-  font-size: clamp(4.2rem, 14vw, 9rem);
+  justify-content: flex-start;
+  color: #1d1d1f;
+  font-size: clamp(4rem, 9vw, 7rem);
   font-weight: 820;
-  letter-spacing: -0.072em;
-  line-height: 0.86;
+  letter-spacing: -0.07em;
+  line-height: 0.9;
 }
 
-.marking-spectacle__score span {
-  color: rgba(214, 244, 255, 0.72);
+.marking-spectacle__score span + span {
+  color: #6e6e73;
   font-size: 0.28em;
   font-weight: 760;
   letter-spacing: -0.035em;
 }
 
 .marking-spectacle__hud > p:last-child {
-  max-width: 34ch;
+  max-width: 30ch;
   margin: 0;
-  color: rgba(231, 246, 255, 0.78);
-  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: #4f534b;
+  font-size: clamp(0.98rem, 1.8vw, 1.1rem);
   font-weight: 650;
-  line-height: 1.35;
+  line-height: 1.4;
+}
+
+.marking-spectacle__hud small {
+  color: #6e6e73;
+  font-size: 0.82rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.marking-spectacle[data-tone="good"] .marking-spectacle__score {
+  color: var(--success);
+}
+
+.marking-spectacle[data-tone="partial"] .marking-spectacle__score {
+  color: var(--warning);
+}
+
+.marking-spectacle[data-tone="low"] .marking-spectacle__score {
+  color: var(--danger);
 }
 
 @keyframes spectacle-shell {
@@ -5101,65 +5135,56 @@ h1 {
     transform: scale(1.02);
   }
 
-  9%,
-  82% {
+  100% {
     opacity: 1;
     transform: scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.04);
-  }
-}
-
-@keyframes spectacle-scanline {
-  0% {
-    opacity: 0;
-    transform: translateX(-44%);
-  }
-
-  18% {
-    opacity: 0.52;
-  }
-
-  74% {
-    opacity: 0.28;
-    transform: translateX(44%);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateX(58%);
   }
 }
 
 @keyframes spectacle-hud {
   0%,
-  42% {
+  50% {
     opacity: 0;
-    transform: translateY(28px) scale(0.94);
+    transform: translateY(18px);
   }
 
-  54%,
+  62%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spectacle-confetti {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+  }
+
+  10% {
+    opacity: 1;
+  }
+
   82% {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 
   100% {
     opacity: 0;
-    transform: translateY(-18px) scale(1.04);
+    transform: translate3d(var(--confetti-drift), 118vh, 0) rotate(var(--confetti-spin));
   }
 }
 
 @media (max-width: 640px) {
   .marking-spectacle__hud {
-    padding-top: min(26vh, 170px);
+    align-self: end;
+    justify-self: start;
+    margin: 0 20px 34px;
   }
 
   .marking-spectacle__score {
-    letter-spacing: -0.065em;
+    font-size: clamp(3.5rem, 22vw, 6.4rem);
+    letter-spacing: -0.06em;
   }
 }
 
@@ -5167,7 +5192,7 @@ h1 {
   .mark-submit-button[aria-busy="true"] .mark-submit-button__scanner,
   .mark-submit-button[aria-busy="true"]::after,
   .marking-spectacle,
-  .marking-spectacle__scan,
+  .marking-spectacle__confetti-piece,
   .marking-spectacle__hud {
     animation: none;
   }
@@ -5177,13 +5202,12 @@ h1 {
     transform: none;
   }
 
-  .marking-spectacle__scan {
-    opacity: 0.14;
-    transform: none;
-  }
-
   .marking-spectacle__hud {
     opacity: 1;
     transform: none;
+  }
+
+  .marking-spectacle__confetti {
+    display: none;
   }
 }
