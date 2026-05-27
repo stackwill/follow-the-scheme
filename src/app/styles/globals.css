@@ -4830,12 +4830,55 @@ h1 {
 }
 
 .submit-row[data-marked="true"] .submit-row__actions {
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .submit-row__actions button {
   flex: 0 1 260px;
   width: min(100%, 260px);
+}
+
+.animation-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1;
+  padding: 0 14px;
+  user-select: none;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.animation-toggle:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.animation-toggle:has(input:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  outline-offset: 3px;
+}
+
+.animation-toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.submit-row[data-marked="true"] .submit-row__next {
+  margin-left: auto;
 }
 
 .submit-row__next {
@@ -4880,12 +4923,21 @@ h1 {
   }
 
   .submit-row__actions button,
+  .animation-toggle,
   .submit-row__next {
     width: 100%;
   }
 
   .submit-row__actions button {
     flex-basis: auto;
+  }
+
+  .animation-toggle {
+    justify-content: center;
+  }
+
+  .submit-row[data-marked="true"] .submit-row__next {
+    margin-left: 0;
   }
 }
 
