@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import type { CSSProperties } from "react";
-import { useActionState, useCallback, useEffect, useMemo, useState } from "react";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { SelectionOption } from "@/lib/grading/schema";
 import { trackAnalyticsEvent } from "@/lib/analytics/umami";
@@ -103,6 +103,8 @@ export function AnswerForm(props: AnswerFormProps) {
   const [localAttempts, setLocalAttempts] = useState<LocalPaperAttempts | null>(null);
   const [answersByQuestionId, setAnswersByQuestionId] = useState<Record<string, string>>({});
   const [completionSpectacle, setCompletionSpectacle] = useState<CompletionSpectacle | null>(null);
+  const [showCompletionAnimation, setShowCompletionAnimation] = useState(true);
+  const showCompletionAnimationRef = useRef(showCompletionAnimation);
   const analyticsProps = useMemo(
     () => ({
       subject: props.analytics.subject,
@@ -151,6 +153,10 @@ export function AnswerForm(props: AnswerFormProps) {
   }, []);
 
   useEffect(() => {
+    showCompletionAnimationRef.current = showCompletionAnimation;
+  }, [showCompletionAnimation]);
+
+  useEffect(() => {
     setLocalAttempts(readLocalPaperAttempts(props.paperId));
   }, [props.paperId]);
 
@@ -185,12 +191,19 @@ export function AnswerForm(props: AnswerFormProps) {
     );
     const finalMarkedCount = props.questions.filter((question) => finalAttemptsByQuestionId[question.id]).length;
 
-    setCompletionSpectacle({
-      awardedMarks: finalAwardedMarks,
-      key: Date.now(),
-      markedCount: finalMarkedCount,
-      totalMarks,
-    });
+    if (showCompletionAnimationRef.current) {
+      setCompletionSpectacle({
+        awardedMarks: finalAwardedMarks,
+        key: Date.now(),
+        markedCount: finalMarkedCount,
+        totalMarks,
+      });
+    } else {
+      setCompletionSpectacle(null);
+      window.requestAnimationFrame(() => {
+        document.getElementById("marks")?.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+    }
   }, [
     analyticsProps,
     hasSuccessfulSubmission,
@@ -422,6 +435,14 @@ export function AnswerForm(props: AnswerFormProps) {
             <span className="mark-submit-button__label">{pending ? "Marking" : "Submit and mark"}</span>
             <span className="mark-submit-button__scanner" aria-hidden="true" />
           </button>
+          <label className="animation-toggle">
+            <input
+              type="checkbox"
+              checked={showCompletionAnimation}
+              onChange={(event) => setShowCompletionAnimation(event.target.checked)}
+            />
+            <span>Animation</span>
+          </label>
           {hasSuccessfulSubmission && props.nextHref ? (
             <Link className="submit-row__next" href={props.nextHref}>
               Next
