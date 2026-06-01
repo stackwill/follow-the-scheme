@@ -59,6 +59,8 @@ type CompletionSpectacle = {
   totalMarks: number;
 };
 
+const COMPLETION_ANIMATION_SEEN_KEY = "followthescheme-completion-animation-seen";
+
 function assetUrl(assetPath: string) {
   return `/api/assets?path=${encodeURIComponent(assetPath)}`;
 }
@@ -157,6 +159,16 @@ export function AnswerForm(props: AnswerFormProps) {
   }, [showCompletionAnimation]);
 
   useEffect(() => {
+    try {
+      if (window.localStorage.getItem(COMPLETION_ANIMATION_SEEN_KEY) === "true") {
+        setShowCompletionAnimation(false);
+      }
+    } catch {
+      // Keep the animation enabled when storage is unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
     setLocalAttempts(readLocalPaperAttempts(props.paperId));
   }, [props.paperId]);
 
@@ -192,6 +204,13 @@ export function AnswerForm(props: AnswerFormProps) {
     const finalMarkedCount = props.questions.filter((question) => finalAttemptsByQuestionId[question.id]).length;
 
     if (showCompletionAnimationRef.current) {
+      try {
+        window.localStorage.setItem(COMPLETION_ANIMATION_SEEN_KEY, "true");
+      } catch {
+        // The spectacle can still run when storage is unavailable.
+      }
+
+      setShowCompletionAnimation(false);
       setCompletionSpectacle({
         awardedMarks: finalAwardedMarks,
         key: Date.now(),

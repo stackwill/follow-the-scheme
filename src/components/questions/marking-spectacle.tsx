@@ -2,7 +2,6 @@
 
 import robPickenImage from "../../../Rob_Picken-1896-optimized.webp";
 import type { BufferGeometry, Material, Object3D } from "three";
-import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
 
 type MarkingSpectacleProps = {
@@ -18,42 +17,10 @@ type DisposableObject = Object3D & {
   material?: Material | Material[];
 };
 
-const SPECTACLE_DURATION_MS = 7200;
-const REDUCED_MOTION_DURATION_MS = 1300;
+const SPECTACLE_DURATION_MS = 4200;
+const REDUCED_MOTION_DURATION_MS = 900;
 const STAPLER_MODEL_PATH = "/models/stapler.glb";
 const PICKEN_IMAGE_SRC = robPickenImage.src;
-
-const CONFETTI_PIECES = Array.from({ length: 96 }, (_, index) => {
-  const lane = (index * 37) % 101;
-  const size = 7 + ((index * 11) % 10);
-  const delay = (index * 83) % 2400;
-  const duration = 3600 + ((index * 71) % 1200);
-  const drift = -110 + ((index * 47) % 221);
-  const spin = 180 + ((index * 131) % 620);
-  const colors = ["#1d7f42", "#30d158", "#0071e3", "#ffd60a", "#ffffff", "#a1a1a6"];
-
-  return {
-    color: colors[index % colors.length],
-    delay,
-    drift,
-    duration,
-    lane,
-    size,
-    spin,
-  };
-});
-
-function confettiStyle(piece: (typeof CONFETTI_PIECES)[number]) {
-  return {
-    "--confetti-color": piece.color,
-    "--confetti-delay": `${piece.delay}ms`,
-    "--confetti-drift": `${piece.drift}px`,
-    "--confetti-duration": `${piece.duration}ms`,
-    "--confetti-size": `${piece.size}px`,
-    "--confetti-spin": `${piece.spin}deg`,
-    "--confetti-x": `${piece.lane}%`,
-  } as CSSProperties;
-}
 
 function clamp(value: number, min = 0, max = 1) {
   return Math.min(max, Math.max(min, value));
@@ -306,9 +273,36 @@ export function MarkingSpectacle({
       stapleGroup.add(stapleBridge, stapleLegLeft, stapleLegRight);
 
       const staplerGroup = new THREE.Group();
-      staplerGroup.position.set(-3.7, 0.15, 1.1);
-      staplerGroup.rotation.set(0.12, -0.8, -0.08);
+      staplerGroup.position.set(-3.82, -0.7, 0.84);
+      staplerGroup.rotation.set(0.04, -0.5, -0.035);
       root.add(staplerGroup);
+
+      const staplerShadow = new THREE.Mesh(
+        new THREE.CircleGeometry(0.9, 48),
+        new THREE.MeshBasicMaterial({
+          color: 0x1d1d1f,
+          opacity: 0.16,
+          transparent: true,
+          depthWrite: false,
+        }),
+      );
+      staplerShadow.position.set(-3.82, -1.066, 0.84);
+      staplerShadow.rotation.x = -Math.PI / 2;
+      staplerShadow.scale.set(1.5, 0.58, 1);
+      root.add(staplerShadow);
+
+      const impactRingMaterial = new THREE.MeshBasicMaterial({
+        color: tone === "good" ? 0x1d7f42 : tone === "partial" ? 0x936100 : 0x6e6e73,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        transparent: true,
+        depthWrite: false,
+      });
+      const impactRing = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.28, 64), impactRingMaterial);
+      impactRing.position.set(-2.42, -0.768, -1.43);
+      impactRing.rotation.x = -Math.PI / 2;
+      impactRing.scale.setScalar(0.01);
+      root.add(impactRing);
 
       const fallbackStapler = () => {
         const baseMaterial = new THREE.MeshStandardMaterial({ color: 0x1d1d1f, roughness: 0.42, metalness: 0.16 });
@@ -380,44 +374,52 @@ export function MarkingSpectacle({
 
       const animate = (now: number) => {
         const progress = clamp((now - startedAt) / SPECTACLE_DURATION_MS);
-        const enter = easeOutQuint(clamp(progress / 0.2));
-        const travel = easeInOut(clamp((progress - 0.12) / 0.36));
-        const press = easeInOut(clamp((progress - 0.48) / 0.12));
-        const count = easeOutQuint(clamp((progress - 0.54) / 0.24));
-        const burst = easeOutQuint(clamp((progress - 0.62) / 0.18));
-        const settle = easeOutQuint(clamp((progress - 0.74) / 0.12));
+        const enter = easeOutQuint(clamp(progress / 0.18));
+        const travel = easeInOut(clamp((progress - 0.12) / 0.32));
+        const ready = easeOutQuint(clamp((progress - 0.42) / 0.08));
+        const press = easeInOut(clamp((progress - 0.5) / 0.105));
+        const impact = easeOutQuint(clamp((progress - 0.552) / 0.09));
+        const count = easeOutQuint(clamp((progress - 0.56) / 0.24));
+        const settle = easeOutQuint(clamp((progress - 0.66) / 0.18));
         const exit = easeInOut(clamp((progress - 0.88) / 0.12));
         const pressed = Math.sin(press * Math.PI);
 
-        root.position.y = -0.1 + enter * 0.3 - exit * 0.2 + Math.sin(progress * Math.PI * 5) * 0.018;
-        root.rotation.y = -0.1 + Math.sin(progress * Math.PI * 1.45) * 0.07;
+        root.position.y = -0.24 + enter * 0.24 - exit * 0.16;
+        root.rotation.y = -0.08 + enter * 0.045 - settle * 0.018;
 
-        staplerGroup.position.x = -3.85 + travel * 1.48 + settle * 0.18;
-        staplerGroup.position.y = 0.18 + Math.sin(travel * Math.PI) * 1.28 - pressed * 0.62 + burst * 0.08;
-        staplerGroup.position.z = 1.35 - travel * 2.78 + settle * 0.1;
-        staplerGroup.rotation.y = -0.72 + travel * (Math.PI * 2.32) + settle * 0.18;
-        staplerGroup.rotation.x = 0.16 + Math.sin(travel * Math.PI) * 0.72 - pressed * 0.62;
-        staplerGroup.rotation.z = -0.12 + Math.sin(travel * Math.PI * 2.4) * 0.18 + pressed * 0.1;
-        staplerGroup.scale.setScalar(0.82 + enter * 0.2 + burst * 0.035);
+        staplerGroup.position.x = -3.82 + travel * 1.4 - settle * 0.08;
+        staplerGroup.position.y = -0.7 - pressed * 0.13 + impact * 0.018;
+        staplerGroup.position.z = 0.84 - travel * 2.22 + settle * 0.04;
+        staplerGroup.rotation.y = -0.5 + travel * 0.34 - settle * 0.035;
+        staplerGroup.rotation.x = 0.04 - ready * 0.085 + pressed * 0.18 - impact * 0.025;
+        staplerGroup.rotation.z = -0.035 + travel * 0.024 - pressed * 0.016;
+        staplerGroup.scale.set(1, 1 - pressed * 0.085, 1);
 
-        paper.position.y = -0.82 + Math.sin(press * Math.PI) * -0.055;
-        paper.rotation.z = -0.015 + settle * 0.035 + pressed * 0.018;
-        paper.rotation.x = pressed * -0.018 + burst * 0.012;
+        staplerShadow.position.x = staplerGroup.position.x;
+        staplerShadow.position.z = staplerGroup.position.z;
+        staplerShadow.scale.set(1.5 + pressed * 0.14, 0.58 + pressed * 0.08, 1);
+        (staplerShadow.material as Material & { opacity: number }).opacity = 0.1 + enter * 0.06 + pressed * 0.05;
+
+        paper.position.y = -0.82 - pressed * 0.042;
+        paper.position.x = -0.2 + impact * 0.035 - settle * 0.018;
+        paper.rotation.z = -0.015 + impact * 0.012 - settle * 0.006;
+        paper.rotation.x = -pressed * 0.012 + impact * 0.006;
 
         seal.scale.setScalar(0.01 + easeOutQuint(clamp((progress - 0.52) / 0.16)) * (0.82 + settle * 0.05));
         seal.rotation.z = -0.4 + easeOutQuint(clamp((progress - 0.52) / 0.22)) * 0.4;
         stapleGroup.visible = progress > 0.535;
-        stapleGroup.scale.setScalar(0.01 + easeOutQuint(clamp((progress - 0.535) / 0.07)) * (1 + burst * 0.08));
-        stapleGroup.rotation.y = Math.sin(burst * Math.PI) * 0.08;
+        stapleGroup.scale.setScalar(0.01 + easeOutQuint(clamp((progress - 0.535) / 0.07)) * (1 + impact * 0.045));
+        stapleGroup.rotation.y = Math.sin(impact * Math.PI) * 0.035;
+        impactRing.scale.setScalar(0.01 + impact * 3.6);
+        impactRingMaterial.opacity = Math.sin(impact * Math.PI) * 0.34;
 
         if (scoreRef.current) {
           scoreRef.current.textContent = String(Math.round(awardedMarks * count));
         }
 
-        const cameraDrift = Math.sin(progress * Math.PI * 1.3);
-        camera.position.x = -0.15 + cameraDrift * 0.28 + burst * 0.12;
-        camera.position.y = 3.8 - enter * 0.5 + settle * 0.16 + exit * 0.3;
-        camera.position.z = 8.8 - enter * 0.7 + Math.sin(progress * Math.PI * 2.2) * 0.18 + exit * 0.8;
+        camera.position.x = -0.22 + travel * 0.14 - settle * 0.05;
+        camera.position.y = 3.8 - enter * 0.46 + impact * 0.035 + exit * 0.3;
+        camera.position.z = 8.8 - enter * 0.72 - settle * 0.16 + exit * 0.8;
         camera.lookAt(0.05, -0.48, -0.12);
 
         renderer.domElement.style.opacity = String(1 - exit);
@@ -481,11 +483,6 @@ export function MarkingSpectacle({
     <div className="marking-spectacle" data-tone={tone} role="status" aria-live="polite">
       <div ref={canvasHostRef} className="marking-spectacle__canvas" aria-hidden="true" />
       <div className="marking-spectacle__paper-light" aria-hidden="true" />
-      <div className="marking-spectacle__confetti" aria-hidden="true">
-        {CONFETTI_PIECES.map((piece, index) => (
-          <span key={index} className="marking-spectacle__confetti-piece" style={confettiStyle(piece)} />
-        ))}
-      </div>
       <div className="marking-spectacle__hud">
         <p className="eyebrow">{tone === "good" ? "Marked and filed" : tone === "partial" ? "Marked carefully" : "Marked for review"}</p>
         <div className="marking-spectacle__score">
