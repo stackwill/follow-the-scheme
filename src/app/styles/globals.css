@@ -2584,38 +2584,40 @@ h1 {
 
 .demo-notice {
   width: min(calc(100% - 32px), 520px);
-  border: 2px solid color-mix(in srgb, var(--accent) 58%, var(--line));
-  border-radius: 8px;
-  background: var(--panel);
   color: var(--text);
-  box-shadow: var(--shadow);
-  padding: 0;
 }
 
 .demo-notice::backdrop {
-  background: color-mix(in srgb, var(--text) 52%, transparent);
+  background: color-mix(in srgb, var(--text) 42%, transparent);
 }
 
 .demo-notice form {
   display: grid;
-  gap: 16px;
-  padding: 28px;
+  gap: 14px;
 }
 
-.demo-notice h2 {
-  margin: 0;
-  color: var(--accent-dark);
-  font-size: clamp(1.5rem, 5vw, 2rem);
-  line-height: 1.08;
-}
-
-.demo-notice p:not(.eyebrow) {
-  color: var(--muted);
-  line-height: 1.55;
+.demo-notice .active-course-pill {
+  justify-self: start;
 }
 
 .demo-notice button {
   justify-self: start;
+}
+
+html[data-demo="true"] {
+  scroll-behavior: auto;
+}
+
+html[data-demo="true"] *,
+html[data-demo="true"] *::before,
+html[data-demo="true"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-demo="true"] .animation-toggle {
+  display: none;
 }
 
 .login-page {
