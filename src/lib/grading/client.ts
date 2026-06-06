@@ -1,6 +1,7 @@
 import { getOpenRouterEnv } from "@/lib/env";
 import { gradingResponseSchema } from "@/lib/grading/schema";
 import type { GradingPromptMessages } from "@/lib/grading/prompt";
+import type { AccessMode } from "@/lib/auth/access-node";
 
 type OpenRouterChatCompletion = {
   choices?: Array<{
@@ -101,11 +102,15 @@ function parseJsonContent(content: string) {
   }
 }
 
-export async function requestStructuredGrade(prompt: GradingPromptMessages) {
-  const openRouterEnv = getOpenRouterEnv();
+export async function requestStructuredGrade(prompt: GradingPromptMessages, accessMode: AccessMode = "normal") {
+  const openRouterEnv = getOpenRouterEnv(accessMode);
 
   if (!openRouterEnv) {
-    throw new Error("Written-answer AI marking is not configured on this server. Multiple choice questions still mark automatically.");
+    throw new Error(
+      accessMode === "demo"
+        ? "Written-answer AI marking is not configured for the portfolio demo."
+        : "Written-answer AI marking is not configured on this server. Multiple choice questions still mark automatically.",
+    );
   }
 
   const controller = new AbortController();

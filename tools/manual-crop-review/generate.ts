@@ -246,7 +246,7 @@ function detectChoiceBoxResponse(text: string) {
     /\bput\s+a\s+tick\b/i,
     /\bplace\s+a\s+tick\b/i,
     /\bmark\s+(?:one|the|a)\s+box\b/i,
-    /\bshade\s+(?:one|the|a)\b/i,
+    /\bshade\s+(?:one|the|a)\s+(?:box|lozenge)\b/i,
     /\bmore\s+than\s+one\s+(?:box|lozenge)\b/i,
     /(?:^|\n)\s*A\s+\S[\s\S]*\n\s*B\s+\S[\s\S]*\n\s*C\s+\S[\s\S]*\n\s*D\s+\S/im,
   ].some((pattern) => pattern.test(text));

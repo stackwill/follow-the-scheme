@@ -49,9 +49,17 @@ const releaseFileName = path.basename(releaseTarball);
 const releaseSha = `${releaseTarball}.sha256`;
 const remoteIncomingDir = `${appDir}/incoming-data`;
 const remoteTarball = `${remoteIncomingDir}/${releaseFileName}`;
-const canUseRsync = await commandExists("rsync");
 
 await run("ssh", ["-p", deployPort, sshTarget, `mkdir -p ${JSON.stringify(remoteIncomingDir)}`]);
+
+const canUseRsync =
+  (await commandExists("rsync")) &&
+  (await new Promise<boolean>((resolve) => {
+    const child = spawn("ssh", ["-p", deployPort, sshTarget, "command -v rsync >/dev/null 2>&1"]);
+
+    child.once("error", () => resolve(false));
+    child.once("exit", (code) => resolve(code === 0));
+  }));
 
 if (canUseRsync) {
   await run("rsync", [

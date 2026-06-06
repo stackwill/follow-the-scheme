@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import type { AccessMode } from "@/lib/auth/access-node";
 import { requestStructuredGrade } from "@/lib/grading/client";
 import { buildGradingPrompt } from "@/lib/grading/prompt";
 import { detectSelectionQuestion, gradeSelectionAnswer } from "@/lib/grading/schema";
@@ -23,6 +24,7 @@ export async function gradeQuestionAttempt(input: {
   questionId: string;
   answer: string;
   notes: string;
+  accessMode?: AccessMode;
 }) {
   const question = await db.question.findUniqueOrThrow({
     where: { id: input.questionId },
@@ -78,6 +80,7 @@ export async function gradeQuestionAttempt(input: {
           markSchemeText: question.markSchemeText,
           answer: trimmedAnswer,
         }),
+        input.accessMode,
       );
   const combinedMarks =
     result.contentMarks !== undefined && result.spagMarks !== undefined

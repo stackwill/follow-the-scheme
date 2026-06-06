@@ -12,9 +12,14 @@ import {
   discoverAqaReligiousStudiesShortCourseThemes,
   discoverAqaPhysicsPaper1Higher,
   discoverAqaPhysicsPaper2Higher,
+  discoverCaieIgcseEnglishLanguagePaper2,
   discoverEdexcelAGeographyPaper1,
   discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflict,
   discoverEdexcelGcseHistoryPaper1Medicine,
+  discoverEdexcelGcseHistoryPaper2ColdWarElizabeth,
+  discoverEdexcelGcseHistoryPaper3Germany,
+  discoverEdexcelGcseMathsPaper2Higher,
+  discoverEdexcelGcseMathsPaper2HigherNovember2024,
   discoverOcrGcseBusinessPaper1,
   discoverOcrGcseBusinessPaper2,
 } from "@/lib/import/pmt/discovery";
@@ -51,13 +56,23 @@ export const EDEXCEL_A_GEOGRAPHY_PAPER_1_ADAPTER_KEY =
   "edexcel-a-geography-paper-1-physical-environment";
 export const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_ADAPTER_KEY =
   "edexcel-gcse-history-paper-1-medicine";
+export const EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_ADAPTER_KEY =
+  "edexcel-gcse-history-paper-2-cold-war-elizabeth";
+export const EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_ADAPTER_KEY =
+  "edexcel-gcse-history-paper-3-germany";
 export const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_ADAPTER_KEY =
   "edexcel-gcse-english-literature-paper-2-jekyll-conflict";
+export const EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_ADAPTER_KEY =
+  "edexcel-gcse-maths-paper-2-higher";
+export const EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_NOVEMBER_2024_ADAPTER_KEY =
+  "edexcel-gcse-maths-paper-2-higher-november-2024";
+export const CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_ADAPTER_KEY =
+  "caie-igcse-english-language-paper-2";
 export const OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY = "ocr-gcse-business-paper-1";
 export const OCR_GCSE_BUSINESS_PAPER_2_ADAPTER_KEY = "ocr-gcse-business-paper-2";
 
 export type SupportedImportYear = 2021 | 2022 | 2023 | 2024;
-export type PhysicsBenchmarkYear = 2022 | 2023 | 2024;
+export type PhysicsBenchmarkYear = 2021 | 2022 | 2023 | 2024;
 export type PhysicsPaper2BenchmarkYear = 2022 | 2023 | 2024;
 export type BiologyBenchmarkYear = 2021 | 2022 | 2023 | 2024;
 export type ChemistryBenchmarkYear = 2023 | 2024;
@@ -66,7 +81,12 @@ export type ComputerScienceBenchmarkYear = 2022 | 2023 | 2024;
 export type ComputerSciencePaper2BenchmarkYear = 2023 | 2024;
 export type EdexcelAGeographyPaper1Year = 2023 | 2024;
 export type EdexcelGcseHistoryPaper1MedicineYear = 2023 | 2024;
+export type EdexcelGcseHistoryPaper2ColdWarElizabethYear = 2022 | 2023 | 2024;
+export type EdexcelGcseHistoryPaper3GermanyYear = 2022 | 2023 | 2024;
 export type EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear = 2023 | 2024;
+export type EdexcelGcseMathsPaper2HigherYear = 2023 | 2024;
+export type EdexcelGcseMathsPaper2HigherNovember2024Year = 2024;
+export type CaieIgcseEnglishLanguagePaper2Year = 2024;
 export type OcrBusinessBenchmarkYear = 2023 | 2024;
 export type AqaReligiousStudiesShortCourseYear = 2022 | 2023 | 2024;
 
@@ -83,9 +103,14 @@ export type SupportedPaperCandidate =
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseChristianity>>[number]
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseJudaism>>[number]
   | Awaited<ReturnType<typeof discoverAqaReligiousStudiesShortCourseThemes>>[number]
+  | Awaited<ReturnType<typeof discoverCaieIgcseEnglishLanguagePaper2>>[number]
   | Awaited<ReturnType<typeof discoverEdexcelAGeographyPaper1>>[number]
   | Awaited<ReturnType<typeof discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflict>>[number]
   | Awaited<ReturnType<typeof discoverEdexcelGcseHistoryPaper1Medicine>>[number]
+  | Awaited<ReturnType<typeof discoverEdexcelGcseHistoryPaper2ColdWarElizabeth>>[number]
+  | Awaited<ReturnType<typeof discoverEdexcelGcseHistoryPaper3Germany>>[number]
+  | Awaited<ReturnType<typeof discoverEdexcelGcseMathsPaper2Higher>>[number]
+  | Awaited<ReturnType<typeof discoverEdexcelGcseMathsPaper2HigherNovember2024>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper1>>[number]
   | Awaited<ReturnType<typeof discoverOcrGcseBusinessPaper2>>[number];
 
@@ -109,6 +134,7 @@ const BIOLOGY_TOTAL_MARKS: Record<BiologyBenchmarkYear, number> = {
 };
 
 const SCIENCE_TOTAL_MARKS: Record<PhysicsBenchmarkYear, number> = {
+  2021: 70,
   2022: 70,
   2023: 70,
   2024: 70,
@@ -157,11 +183,51 @@ const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_TOTAL_MARKS: Record<
   2024: 72,
 };
 
+const EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_TOTAL_MARKS: Record<
+  EdexcelGcseHistoryPaper2ColdWarElizabethYear,
+  number
+> = {
+  2022: 80,
+  2023: 80,
+  2024: 80,
+};
+
+const EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_TOTAL_MARKS: Record<
+  EdexcelGcseHistoryPaper3GermanyYear,
+  number
+> = {
+  2022: 52,
+  2023: 52,
+  2024: 52,
+};
+
 const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_TOTAL_MARKS: Record<
   EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear,
   number
 > = {
   2023: 80,
+  2024: 80,
+};
+
+const EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_TOTAL_MARKS: Record<
+  EdexcelGcseMathsPaper2HigherYear,
+  number
+> = {
+  2023: 80,
+  2024: 80,
+};
+
+const EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_NOVEMBER_2024_TOTAL_MARKS: Record<
+  EdexcelGcseMathsPaper2HigherNovember2024Year,
+  number
+> = {
+  2024: 80,
+};
+
+const CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_TOTAL_MARKS: Record<
+  CaieIgcseEnglishLanguagePaper2Year,
+  number
+> = {
   2024: 80,
 };
 
@@ -345,6 +411,30 @@ export const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION = {
     getPaperDirForAdapter(EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_ADAPTER_KEY, year),
 } satisfies SupportedPaperDefinition<EdexcelGcseHistoryPaper1MedicineYear>;
 
+export const EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_DEFINITION = {
+  adapterKey: EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-2/",
+  specCode: "1HI0/2R",
+  title: (candidate) =>
+    `Edexcel GCSE History Paper 2: Superpower relations and the Cold War, and Early Elizabethan England ${candidate.sessionLabel}`,
+  totalMarks: EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_TOTAL_MARKS,
+  discover: discoverEdexcelGcseHistoryPaper2ColdWarElizabeth,
+  paperDir: (year) =>
+    getPaperDirForAdapter(EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<EdexcelGcseHistoryPaper2ColdWarElizabethYear>;
+
+export const EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_DEFINITION = {
+  adapterKey: EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-3/",
+  specCode: "1HI0/31",
+  title: (candidate) =>
+    `Edexcel GCSE History Paper 3: Weimar and Nazi Germany, 1918-39 ${candidate.sessionLabel}`,
+  totalMarks: EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_TOTAL_MARKS,
+  discover: discoverEdexcelGcseHistoryPaper3Germany,
+  paperDir: (year) =>
+    getPaperDirForAdapter(EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<EdexcelGcseHistoryPaper3GermanyYear>;
+
 export const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_DEFINITION = {
   adapterKey: EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_ADAPTER_KEY,
   familyPageUrl:
@@ -360,6 +450,44 @@ export const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_DEFINITION 
       year,
     ),
 } satisfies SupportedPaperDefinition<EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear>;
+
+export const CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_DEFINITION = {
+  adapterKey: CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_ADAPTER_KEY,
+  sourceProvider: "PastPapers.co",
+  subjectIndexUrl:
+    "https://pastpapers.co/cie/IGCSE/English-First-Language-0500/2024-May-June/",
+  familyPageUrl:
+    "https://www.physicsandmathstutor.com/past-papers/gcse-english-language/cie-igcse-paper-2/",
+  specCode: "0500/21",
+  title: (candidate) =>
+    `CAIE IGCSE First Language English Paper 2: Directed Writing and Composition ${candidate.sessionLabel}`,
+  totalMarks: CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_TOTAL_MARKS,
+  discover: discoverCaieIgcseEnglishLanguagePaper2,
+  paperDir: (year) =>
+    getPaperDirForAdapter(CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<CaieIgcseEnglishLanguagePaper2Year>;
+
+export const EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_DEFINITION = {
+  adapterKey: EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-maths/edexcel-paper-2/",
+  specCode: "1MA1/2H",
+  title: (candidate) => `Edexcel GCSE Mathematics Paper 2 Higher ${candidate.sessionLabel}`,
+  totalMarks: EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_TOTAL_MARKS,
+  discover: discoverEdexcelGcseMathsPaper2Higher,
+  paperDir: (year) =>
+    getPaperDirForAdapter(EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<EdexcelGcseMathsPaper2HigherYear>;
+
+export const EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_NOVEMBER_2024_DEFINITION = {
+  adapterKey: EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_NOVEMBER_2024_ADAPTER_KEY,
+  familyPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-maths/edexcel-paper-2/",
+  specCode: "1MA1/2H",
+  title: () => "Edexcel GCSE Mathematics Paper 2 Higher Friday 8 November 2024",
+  totalMarks: EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_NOVEMBER_2024_TOTAL_MARKS,
+  discover: discoverEdexcelGcseMathsPaper2HigherNovember2024,
+  paperDir: (year) =>
+    getPaperDirForAdapter(EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_NOVEMBER_2024_ADAPTER_KEY, year),
+} satisfies SupportedPaperDefinition<EdexcelGcseMathsPaper2HigherNovember2024Year>;
 
 export const OCR_GCSE_BUSINESS_PAPER_1_DEFINITION = {
   adapterKey: OCR_GCSE_BUSINESS_PAPER_1_ADAPTER_KEY,
@@ -400,7 +528,12 @@ export const supportedPaperDefinitions = [
   AQA_GCSE_RELIGIOUS_STUDIES_SHORT_COURSE_THEMES_DEFINITION,
   EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION,
   EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_DEFINITION,
+  CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_DEFINITION,
+  EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_DEFINITION,
+  EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_NOVEMBER_2024_DEFINITION,
   EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION,
+  EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_DEFINITION,
+  EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
 ] as const;

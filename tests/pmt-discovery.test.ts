@@ -15,6 +15,10 @@ import {
   discoverAqaPhysicsPaper2HigherFromHtml,
   discoverEdexcelAGeographyPaper1FromHtml,
   discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflictFromHtml,
+  discoverEdexcelGcseHistoryPaper2ColdWarElizabethFromHtml,
+  discoverEdexcelGcseHistoryPaper3GermanyFromHtml,
+  discoverEdexcelGcseMathsPaper2HigherFromHtml,
+  discoverEdexcelGcseMathsPaper2HigherNovember2024FromHtml,
   discoverOcrGcseBusinessPaper1FromHtml,
   discoverOcrGcseBusinessPaper2FromHtml,
 } from "@/lib/import/pmt/discovery";
@@ -23,6 +27,8 @@ import { parseSessionLabel } from "@/lib/import/pmt/normalize";
 function buildFixtureHtml() {
   return `
     <main>
+      <a href="/papers/Physics-1H/QP/2021-qp.pdf">June 2021 QP</a>
+      <a href="/papers/Physics-1H/MS/2021-ms.pdf">June 2021 MS</a>
       <a href="/papers/Physics-1H/QP/2022-qp.pdf">June 2022 QP</a>
       <a href="/papers/Physics-1H/MS/2022-ms.pdf">June 2022 MS</a>
       <a href="/papers/Physics-1H/QP/2023-qp.pdf">June 2023 QP</a>
@@ -38,6 +44,13 @@ describe("parseSessionLabel", () => {
   it("extracts a June year label", () => {
     expect(parseSessionLabel("June 2024 QP")).toEqual({
       sessionLabel: "June 2024",
+      year: 2024,
+    });
+  });
+
+  it("normalizes an abbreviated November label", () => {
+    expect(parseSessionLabel("Nov 2024 QP")).toEqual({
+      sessionLabel: "November 2024",
       year: 2024,
     });
   });
@@ -333,6 +346,234 @@ describe("discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflictFromHtml", () 
         paperNumber: 2,
         tier: "Dr Jekyll and Mr Hyde / Conflict anthology",
         sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+});
+
+describe("discoverEdexcelGcseHistoryPaper2ColdWarElizabethFromHtml", () => {
+  it("selects Paper 2 P4 Cold War and B4 Elizabeth for June 2022-2024", () => {
+    const html = `
+      <main>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2022 MS - Paper 2 Option B4 Edexcel History GCSE.pdf">June 2022 MS - Paper 2 Option B4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2022 QP - Paper 2 Option B4 Edexcel History GCSE.pdf">June 2022 QP - Paper 2 Option B4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2022 MS - Paper 2 Option P4 Edexcel History GCSE.pdf">June 2022 MS - Paper 2 Option P4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2022 QP - Paper 2 Option P4 Edexcel History GCSE.pdf">June 2022 QP - Paper 2 Option P4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2023 MS - Paper 2 Option B3 Edexcel History GCSE.pdf">June 2023 MS - Paper 2 Option B3 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2023 QP - Paper 2 Option B3 Edexcel History GCSE.pdf">June 2023 QP - Paper 2 Option B3 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2023 MS - Paper 2 Option B4 Edexcel History GCSE.pdf">June 2023 MS - Paper 2 Option B4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2023 QP - Paper 2 Option B4 Edexcel History GCSE.pdf">June 2023 QP - Paper 2 Option B4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2023 MS - Paper 2 Option P4 Edexcel History GCSE.pdf">June 2023 MS - Paper 2 Option P4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2023 QP - Paper 2 Option P4 Edexcel History GCSE.pdf">June 2023 QP - Paper 2 Option P4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2024 MS - Paper 2 Option B4 Edexcel History GCSE.pdf">June 2024 MS - Paper 2 Option B4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2024 QP - Paper 2 Option B4 Edexcel History GCSE.pdf">June 2024 QP - Paper 2 Option B4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2024 MS - Paper 2 Option P4 Edexcel History GCSE.pdf">June 2024 MS - Paper 2 Option P4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2024 QP - Paper 2 Option P4 Edexcel History GCSE.pdf">June 2024 QP - Paper 2 Option P4 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2024 MS - Paper 2 Option P5 Edexcel History GCSE.pdf">June 2024 MS - Paper 2 Option P5 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June 2024 QP - Paper 2 Option P5 Edexcel History GCSE.pdf">June 2024 QP - Paper 2 Option P5 Edexcel History GCSE</a>
+      </main>
+    `;
+
+    expect(discoverEdexcelGcseHistoryPaper2ColdWarElizabethFromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202022%20QP%20-%20Paper%202%20Option%20P4%20Edexcel%20History%20GCSE.pdf",
+        insertUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202022%20QP%20-%20Paper%202%20Option%20B4%20Edexcel%20History%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202022%20MS%20-%20Paper%202%20Option%20P4%20Edexcel%20History%20GCSE.pdf",
+        markSchemeInsertUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202022%20MS%20-%20Paper%202%20Option%20B4%20Edexcel%20History%20GCSE.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE History",
+        subject: "History",
+        paperNumber: 2,
+        tier: "P4 Superpower relations and the Cold War; B4 Early Elizabethan England",
+        sessionLabel: "June 2022",
+        year: 2022,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202023%20QP%20-%20Paper%202%20Option%20P4%20Edexcel%20History%20GCSE.pdf",
+        insertUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202023%20QP%20-%20Paper%202%20Option%20B4%20Edexcel%20History%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202023%20MS%20-%20Paper%202%20Option%20P4%20Edexcel%20History%20GCSE.pdf",
+        markSchemeInsertUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202023%20MS%20-%20Paper%202%20Option%20B4%20Edexcel%20History%20GCSE.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE History",
+        subject: "History",
+        paperNumber: 2,
+        tier: "P4 Superpower relations and the Cold War; B4 Early Elizabethan England",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202024%20QP%20-%20Paper%202%20Option%20P4%20Edexcel%20History%20GCSE.pdf",
+        insertUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202024%20QP%20-%20Paper%202%20Option%20B4%20Edexcel%20History%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202024%20MS%20-%20Paper%202%20Option%20P4%20Edexcel%20History%20GCSE.pdf",
+        markSchemeInsertUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-2/June%202024%20MS%20-%20Paper%202%20Option%20B4%20Edexcel%20History%20GCSE.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE History",
+        subject: "History",
+        paperNumber: 2,
+        tier: "P4 Superpower relations and the Cold War; B4 Early Elizabethan England",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+});
+
+describe("discoverEdexcelGcseHistoryPaper3GermanyFromHtml", () => {
+  it("selects Paper 3 Option 31 Weimar and Nazi Germany for June 2022-2024", () => {
+    const html = `
+      <main>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June 2022 MS - Paper 3 Option 31 Edexcel History GCSE.pdf">June 2022 MS - Paper 3 Option 31 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June 2022 QP - Paper 3 Option 31 Edexcel History GCSE.pdf">June 2022 QP - Paper 3 Option 31 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June 2023 MS - Paper 3 Option 30 Edexcel History GCSE.pdf">June 2023 MS - Paper 3 Option 30 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June 2023 QP - Paper 3 Option 30 Edexcel History GCSE.pdf">June 2023 QP - Paper 3 Option 30 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June 2023 MS - Paper 3 Option 31 Edexcel History GCSE.pdf">June 2023 MS - Paper 3 Option 31 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June 2023 QP - Paper 3 Option 31 Edexcel History GCSE.pdf">June 2023 QP - Paper 3 Option 31 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June 2024 MS - Paper 3 Option 31 Edexcel History GCSE.pdf">June 2024 MS - Paper 3 Option 31 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June 2024 QP - Paper 3 Option 31 Edexcel History GCSE.pdf">June 2024 QP - Paper 3 Option 31 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June 2024 MS - Paper 3 Option 32 Edexcel History GCSE.pdf">June 2024 MS - Paper 3 Option 32 Edexcel History GCSE</a>
+        <a href="/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June 2024 QP - Paper 3 Option 32 Edexcel History GCSE.pdf">June 2024 QP - Paper 3 Option 32 Edexcel History GCSE</a>
+      </main>
+    `;
+
+    expect(discoverEdexcelGcseHistoryPaper3GermanyFromHtml(html)).toEqual([
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-3/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June%202022%20QP%20-%20Paper%203%20Option%2031%20Edexcel%20History%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June%202022%20MS%20-%20Paper%203%20Option%2031%20Edexcel%20History%20GCSE.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE History",
+        subject: "History",
+        paperNumber: 3,
+        tier: "Option 31 Weimar and Nazi Germany, 1918-39",
+        sessionLabel: "June 2022",
+        year: 2022,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-3/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June%202023%20QP%20-%20Paper%203%20Option%2031%20Edexcel%20History%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June%202023%20MS%20-%20Paper%203%20Option%2031%20Edexcel%20History%20GCSE.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE History",
+        subject: "History",
+        paperNumber: 3,
+        tier: "Option 31 Weimar and Nazi Germany, 1918-39",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-3/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June%202024%20QP%20-%20Paper%203%20Option%2031%20Edexcel%20History%20GCSE.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/History/GCSE/Past-Papers/Edexcel/Paper-3/June%202024%20MS%20-%20Paper%203%20Option%2031%20Edexcel%20History%20GCSE.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE History",
+        subject: "History",
+        paperNumber: 3,
+        tier: "Option 31 Weimar and Nazi Germany, 1918-39",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+});
+
+describe("discoverEdexcelGcseMathsPaper2HigherFromHtml", () => {
+  it("selects Edexcel GCSE Mathematics Paper 2 Higher for June 2023 and 2024", () => {
+    const html = `
+      <main>
+        <a href="/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2F/QP/June 2024 QP.pdf">June 2024 QP</a>
+        <a href="/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/MS/June 2023 MS.pdf">June 2023 MS</a>
+        <a href="/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/QP/June 2024 QP.pdf">June 2024 QP</a>
+        <a href="/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/MS/June 2024 MS.pdf">June 2024 MS</a>
+        <a href="/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/QP/Nov 2024 QP.pdf">Nov 2024 QP</a>
+      </main>
+    `;
+
+    expect(discoverEdexcelGcseMathsPaper2HigherFromHtml(html)).toEqual([
+      {
+        paperPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-maths/edexcel-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/QP/June%202023%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/MS/June%202023%20MS.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE Mathematics",
+        subject: "Maths",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-maths/edexcel-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/QP/June%202024%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/MS/June%202024%20MS.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE Mathematics",
+        subject: "Maths",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
+  });
+});
+
+describe("discoverEdexcelGcseMathsPaper2HigherNovember2024FromHtml", () => {
+  it("selects the Friday 8 November 2024 Edexcel GCSE Mathematics Paper 2 Higher sitting", () => {
+    const html = `
+      <main>
+        <a href="/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/QP/June 2024 QP.pdf">June 2024 QP</a>
+        <a href="/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/MS/June 2024 MS.pdf">June 2024 MS</a>
+        <a href="/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/QP/Nov 2024 QP.pdf">Nov 2024 QP</a>
+        <a href="/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/MS/Nov 2024 MS.pdf">Nov 2024 MS</a>
+      </main>
+    `;
+
+    expect(discoverEdexcelGcseMathsPaper2HigherNovember2024FromHtml(html)).toEqual([
+      {
+        paperPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-maths/edexcel-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/QP/Nov%202024%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Maths/GCSE/Past-Papers/Edexcel/Paper-2H/MS/Nov%202024%20MS.pdf",
+        examBoard: "Edexcel",
+        qualification: "GCSE Mathematics",
+        subject: "Maths",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "November 2024",
         year: 2024,
       },
     ]);
@@ -665,6 +906,21 @@ describe("discoverAqaPhysicsPaper1HigherFromHtml", () => {
         paperPageUrl:
           "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-1/",
         questionPaperUrl:
+          "https://www.physicsandmathstutor.com/papers/Physics-1H/QP/2021-qp.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/papers/Physics-1H/MS/2021-ms.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Combined Science Trilogy",
+        subject: "Physics",
+        paperNumber: 1,
+        tier: "Higher",
+        sessionLabel: "June 2021",
+        year: 2021,
+      },
+      {
+        paperPageUrl:
+          "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-physics-1/",
+        questionPaperUrl:
           "https://www.physicsandmathstutor.com/papers/Physics-1H/QP/2022-qp.pdf",
         markSchemeUrl:
           "https://www.physicsandmathstutor.com/papers/Physics-1H/MS/2022-ms.pdf",
@@ -714,6 +970,8 @@ describe("discoverAqaPhysicsPaper1HigherFromHtml", () => {
       <main>
         <a href="/papers/Physics-1H/QP/2023-qp.pdf">June 2023 QP</a>
         <a href="/papers/Physics-1H/MS/2023-ms.pdf">June 2023 MS</a>
+        <a href="/papers/Physics-1H/QP/2021-qp.pdf">June 2021 QP</a>
+        <a href="/papers/Physics-1H/MS/2021-ms.pdf">June 2021 MS</a>
         <a href="/papers/Physics-1H/QP/2022-qp.pdf">June 2022 QP</a>
         <a href="/papers/Physics-1H/MS/2022-ms.pdf">June 2022 MS</a>
         <a href="/papers/Physics-1H/QP/2024-qp.pdf">June 2024 QP</a>
@@ -734,6 +992,8 @@ describe("discoverAqaPhysicsPaper1HigherFromHtml", () => {
         <a href="/papers/Physics-1H/QP/2023-qp-a.pdf">June 2023 QP</a>
         <a href="/papers/Physics-1H/QP/2023-qp-b.pdf">June 2023 QP</a>
         <a href="/papers/Physics-1H/MS/2023-ms.pdf">June 2023 MS</a>
+        <a href="/papers/Physics-1H/QP/2021-qp.pdf">June 2021 QP</a>
+        <a href="/papers/Physics-1H/MS/2021-ms.pdf">June 2021 MS</a>
         <a href="/papers/Physics-1H/QP/2022-qp.pdf">June 2022 QP</a>
         <a href="/papers/Physics-1H/MS/2022-ms.pdf">June 2022 MS</a>
         <a href="/papers/Physics-1H/QP/2024-qp.pdf">June 2024 QP</a>

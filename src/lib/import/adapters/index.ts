@@ -19,9 +19,18 @@ import {
   aqaGcseReligiousStudiesShortCourseJudaismAdapter,
   aqaGcseReligiousStudiesShortCourseThemesAdapter,
 } from "@/lib/import/adapters/aqa-gcse-religious-studies-short-course";
+import { caieIgcseEnglishLanguagePaper2Adapter } from "@/lib/import/adapters/caie-igcse-english-language-paper-2";
 import { edexcelAGeographyPaper1Adapter } from "@/lib/import/adapters/edexcel-a-geography-paper-1";
 import { edexcelGcseEnglishLiteraturePaper2JekyllConflictAdapter } from "@/lib/import/adapters/edexcel-english-literature-paper-2-jekyll-conflict";
 import { edexcelGcseHistoryPaper1MedicineAdapter } from "@/lib/import/adapters/edexcel-history-paper-1-medicine";
+import {
+  edexcelGcseHistoryPaper2ColdWarElizabethAdapter,
+  edexcelGcseHistoryPaper3GermanyAdapter,
+} from "@/lib/import/adapters/edexcel-history-papers-2-and-3";
+import {
+  edexcelGcseMathsPaper2HigherAdapter,
+  edexcelGcseMathsPaper2HigherNovember2024Adapter,
+} from "@/lib/import/adapters/edexcel-gcse-maths-paper-2-higher";
 import {
   ocrGcseBusinessPaper1Adapter,
   ocrGcseBusinessPaper2Adapter,
@@ -50,10 +59,17 @@ export const adapters: Record<string, PaperImportAdapter> = {
     aqaGcseReligiousStudiesShortCourseJudaismAdapter,
   [aqaGcseReligiousStudiesShortCourseThemesAdapter.key]:
     aqaGcseReligiousStudiesShortCourseThemesAdapter,
+  [caieIgcseEnglishLanguagePaper2Adapter.key]: caieIgcseEnglishLanguagePaper2Adapter,
   [edexcelAGeographyPaper1Adapter.key]: edexcelAGeographyPaper1Adapter,
   [edexcelGcseEnglishLiteraturePaper2JekyllConflictAdapter.key]:
     edexcelGcseEnglishLiteraturePaper2JekyllConflictAdapter,
   [edexcelGcseHistoryPaper1MedicineAdapter.key]: edexcelGcseHistoryPaper1MedicineAdapter,
+  [edexcelGcseHistoryPaper2ColdWarElizabethAdapter.key]:
+    edexcelGcseHistoryPaper2ColdWarElizabethAdapter,
+  [edexcelGcseHistoryPaper3GermanyAdapter.key]: edexcelGcseHistoryPaper3GermanyAdapter,
+  [edexcelGcseMathsPaper2HigherAdapter.key]: edexcelGcseMathsPaper2HigherAdapter,
+  [edexcelGcseMathsPaper2HigherNovember2024Adapter.key]:
+    edexcelGcseMathsPaper2HigherNovember2024Adapter,
   [ocrGcseBusinessPaper1Adapter.key]: ocrGcseBusinessPaper1Adapter,
   [ocrGcseBusinessPaper2Adapter.key]: ocrGcseBusinessPaper2Adapter,
 };
@@ -79,7 +95,14 @@ export {
   aqaGcseReligiousStudiesShortCourseJudaismAdapter,
   aqaGcseReligiousStudiesShortCourseThemesAdapter,
 };
+export { caieIgcseEnglishLanguagePaper2Adapter };
 export { edexcelAGeographyPaper1Adapter };
 export { edexcelGcseEnglishLiteraturePaper2JekyllConflictAdapter };
 export { edexcelGcseHistoryPaper1MedicineAdapter };
+export {
+  edexcelGcseHistoryPaper2ColdWarElizabethAdapter,
+  edexcelGcseHistoryPaper3GermanyAdapter,
+};
+export { edexcelGcseMathsPaper2HigherAdapter };
+export { edexcelGcseMathsPaper2HigherNovember2024Adapter };
 export { ocrGcseBusinessPaper1Adapter, ocrGcseBusinessPaper2Adapter };

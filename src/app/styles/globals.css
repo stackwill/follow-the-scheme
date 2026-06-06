@@ -2582,6 +2582,42 @@ h1 {
   line-height: 1.45;
 }
 
+.demo-notice {
+  width: min(calc(100% - 32px), 520px);
+  border: 2px solid color-mix(in srgb, var(--accent) 58%, var(--line));
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  padding: 0;
+}
+
+.demo-notice::backdrop {
+  background: color-mix(in srgb, var(--text) 52%, transparent);
+}
+
+.demo-notice form {
+  display: grid;
+  gap: 16px;
+  padding: 28px;
+}
+
+.demo-notice h2 {
+  margin: 0;
+  color: var(--accent-dark);
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  line-height: 1.08;
+}
+
+.demo-notice p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.demo-notice button {
+  justify-self: start;
+}
+
 .login-page {
   min-height: 100vh;
   align-content: start;

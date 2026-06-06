@@ -1,4 +1,5 @@
 export const AUTH_COOKIE_NAME = "followthescheme_session";
+export const DEMO_AUTH_COOKIE_NAME = "followthescheme_demo_session";
 
 const SESSION_VERSION = "v1";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 14;
