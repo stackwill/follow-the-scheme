@@ -11,14 +11,14 @@ export function DemoNotice() {
   }, []);
 
   return (
-    <dialog className="demo-notice" ref={dialogRef}>
+    <dialog className="demo-notice study-callout" ref={dialogRef}>
       <form method="dialog">
-        <p className="eyebrow">Portfolio demo</p>
-        <h2>This is the demo version of IHateGCSE</h2>
-        <p>
+        <span className="active-course-pill">Portfolio demo</span>
+        <strong>This is the demo version of IHateGCSE</strong>
+        <span>
           The real site is private. This demo gives you the same experience so you can explore papers and try the
           marking flow.
-        </p>
+        </span>
         <button type="submit">Explore the demo</button>
       </form>
     </dialog>

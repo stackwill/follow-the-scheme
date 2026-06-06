@@ -93,6 +93,14 @@ export default async function QuestionPage({
   params: Promise<{ paperId: string; questionId: string }>;
 }) {
   const { paperId, questionId } = await params;
+  const initialCookieStore = await cookies();
+  const initialAccessMode = resolveNodeAccessMode(
+    {
+      normalToken: initialCookieStore.get(AUTH_COOKIE_NAME)?.value,
+      demoToken: initialCookieStore.get(DEMO_AUTH_COOKIE_NAME)?.value,
+    },
+    process.env.AUTH_SESSION_SECRET,
+  );
   const { db } = await import("@/lib/db");
   const paper = await db.paper.findUnique({
     where: { id: paperId },
@@ -286,6 +294,7 @@ export default async function QuestionPage({
       <div className="question-flow">
         <AnswerForm
           action={submit}
+          disableAnimations={initialAccessMode === "demo"}
           analytics={{
             subject: paper.subject,
             qualification: paper.qualification,

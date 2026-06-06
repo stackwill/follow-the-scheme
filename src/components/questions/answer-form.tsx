@@ -27,6 +27,7 @@ type AnswerFormState = {
 
 type AnswerFormProps = {
   action: (state: AnswerFormState, formData: FormData) => Promise<AnswerFormState>;
+  disableAnimations: boolean;
   paperId: string;
   groupKey: string;
   nextHref: Route | null;
@@ -105,7 +106,7 @@ export function AnswerForm(props: AnswerFormProps) {
   const [localAttempts, setLocalAttempts] = useState<LocalPaperAttempts | null>(null);
   const [answersByQuestionId, setAnswersByQuestionId] = useState<Record<string, string>>({});
   const [completionSpectacle, setCompletionSpectacle] = useState<CompletionSpectacle | null>(null);
-  const [showCompletionAnimation, setShowCompletionAnimation] = useState(true);
+  const [showCompletionAnimation, setShowCompletionAnimation] = useState(!props.disableAnimations);
   const showCompletionAnimationRef = useRef(showCompletionAnimation);
   const analyticsProps = useMemo(
     () => ({
@@ -151,14 +152,22 @@ export function AnswerForm(props: AnswerFormProps) {
     ((state.results?.length ?? 0) > 0 || (state.skippedCount ?? 0) > 0);
   const completeSpectacle = useCallback(() => {
     setCompletionSpectacle(null);
-    document.getElementById("marks")?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, []);
+    document.getElementById("marks")?.scrollIntoView({
+      block: "start",
+      behavior: props.disableAnimations ? "auto" : "smooth",
+    });
+  }, [props.disableAnimations]);
 
   useEffect(() => {
     showCompletionAnimationRef.current = showCompletionAnimation;
   }, [showCompletionAnimation]);
 
   useEffect(() => {
+    if (props.disableAnimations) {
+      setShowCompletionAnimation(false);
+      return;
+    }
+
     try {
       if (window.localStorage.getItem(COMPLETION_ANIMATION_SEEN_KEY) === "true") {
         setShowCompletionAnimation(false);
@@ -166,7 +175,7 @@ export function AnswerForm(props: AnswerFormProps) {
     } catch {
       // Keep the animation enabled when storage is unavailable.
     }
-  }, []);
+  }, [props.disableAnimations]);
 
   useEffect(() => {
     setLocalAttempts(readLocalPaperAttempts(props.paperId));
@@ -220,7 +229,10 @@ export function AnswerForm(props: AnswerFormProps) {
     } else {
       setCompletionSpectacle(null);
       window.requestAnimationFrame(() => {
-        document.getElementById("marks")?.scrollIntoView({ block: "start", behavior: "smooth" });
+        document.getElementById("marks")?.scrollIntoView({
+          block: "start",
+          behavior: props.disableAnimations ? "auto" : "smooth",
+        });
       });
     }
   }, [
@@ -233,6 +245,7 @@ export function AnswerForm(props: AnswerFormProps) {
     state.results,
     state.skippedCount,
     totalMarks,
+    props.disableAnimations,
   ]);
 
   useEffect(() => {
