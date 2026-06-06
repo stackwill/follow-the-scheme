@@ -28,6 +28,10 @@ import {
   EDEXCEL_A_GEOGRAPHY_PAPER_1_DEFINITION,
   EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_JEKYLL_CONFLICT_DEFINITION,
   EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION,
+  EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_DEFINITION,
+  EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_DEFINITION,
+  EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_DEFINITION,
+  EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_NOVEMBER_2024_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_1_DEFINITION,
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
   type BiologyBenchmarkYear,
@@ -38,6 +42,10 @@ import {
   type EdexcelAGeographyPaper1Year,
   type EdexcelGcseEnglishLiteraturePaper2JekyllConflictYear,
   type EdexcelGcseHistoryPaper1MedicineYear,
+  type EdexcelGcseHistoryPaper2ColdWarElizabethYear,
+  type EdexcelGcseHistoryPaper3GermanyYear,
+  type EdexcelGcseMathsPaper2HigherYear,
+  type EdexcelGcseMathsPaper2HigherNovember2024Year,
   type OcrBusinessBenchmarkYear,
   type PhysicsBenchmarkYear,
   type PhysicsPaper2BenchmarkYear,
@@ -124,6 +132,7 @@ async function writeFailureDiagnostics(
         paperPageUrl: candidate.paperPageUrl ?? null,
         questionPaperUrl: candidate.questionPaperUrl ?? null,
         markSchemeUrl: candidate.markSchemeUrl ?? null,
+        markSchemeInsertUrl: candidate.markSchemeInsertUrl ?? null,
         failedAt: new Date().toISOString(),
         ...failure,
       },
@@ -172,16 +181,59 @@ async function runCommand(command: string, args: string[], stage: "adapter" | "r
 async function ensureBenchmarkFixtures(
   year: number,
   paperDir: string,
-  urls: { questionPaperUrl: string; markSchemeUrl: string },
+  urls: {
+    questionPaperUrl: string;
+    insertUrl?: string;
+    markSchemeUrl: string;
+    markSchemeInsertUrl?: string;
+  },
 ) {
   const questionPaperPath = path.join(paperDir, "question-paper.pdf");
   const markSchemePath = path.join(paperDir, "mark-scheme.pdf");
 
-  if (!(await fileExists(questionPaperPath))) {
+  if (urls.insertUrl) {
+    const questionPaperSourcePath = path.join(paperDir, "question-paper-source.pdf");
+    const insertPath = path.join(paperDir, "insert.pdf");
+
+    if (!(await fileExists(questionPaperSourcePath))) {
+      await downloadPdf(urls.questionPaperUrl, questionPaperSourcePath);
+    }
+
+    if (!(await fileExists(insertPath))) {
+      await downloadPdf(urls.insertUrl, insertPath);
+    }
+
+    if (!(await fileExists(questionPaperPath))) {
+      await runCommand(
+        "pdfunite",
+        [questionPaperSourcePath, insertPath, questionPaperPath],
+        "render",
+      );
+    }
+  } else if (!(await fileExists(questionPaperPath))) {
     await downloadPdf(urls.questionPaperUrl, questionPaperPath);
   }
 
-  if (!(await fileExists(markSchemePath))) {
+  if (urls.markSchemeInsertUrl) {
+    const markSchemeSourcePath = path.join(paperDir, "mark-scheme-source.pdf");
+    const markSchemeInsertPath = path.join(paperDir, "mark-scheme-insert.pdf");
+
+    if (!(await fileExists(markSchemeSourcePath))) {
+      await downloadPdf(urls.markSchemeUrl, markSchemeSourcePath);
+    }
+
+    if (!(await fileExists(markSchemeInsertPath))) {
+      await downloadPdf(urls.markSchemeInsertUrl, markSchemeInsertPath);
+    }
+
+    if (!(await fileExists(markSchemePath))) {
+      await runCommand(
+        "pdfunite",
+        [markSchemeSourcePath, markSchemeInsertPath, markSchemePath],
+        "render",
+      );
+    }
+  } else if (!(await fileExists(markSchemePath))) {
     await downloadPdf(urls.markSchemeUrl, markSchemePath);
   }
 
@@ -486,7 +538,9 @@ export async function importSupportedPaper<Year extends BenchmarkYear>(
       definition.paperDir(year),
       {
         questionPaperUrl: candidate.questionPaperUrl,
+        insertUrl: candidate.insertUrl,
         markSchemeUrl: candidate.markSchemeUrl,
+        markSchemeInsertUrl: candidate.markSchemeInsertUrl,
       },
     );
 
@@ -696,6 +750,30 @@ export async function importEdexcelGcseHistoryPaper1MedicineBenchmark(
   year: EdexcelGcseHistoryPaper1MedicineYear,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_DEFINITION, year);
+}
+
+export async function importEdexcelGcseHistoryPaper2ColdWarElizabethBenchmark(
+  year: EdexcelGcseHistoryPaper2ColdWarElizabethYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_DEFINITION, year);
+}
+
+export async function importEdexcelGcseHistoryPaper3GermanyBenchmark(
+  year: EdexcelGcseHistoryPaper3GermanyYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_DEFINITION, year);
+}
+
+export async function importEdexcelGcseMathsPaper2HigherBenchmark(
+  year: EdexcelGcseMathsPaper2HigherYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_DEFINITION, year);
+}
+
+export async function importEdexcelGcseMathsPaper2HigherNovember2024Benchmark(
+  year: EdexcelGcseMathsPaper2HigherNovember2024Year,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_NOVEMBER_2024_DEFINITION, year);
 }
 
 export async function importOcrGcseBusinessPaper1Benchmark(

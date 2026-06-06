@@ -26,13 +26,23 @@ const EDEXCEL_A_GEOGRAPHY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-geography/edexcel-a-paper-1/";
 const EDEXCEL_GCSE_HISTORY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-1/";
+const EDEXCEL_GCSE_HISTORY_PAPER_2_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-2/";
+const EDEXCEL_GCSE_HISTORY_PAPER_3_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-history/edexcel-paper-3/";
 const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-english-literature/edexcel-paper-2/";
+const EDEXCEL_GCSE_MATHS_PAPER_2_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-maths/edexcel-paper-2/";
+const CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-english-language/cie-igcse-paper-2/";
+const CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_PASTPAPERS_BASE_URL =
+  "https://pastpapers.co/cie/IGCSE/English-First-Language-0500/2024-May-June";
 const OCR_GCSE_BUSINESS_ASSESSMENT_URL =
   "https://www.ocr.org.uk/qualifications/gcse/business-j204-from-2017/assessment/?channel=direct";
 const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_ASSESSMENT_URL =
   "https://www.aqa.org.uk/subjects/religious-studies/gcse/religious-studies-short-course-8061/assessment-resources";
-const PHYSICS_PAPER_1_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
+const PHYSICS_PAPER_1_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
 const PHYSICS_PAPER_2_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const BIOLOGY_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
 const CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
@@ -41,7 +51,11 @@ const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const COMPUTER_SCIENCE_PAPER_2_BENCHMARK_YEARS = [2023, 2024] as const;
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS = [2023, 2024] as const;
 const EDEXCEL_GCSE_HISTORY_PAPER_1_MEDICINE_YEARS = [2023, 2024] as const;
+const EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_YEARS = [2022, 2023, 2024] as const;
+const EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_YEARS = [2022, 2023, 2024] as const;
 const EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_YEARS = [2023, 2024] as const;
+const EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_YEARS = [2023, 2024] as const;
+const CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_YEARS = [2024] as const;
 const OCR_BUSINESS_BENCHMARK_YEARS = [2023, 2024] as const;
 const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_YEARS = [2022, 2023, 2024] as const;
 
@@ -55,10 +69,6 @@ function normalizeLinkUrlForBase(href: string, baseUrl: string) {
 }
 
 function readSessionLabel(label: string) {
-  if (!label.trim().startsWith("June")) {
-    return null;
-  }
-
   try {
     return parseSessionLabel(label);
   } catch {
@@ -591,6 +601,114 @@ export async function discoverEdexcelGcseHistoryPaper1Medicine() {
   return discoverEdexcelGcseHistoryPaper1MedicineFromHtml(html);
 }
 
+export function discoverEdexcelGcseHistoryPaper2ColdWarElizabethFromHtml(html: string) {
+  const $ = cheerio.load(html);
+  const candidates: PmtPaperCandidate[] = [];
+
+  for (const year of EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_YEARS) {
+    const p4QuestionPaper = $(`a[href*='June ${year} QP - Paper 2 Option P4 Edexcel History GCSE.pdf']`).first();
+    const b4QuestionPaper = $(`a[href*='June ${year} QP - Paper 2 Option B4 Edexcel History GCSE.pdf']`).first();
+    const p4MarkScheme = $(`a[href*='June ${year} MS - Paper 2 Option P4 Edexcel History GCSE.pdf']`).first();
+    const b4MarkScheme = $(`a[href*='June ${year} MS - Paper 2 Option B4 Edexcel History GCSE.pdf']`).first();
+    const p4QuestionPaperHref = p4QuestionPaper.attr("href");
+    const b4QuestionPaperHref = b4QuestionPaper.attr("href");
+    const p4MarkSchemeHref = p4MarkScheme.attr("href");
+    const b4MarkSchemeHref = b4MarkScheme.attr("href");
+
+    if (!p4QuestionPaperHref || !b4QuestionPaperHref || !p4MarkSchemeHref || !b4MarkSchemeHref) {
+      continue;
+    }
+
+    candidates.push({
+      paperPageUrl: EDEXCEL_GCSE_HISTORY_PAPER_2_URL,
+      questionPaperUrl: normalizeLinkUrlForBase(p4QuestionPaperHref, EDEXCEL_GCSE_HISTORY_PAPER_2_URL),
+      insertUrl: normalizeLinkUrlForBase(b4QuestionPaperHref, EDEXCEL_GCSE_HISTORY_PAPER_2_URL),
+      markSchemeUrl: normalizeLinkUrlForBase(p4MarkSchemeHref, EDEXCEL_GCSE_HISTORY_PAPER_2_URL),
+      markSchemeInsertUrl: normalizeLinkUrlForBase(b4MarkSchemeHref, EDEXCEL_GCSE_HISTORY_PAPER_2_URL),
+      examBoard: "Edexcel",
+      qualification: "GCSE History",
+      subject: "History",
+      paperNumber: 2,
+      tier: "P4 Superpower relations and the Cold War; B4 Early Elizabethan England",
+      sessionLabel: `June ${year}`,
+      year,
+    });
+  }
+
+  if (
+    candidates.length !== EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_YEARS.length
+  ) {
+    throw new Error(
+      `PMT benchmark discovery contract failed for ${EDEXCEL_GCSE_HISTORY_PAPER_2_URL}: expected ${EDEXCEL_GCSE_HISTORY_PAPER_2_COLD_WAR_ELIZABETH_YEARS.length} Paper 2 P4+B4 candidates, found ${candidates.length}`,
+    );
+  }
+
+  return candidates;
+}
+
+export async function discoverEdexcelGcseHistoryPaper2ColdWarElizabeth() {
+  const html = await fetchHtml(EDEXCEL_GCSE_HISTORY_PAPER_2_URL);
+  return discoverEdexcelGcseHistoryPaper2ColdWarElizabethFromHtml(html);
+}
+
+export function discoverEdexcelGcseHistoryPaper3GermanyFromHtml(html: string) {
+  const $ = cheerio.load(html);
+  const candidates: PmtPaperCandidate[] = [];
+
+  for (const year of EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_YEARS) {
+    const markScheme = $(`a[href*='June ${year} MS - Paper 3 Option 31 Edexcel History GCSE.pdf']`).first();
+    const questionPaper = $(`a[href*='June ${year} QP - Paper 3 Option 31 Edexcel History GCSE.pdf']`).first();
+    const markSchemeHref = markScheme.attr("href");
+    const questionPaperHref = questionPaper.attr("href");
+
+    if (!markSchemeHref || !questionPaperHref) {
+      continue;
+    }
+
+    candidates.push({
+      paperPageUrl: EDEXCEL_GCSE_HISTORY_PAPER_3_URL,
+      questionPaperUrl: normalizeLinkUrlForBase(questionPaperHref, EDEXCEL_GCSE_HISTORY_PAPER_3_URL),
+      markSchemeUrl: normalizeLinkUrlForBase(markSchemeHref, EDEXCEL_GCSE_HISTORY_PAPER_3_URL),
+      examBoard: "Edexcel",
+      qualification: "GCSE History",
+      subject: "History",
+      paperNumber: 3,
+      tier: "Option 31 Weimar and Nazi Germany, 1918-39",
+      sessionLabel: `June ${year}`,
+      year,
+    });
+  }
+
+  if (candidates.length !== EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_YEARS.length) {
+    throw new Error(
+      `PMT benchmark discovery contract failed for ${EDEXCEL_GCSE_HISTORY_PAPER_3_URL}: expected ${EDEXCEL_GCSE_HISTORY_PAPER_3_GERMANY_YEARS.length} Paper 3 Option 31 candidates, found ${candidates.length}`,
+    );
+  }
+
+  return candidates;
+}
+
+export async function discoverEdexcelGcseHistoryPaper3Germany() {
+  const html = await fetchHtml(EDEXCEL_GCSE_HISTORY_PAPER_3_URL);
+  return discoverEdexcelGcseHistoryPaper3GermanyFromHtml(html);
+}
+
+export async function discoverCaieIgcseEnglishLanguagePaper2(): Promise<PmtPaperCandidate[]> {
+  return CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_YEARS.map((year) => ({
+    paperPageUrl: CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_URL,
+    questionPaperUrl: `${CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_PASTPAPERS_BASE_URL}/0500_s24_qp_21.pdf`,
+    insertUrl: `${CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_PASTPAPERS_BASE_URL}/0500_s24_in_21.pdf`,
+    markSchemeUrl: `${CAIE_IGCSE_ENGLISH_LANGUAGE_PAPER_2_PASTPAPERS_BASE_URL}/0500_s24_ms_21.pdf`,
+    examBoard: "CAIE",
+    qualification: "IGCSE First Language English",
+    subject: "English Language",
+    paperNumber: 2,
+    tier: "Paper 2 Directed Writing and Composition",
+    sessionLabel: `June ${year}`,
+    year,
+  }));
+}
+
 export function discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflictFromHtml(html: string) {
   const $ = cheerio.load(html);
   const candidates: PmtPaperCandidate[] = [];
@@ -641,6 +759,114 @@ export function discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflictFromHtml
 export async function discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflict() {
   const html = await fetchHtml(EDEXCEL_GCSE_ENGLISH_LITERATURE_PAPER_2_URL);
   return discoverEdexcelGcseEnglishLiteraturePaper2JekyllConflictFromHtml(html);
+}
+
+export function discoverEdexcelGcseMathsPaper2HigherFromHtml(html: string) {
+  const $ = cheerio.load(html);
+  const sessionLinks = collectSessionLinks(
+    $,
+    "a[href*='/Edexcel/Paper-2H/QP/']",
+    "questionPaperUrl",
+    EDEXCEL_GCSE_MATHS_PAPER_2_URL,
+  );
+  const markSchemes = collectSessionLinks(
+    $,
+    "a[href*='/Edexcel/Paper-2H/MS/']",
+    "markSchemeUrl",
+    EDEXCEL_GCSE_MATHS_PAPER_2_URL,
+  );
+  const candidates: PmtPaperCandidate[] = [];
+
+  for (const [sessionLabel, links] of markSchemes) {
+    sessionLinks.set(sessionLabel, {
+      ...(sessionLinks.get(sessionLabel) ?? {}),
+      ...links,
+    });
+  }
+
+  for (const year of EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_YEARS) {
+    const sessionLabel = `June ${year}`;
+    const links = sessionLinks.get(sessionLabel);
+
+    if (!links?.questionPaperUrl || !links.markSchemeUrl) {
+      continue;
+    }
+
+    candidates.push({
+      paperPageUrl: EDEXCEL_GCSE_MATHS_PAPER_2_URL,
+      questionPaperUrl: links.questionPaperUrl,
+      markSchemeUrl: links.markSchemeUrl,
+      examBoard: "Edexcel",
+      qualification: "GCSE Mathematics",
+      subject: "Maths",
+      paperNumber: 2,
+      tier: "Higher",
+      sessionLabel,
+      year,
+    });
+  }
+
+  assertBenchmarkContract(
+    candidates,
+    EDEXCEL_GCSE_MATHS_PAPER_2_HIGHER_YEARS,
+    EDEXCEL_GCSE_MATHS_PAPER_2_URL,
+  );
+
+  return candidates;
+}
+
+export async function discoverEdexcelGcseMathsPaper2Higher() {
+  const html = await fetchHtml(EDEXCEL_GCSE_MATHS_PAPER_2_URL);
+  return discoverEdexcelGcseMathsPaper2HigherFromHtml(html);
+}
+
+export function discoverEdexcelGcseMathsPaper2HigherNovember2024FromHtml(
+  html: string,
+): PmtPaperCandidate[] {
+  const $ = cheerio.load(html);
+  const questionPapers = collectSessionLinks(
+    $,
+    "a[href*='/Edexcel/Paper-2H/QP/']",
+    "questionPaperUrl",
+    EDEXCEL_GCSE_MATHS_PAPER_2_URL,
+  );
+  const markSchemes = collectSessionLinks(
+    $,
+    "a[href*='/Edexcel/Paper-2H/MS/']",
+    "markSchemeUrl",
+    EDEXCEL_GCSE_MATHS_PAPER_2_URL,
+  );
+  const sessionLabel = "November 2024";
+  const links = {
+    ...(questionPapers.get(sessionLabel) ?? {}),
+    ...(markSchemes.get(sessionLabel) ?? {}),
+  };
+
+  if (!links.questionPaperUrl || !links.markSchemeUrl) {
+    throw new Error(
+      `PMT benchmark discovery contract failed for ${EDEXCEL_GCSE_MATHS_PAPER_2_URL}: missing paired Higher QP/MS links for ${sessionLabel}`,
+    );
+  }
+
+  return [
+    {
+      paperPageUrl: EDEXCEL_GCSE_MATHS_PAPER_2_URL,
+      questionPaperUrl: links.questionPaperUrl,
+      markSchemeUrl: links.markSchemeUrl,
+      examBoard: "Edexcel" as const,
+      qualification: "GCSE Mathematics",
+      subject: "Maths",
+      paperNumber: 2,
+      tier: "Higher",
+      sessionLabel,
+      year: 2024,
+    },
+  ];
+}
+
+export async function discoverEdexcelGcseMathsPaper2HigherNovember2024() {
+  const html = await fetchHtml(EDEXCEL_GCSE_MATHS_PAPER_2_URL);
+  return discoverEdexcelGcseMathsPaper2HigherNovember2024FromHtml(html);
 }
 
 function discoverOcrGcseBusinessPaperFromHtml(html: string, paperNumber: 1 | 2) {

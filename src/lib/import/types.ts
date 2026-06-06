@@ -3,8 +3,10 @@ export type ImportStatus = "discovered" | "importing" | "ready" | "failed";
 export type PmtPaperCandidate = {
   paperPageUrl: string;
   questionPaperUrl: string;
+  insertUrl?: string;
   markSchemeUrl: string;
-  examBoard: "AQA" | "Edexcel" | "OCR";
+  markSchemeInsertUrl?: string;
+  examBoard: "AQA" | "CAIE" | "Edexcel" | "OCR";
   qualification: string;
   subject: string;
   paperNumber: number;

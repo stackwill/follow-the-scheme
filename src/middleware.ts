@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { AUTH_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
+import { AUTH_COOKIE_NAME, DEMO_AUTH_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 
-const PUBLIC_PATHS = new Set(["/icon.svg", "/login", "/umami/script.js"]);
+const PUBLIC_PATHS = new Set(["/demo/portfolio", "/icon.svg", "/login", "/umami/script.js"]);
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/fonts/");
@@ -10,10 +10,15 @@ function isPublicPath(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const authenticated = await verifySessionToken(
+  const normallyAuthenticated = await verifySessionToken(
     request.cookies.get(AUTH_COOKIE_NAME)?.value,
     process.env.AUTH_SESSION_SECRET,
   );
+  const demoAuthenticated = await verifySessionToken(
+    request.cookies.get(DEMO_AUTH_COOKIE_NAME)?.value,
+    process.env.AUTH_SESSION_SECRET,
+  );
+  const authenticated = normallyAuthenticated || demoAuthenticated;
 
   if (authenticated && pathname === "/login") {
     return NextResponse.redirect(new URL("/", request.url));

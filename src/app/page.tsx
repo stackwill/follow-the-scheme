@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Route } from "next";
 
 import { ExamCountdown } from "@/components/exam-countdown";
+import { DemoNotice } from "@/components/demo/demo-notice";
 import { ScrollCue } from "@/components/scroll-cue";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { nextExamFromSchedule } from "@/lib/exam-schedule";
@@ -162,7 +163,7 @@ function buildCourses(papers: CoursePaper[]) {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ subject?: string | string[]; paper?: string | string[] }>;
+  searchParams?: Promise<{ demo?: string | string[]; subject?: string | string[]; paper?: string | string[] }>;
 }) {
   const resolvedSearchParams = await searchParams;
   const subjectParam = resolvedSearchParams?.subject;
@@ -170,6 +171,9 @@ export default async function HomePage({
   const selectedCourseKey = Array.isArray(subjectParam) ? subjectParam[0] : subjectParam;
   const selectedPaperNumberValue = Array.isArray(paperParam) ? paperParam[0] : paperParam;
   const selectedPaperNumber = selectedPaperNumberValue ? Number(selectedPaperNumberValue) : null;
+  const demoParam = Array.isArray(resolvedSearchParams?.demo)
+    ? resolvedSearchParams.demo[0]
+    : resolvedSearchParams?.demo;
   const { db } = await import("@/lib/db");
   const papers = await db.paper.findMany({
     include: {
@@ -205,6 +209,7 @@ export default async function HomePage({
 
   return (
     <main className="page-shell learning-page">
+      {demoParam === "portfolio" ? <DemoNotice /> : null}
       <nav className="app-topbar" aria-label="App navigation">
         <Link className="brand-mark" href="/">
           <span className="brand-spark" aria-hidden="true">

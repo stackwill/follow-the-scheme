@@ -20,7 +20,7 @@ describe("supported paper registry", () => {
     ).toEqual([
       {
         adapterKey: "aqa-combined-science-physics-paper-1-higher",
-        years: [2022, 2023, 2024],
+        years: [2021, 2022, 2023, 2024],
       },
       {
         adapterKey: "aqa-combined-science-physics-paper-2-higher",
@@ -75,8 +75,28 @@ describe("supported paper registry", () => {
         years: [2023, 2024],
       },
       {
+        adapterKey: "caie-igcse-english-language-paper-2",
+        years: [2024],
+      },
+      {
+        adapterKey: "edexcel-gcse-maths-paper-2-higher",
+        years: [2023, 2024],
+      },
+      {
+        adapterKey: "edexcel-gcse-maths-paper-2-higher-november-2024",
+        years: [2024],
+      },
+      {
         adapterKey: "edexcel-gcse-history-paper-1-medicine",
         years: [2023, 2024],
+      },
+      {
+        adapterKey: "edexcel-gcse-history-paper-2-cold-war-elizabeth",
+        years: [2022, 2023, 2024],
+      },
+      {
+        adapterKey: "edexcel-gcse-history-paper-3-germany",
+        years: [2022, 2023, 2024],
       },
       {
         adapterKey: "ocr-gcse-business-paper-1",

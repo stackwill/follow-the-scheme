@@ -34,6 +34,7 @@ requireEnv("AUTH_SESSION_SECRET", 32);
 requireEnv("DATABASE_URL", 1);
 requireEnv("APP_DATA_DIR", 1);
 forbidEnv("NEXT_PUBLIC_OPENROUTER_API_KEY", "OpenRouter keys must only be available server-side.");
+forbidEnv("NEXT_PUBLIC_OPENROUTER_DEMO_API_KEY", "OpenRouter keys must only be available server-side.");
 forbidEnv("NEXT_PUBLIC_OPENROUTER_MODEL", "OpenRouter configuration must only be available server-side.");
 forbidEnv("NEXT_PUBLIC_OPENROUTER_BASE_URL", "OpenRouter configuration must only be available server-side.");
 

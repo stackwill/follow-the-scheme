@@ -1,10 +1,12 @@
 import type { Route } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { AnalyticsEvent } from "@/components/analytics/analytics-event";
 import { AnswerForm } from "@/components/questions/answer-form";
 import { ProgressHeader } from "@/components/questions/progress-header";
+import { resolveNodeAccessMode } from "@/lib/auth/access-node";
+import { AUTH_COOKIE_NAME, DEMO_AUTH_COOKIE_NAME } from "@/lib/auth/session";
 import { detectPaperOnlyQuestion, detectSelectionQuestion } from "@/lib/grading/schema";
 import type { LocalQuestionAttempt } from "@/lib/questions/local-attempts";
 import { questionGroupKey, uniqueQuestionGroups } from "@/lib/questions/groups";
@@ -59,6 +61,18 @@ function sourceMaterialImagePathsForGroup(
   groupKey: string,
   questions: Array<{ questionKey: string; supportingAssetPaths: string }>,
 ) {
+  if (adapterKey === "caie-igcse-english-language-paper-2" && groupKey === "1") {
+    return [
+      ...new Set(
+        questions.flatMap((groupQuestion) =>
+          parseSupportingAssetPaths(groupQuestion.supportingAssetPaths).filter((assetPath) =>
+            /\/1-page-(14|15)\.png$/.test(assetPath),
+          ),
+        ),
+      ),
+    ];
+  }
+
   if (adapterKey !== "edexcel-gcse-history-paper-1-medicine" || groupKey !== "2") {
     return [];
   }
@@ -133,7 +147,8 @@ export default async function QuestionPage({
       imagePath: groupQuestion.primaryCropPath,
       continuationImagePaths: parseSupportingAssetPaths(groupQuestion.supportingAssetPaths).filter(
         (assetPath) =>
-          !isEdexcelHistoryMedicineSourceAsset(paper.adapterKey, groupQuestion.questionKey, assetPath),
+          !isEdexcelHistoryMedicineSourceAsset(paper.adapterKey, groupQuestion.questionKey, assetPath) &&
+          !sourceMaterialImagePaths.includes(assetPath),
       ),
       paperOnlyReason: paperOnlyQuestion?.reason ?? null,
       selectionQuestion: selectionQuestion
@@ -170,6 +185,23 @@ export default async function QuestionPage({
       }
 
       const { gradeQuestionAttempt } = await import("@/lib/grading/grade-question");
+      const cookieStore = await cookies();
+      const accessMode = resolveNodeAccessMode(
+        {
+          normalToken: cookieStore.get(AUTH_COOKIE_NAME)?.value,
+          demoToken: cookieStore.get(DEMO_AUTH_COOKIE_NAME)?.value,
+        },
+        process.env.AUTH_SESSION_SECRET,
+      );
+
+      if (!accessMode) {
+        return {
+          error: "Your session has expired. Refresh the page and sign in again.",
+          answers: submittedAnswers,
+          submitted: true,
+        };
+      }
+
       let gradedCount = 0;
       let skippedCount = 0;
       const results: LocalQuestionAttempt[] = [];
@@ -199,6 +231,7 @@ export default async function QuestionPage({
           questionId: groupQuestion.id,
           answer,
           notes: "",
+          accessMode,
         });
         results.push(result);
         gradedCount += 1;

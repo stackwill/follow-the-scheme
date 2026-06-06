@@ -19,6 +19,8 @@ const openRouterEnvSchema = z.object({
   OPENROUTER_BASE_URL: z.string().url(),
 });
 
+type OpenRouterAccessMode = "normal" | "demo";
+
 export const env = envSchema.parse({
   DATABASE_URL:
     process.env.DATABASE_URL ??
@@ -28,9 +30,16 @@ export const env = envSchema.parse({
     (useLocalDevEnvDefaults ? localDevEnvDefaults.APP_DATA_DIR : undefined),
 });
 
-export function getOpenRouterEnv() {
+export function getOpenRouterEnv(accessMode: OpenRouterAccessMode = "normal") {
+  const apiKey =
+    accessMode === "demo" ? process.env.OPENROUTER_DEMO_API_KEY : process.env.OPENROUTER_API_KEY;
+
+  if (accessMode === "demo" && !apiKey) {
+    return null;
+  }
+
   const candidate = {
-    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    OPENROUTER_API_KEY: apiKey,
     OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
     OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL,
   };
