@@ -9,6 +9,7 @@ import { useActionState, useCallback, useEffect, useMemo, useRef, useState } fro
 import type { SelectionOption } from "@/lib/grading/schema";
 import { trackAnalyticsEvent } from "@/lib/analytics/umami";
 import { MarkingSpectacle } from "@/components/questions/marking-spectacle";
+import { formatMarkSchemeText } from "@/lib/mark-schemes/format";
 import {
   latestLocalAttempt,
   type LocalPaperAttempts,
@@ -45,6 +46,7 @@ type AnswerFormProps = {
     maxMarks: number;
     imagePath: string;
     continuationImagePaths: string[];
+    markSchemeText: string;
     paperOnlyReason: string | null;
     selectionQuestion: {
       type: "single";
@@ -101,12 +103,70 @@ function hasGoodUnchangedAttempt(attempt: LocalQuestionAttempt | null, answer: s
   );
 }
 
+function MarkSchemeHintDialog(props: {
+  onClose: () => void;
+  question: AnswerFormProps["questions"][number] | null;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const sections = useMemo(
+    () => formatMarkSchemeText(props.question?.markSchemeText ?? ""),
+    [props.question?.markSchemeText],
+  );
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+
+    if (!dialog) {
+      return;
+    }
+
+    if (props.question) {
+      if (!dialog.open) {
+        dialog.showModal();
+      }
+      return;
+    }
+
+    if (dialog.open) {
+      dialog.close();
+    }
+  }, [props.question]);
+
+  return (
+    <dialog className="mark-scheme-dialog" onCancel={props.onClose} onClose={props.onClose} ref={dialogRef}>
+      <div className="mark-scheme-dialog__shell">
+        <header className="mark-scheme-dialog__header">
+          <h2>{props.question ? `Question ${props.question.questionKey} mark scheme` : "Mark scheme"}</h2>
+          <button className="mark-scheme-dialog__close" onClick={props.onClose} type="button">
+            Close
+          </button>
+        </header>
+        <div className="mark-scheme-dialog__body">
+          {sections.map((section, sectionIndex) => (
+            <section className="mark-scheme-section" key={`${section.title ?? "section"}-${sectionIndex}`}>
+              {section.title ? <h3>{section.title}</h3> : null}
+              <div className="mark-scheme-lines">
+                {section.lines.map((line, lineIndex) => (
+                  <p data-kind={line.kind} key={`${line.kind}-${lineIndex}`}>
+                    {line.text}
+                  </p>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
+    </dialog>
+  );
+}
+
 export function AnswerForm(props: AnswerFormProps) {
   const [state, formAction, pending] = useActionState(props.action, { error: null });
   const [localAttempts, setLocalAttempts] = useState<LocalPaperAttempts | null>(null);
   const [answersByQuestionId, setAnswersByQuestionId] = useState<Record<string, string>>({});
   const [completionSpectacle, setCompletionSpectacle] = useState<CompletionSpectacle | null>(null);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(!props.disableAnimations);
+  const [hintQuestionId, setHintQuestionId] = useState<string | null>(null);
   const showCompletionAnimationRef = useRef(showCompletionAnimation);
   const analyticsProps = useMemo(
     () => ({
@@ -134,6 +194,7 @@ export function AnswerForm(props: AnswerFormProps) {
   }, [localAttempts, props.questions]);
   const totalMarks = props.questions.reduce((sum, question) => sum + question.maxMarks, 0);
   const markedQuestions = props.questions.filter((question) => latestAttemptsByQuestionId[question.id]);
+  const hintQuestion = props.questions.find((question) => question.id === hintQuestionId) ?? null;
   const awardedMarks = markedQuestions.reduce(
     (sum, question) => sum + (latestAttemptsByQuestionId[question.id]?.awardedMarks ?? 0),
     0,
@@ -256,6 +317,7 @@ export function AnswerForm(props: AnswerFormProps) {
 
   return (
     <form action={formAction} className="answer-form">
+      <MarkSchemeHintDialog onClose={() => setHintQuestionId(null)} question={hintQuestion} />
       {completionSpectacle ? (
         <MarkingSpectacle
           awardedMarks={completionSpectacle.awardedMarks}
@@ -406,6 +468,18 @@ export function AnswerForm(props: AnswerFormProps) {
                   />
                 </label>
               )}
+
+              {!question.paperOnlyReason ? (
+                <div className="question-hint-row">
+                  <button
+                    className="question-hint-button"
+                    onClick={() => setHintQuestionId(question.id)}
+                    type="button"
+                  >
+                    I&apos;m lost.
+                  </button>
+                </div>
+              ) : null}
 
               {latestAttempt ? (
                 <section

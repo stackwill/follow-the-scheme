@@ -158,6 +158,7 @@ export default async function QuestionPage({
           !isEdexcelHistoryMedicineSourceAsset(paper.adapterKey, groupQuestion.questionKey, assetPath) &&
           !sourceMaterialImagePaths.includes(assetPath),
       ),
+      markSchemeText: groupQuestion.markSchemeText,
       paperOnlyReason: paperOnlyQuestion?.reason ?? null,
       selectionQuestion: selectionQuestion
         ? {
