@@ -26,13 +26,33 @@ Useful files:
 
 ## 2. Sync And Import Locally
 
-Run the existing local import flow.
+Run the local import flow. By default this is incremental: it discovers supported papers,
+skips papers that are already current, and imports only missing or stale papers.
 
 ```bash
 bun run import:sync
 ```
 
-For narrower checks, use the existing adapter filters or smoke scripts where appropriate.
+For a new-paper batch, prefer a narrow sync so unrelated papers are not rechecked:
+
+```bash
+bun run import:sync -- --paper aqa-gcse-chemistry-paper-2-higher:2022 --paper aqa-gcse-chemistry-paper-2-higher:2023
+```
+
+Useful filters:
+
+```bash
+bun run import:sync -- --adapter aqa-gcse-chemistry-paper-2-higher
+bun run import:sync -- --year 2023
+```
+
+Use `--force` only when adapter logic changed and existing crops/data must be rebuilt:
+
+```bash
+bun run import:sync -- --adapter aqa-gcse-chemistry-paper-2-higher --force
+```
+
+For broader checks, use the smoke script where appropriate.
 
 ```bash
 bun run import:smoke

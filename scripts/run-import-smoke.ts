@@ -117,6 +117,14 @@ const CHEMISTRY_EXPECTATIONS = {
     },
   },
   paper2: {
+    2021: {
+      questionCount: 33,
+      totalMarks: 70,
+    },
+    2022: {
+      questionCount: 28,
+      totalMarks: 70,
+    },
     2023: {
       questionCount: 35,
       totalMarks: 70,
@@ -576,72 +584,108 @@ for (const year of [2021, 2022, 2023, 2024] as const) {
   }
 }
 
-const chemistryImports = [
-  {
-    label: "Chemistry Paper 1H",
-    expectation: CHEMISTRY_EXPECTATIONS.paper1,
-    importPaper: importAqaChemistryPaper1HigherBenchmark,
-  },
-  {
-    label: "Chemistry Paper 2H",
-    expectation: CHEMISTRY_EXPECTATIONS.paper2,
-    importPaper: importAqaChemistryPaper2HigherBenchmark,
-  },
-] as const;
-
 const chemistryPapers = [];
 
 for (const year of [2023, 2024] as const) {
-  for (const chemistryImport of chemistryImports) {
-    const expectation = chemistryImport.expectation[year];
-    const initialResult = await chemistryImport.importPaper(year);
-    const initialPaper = await getPaperSnapshot(initialResult.paperId);
-    const initialQuestionIds = new Map(
-      initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
-    );
+  const expectation = CHEMISTRY_EXPECTATIONS.paper1[year];
+  const initialResult = await importAqaChemistryPaper1HigherBenchmark(year);
+  const initialPaper = await getPaperSnapshot(initialResult.paperId);
+  const initialQuestionIds = new Map(
+    initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
+  );
 
+  assert(
+    initialPaper.questions.length === expectation.questionCount,
+    `Chemistry Paper 1H ${year} imported ${initialPaper.questions.length} questions, expected ${expectation.questionCount}`,
+  );
+  assert(
+    initialPaper.totalMarks === expectation.totalMarks,
+    `Chemistry Paper 1H ${year} imported ${initialPaper.totalMarks} total marks, expected ${expectation.totalMarks}`,
+  );
+
+  for (const question of initialPaper.questions) {
+    await access(assetFilePath(question.primaryCropPath));
     assert(
-      initialPaper.questions.length === expectation.questionCount,
-      `${chemistryImport.label} ${year} imported ${initialPaper.questions.length} questions, expected ${expectation.questionCount}`,
+      question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
+      `Chemistry Paper 1H ${year} imported invalid mark scheme text for ${question.questionKey}`,
     );
-    assert(
-      initialPaper.totalMarks === expectation.totalMarks,
-      `${chemistryImport.label} ${year} imported ${initialPaper.totalMarks} total marks, expected ${expectation.totalMarks}`,
-    );
-
-    for (const question of initialPaper.questions) {
-      await access(assetFilePath(question.primaryCropPath));
-      assert(
-        question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
-        `${chemistryImport.label} ${year} imported invalid mark scheme text for ${question.questionKey}`,
-      );
-    }
-
-    const repeatResult = await chemistryImport.importPaper(year);
-    const repeatedPaper = await getPaperSnapshot(repeatResult.paperId);
-
-    assert(
-      initialResult.paperId === repeatResult.paperId,
-      `${chemistryImport.label} ${year} re-import changed paper id from ${initialResult.paperId} to ${repeatResult.paperId}`,
-    );
-    assert(
-      initialResult.questionCount === repeatResult.questionCount,
-      `${chemistryImport.label} ${year} re-import changed question count from ${initialResult.questionCount} to ${repeatResult.questionCount}`,
-    );
-    assert(
-      initialResult.totalMarks === repeatResult.totalMarks,
-      `${chemistryImport.label} ${year} re-import changed total marks from ${initialResult.totalMarks} to ${repeatResult.totalMarks}`,
-    );
-
-    for (const question of repeatedPaper.questions) {
-      assert(
-        initialQuestionIds.get(question.questionKey) === question.id,
-        `${chemistryImport.label} ${year}/${question.questionKey} changed question id across repeat import`,
-      );
-    }
-
-    chemistryPapers.push(repeatedPaper);
   }
+
+  const repeatResult = await importAqaChemistryPaper1HigherBenchmark(year);
+  const repeatedPaper = await getPaperSnapshot(repeatResult.paperId);
+
+  assert(
+    initialResult.paperId === repeatResult.paperId,
+    `Chemistry Paper 1H ${year} re-import changed paper id from ${initialResult.paperId} to ${repeatResult.paperId}`,
+  );
+  assert(
+    initialResult.questionCount === repeatResult.questionCount,
+    `Chemistry Paper 1H ${year} re-import changed question count from ${initialResult.questionCount} to ${repeatResult.questionCount}`,
+  );
+  assert(
+    initialResult.totalMarks === repeatResult.totalMarks,
+    `Chemistry Paper 1H ${year} re-import changed total marks from ${initialResult.totalMarks} to ${repeatResult.totalMarks}`,
+  );
+
+  for (const question of repeatedPaper.questions) {
+    assert(
+      initialQuestionIds.get(question.questionKey) === question.id,
+      `Chemistry Paper 1H ${year}/${question.questionKey} changed question id across repeat import`,
+    );
+  }
+
+  chemistryPapers.push(repeatedPaper);
+}
+
+for (const year of [2021, 2022, 2023, 2024] as const) {
+  const expectation = CHEMISTRY_EXPECTATIONS.paper2[year];
+  const initialResult = await importAqaChemistryPaper2HigherBenchmark(year);
+  const initialPaper = await getPaperSnapshot(initialResult.paperId);
+  const initialQuestionIds = new Map(
+    initialPaper.questions.map((question) => [question.questionKey, question.id] as const),
+  );
+
+  assert(
+    initialPaper.questions.length === expectation.questionCount,
+    `Chemistry Paper 2H ${year} imported ${initialPaper.questions.length} questions, expected ${expectation.questionCount}`,
+  );
+  assert(
+    initialPaper.totalMarks === expectation.totalMarks,
+    `Chemistry Paper 2H ${year} imported ${initialPaper.totalMarks} total marks, expected ${expectation.totalMarks}`,
+  );
+
+  for (const question of initialPaper.questions) {
+    await access(assetFilePath(question.primaryCropPath));
+    assert(
+      question.markSchemeText.trim().length > 0 && !PLACEHOLDER_MARK_SCHEME_PATTERN.test(question.markSchemeText),
+      `Chemistry Paper 2H ${year} imported invalid mark scheme text for ${question.questionKey}`,
+    );
+  }
+
+  const repeatResult = await importAqaChemistryPaper2HigherBenchmark(year);
+  const repeatedPaper = await getPaperSnapshot(repeatResult.paperId);
+
+  assert(
+    initialResult.paperId === repeatResult.paperId,
+    `Chemistry Paper 2H ${year} re-import changed paper id from ${initialResult.paperId} to ${repeatResult.paperId}`,
+  );
+  assert(
+    initialResult.questionCount === repeatResult.questionCount,
+    `Chemistry Paper 2H ${year} re-import changed question count from ${initialResult.questionCount} to ${repeatResult.questionCount}`,
+  );
+  assert(
+    initialResult.totalMarks === repeatResult.totalMarks,
+    `Chemistry Paper 2H ${year} re-import changed total marks from ${initialResult.totalMarks} to ${repeatResult.totalMarks}`,
+  );
+
+  for (const question of repeatedPaper.questions) {
+    assert(
+      initialQuestionIds.get(question.questionKey) === question.id,
+      `Chemistry Paper 2H ${year}/${question.questionKey} changed question id across repeat import`,
+    );
+  }
+
+  chemistryPapers.push(repeatedPaper);
 }
 
 const ocrBusinessImports = [

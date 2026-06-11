@@ -383,6 +383,32 @@ function parseSectionTotalLine(line: Line) {
   return Number(match[1]);
 }
 
+function parseSplitSectionTotalLine(lines: Line[], index: number) {
+  const line = lines[index];
+
+  if (!/^Total$/i.test(line.rawText)) {
+    return null;
+  }
+
+  const totalValueLine = lines.find((candidate, candidateIndex) => {
+    if (candidateIndex === index || candidate.pageNumber !== line.pageNumber) {
+      return false;
+    }
+
+    if (Math.abs(candidate.y - line.y) > 8) {
+      return false;
+    }
+
+    if (candidate.minX < MARK_COLUMN_MIN_X || candidate.maxX > MARK_COLUMN_MAX_X) {
+      return false;
+    }
+
+    return /^\d{1,2}$/.test(candidate.rawText);
+  });
+
+  return totalValueLine ? Number(totalValueLine.rawText) : null;
+}
+
 function buildMarkSchemeText(lines: Line[]) {
   const extractedText = lines
     .map((line) => buildLineText(line.items, MARK_SCHEME_CONTENT_MIN_X, MARK_SCHEME_CONTENT_MAX_X))
@@ -509,7 +535,7 @@ function buildMarkSchemeBlocks(lines: Line[]) {
       return;
     }
 
-    const sectionTotal = parseSectionTotalLine(line);
+    const sectionTotal = parseSectionTotalLine(line) ?? parseSplitSectionTotalLine(filteredLines, index);
 
     if (sectionTotal !== null) {
       const previousBlock = blockStarts.at(-1);

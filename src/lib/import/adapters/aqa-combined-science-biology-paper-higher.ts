@@ -19,3 +19,7 @@ export const aqaCombinedScienceChemistryPaper2HigherAdapter = createAqaCombinedS
 export const aqaGcseChemistryPaper1HigherAdapter = createAqaCombinedSciencePaperAdapter(
   "aqa-gcse-chemistry-paper-1-higher",
 );
+
+export const aqaGcseChemistryPaper2HigherAdapter = createAqaCombinedSciencePaperAdapter(
+  "aqa-gcse-chemistry-paper-2-higher",
+);

@@ -18,6 +18,8 @@ const AQA_CHEMISTRY_PAPER_2_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-science/aqa-chemistry-2/";
 const AQA_GCSE_CHEMISTRY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-chemistry/aqa-paper-1/";
+const AQA_GCSE_CHEMISTRY_PAPER_2_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-chemistry/aqa-paper-2/";
 const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1";
 const AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_URL =
@@ -45,8 +47,10 @@ const AQA_RELIGIOUS_STUDIES_SHORT_COURSE_ASSESSMENT_URL =
 const PHYSICS_PAPER_1_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
 const PHYSICS_PAPER_2_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const BIOLOGY_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
-const CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
+const CHEMISTRY_PAPER_1_BENCHMARK_YEARS = [2023, 2024] as const;
+const CHEMISTRY_PAPER_2_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
 const AQA_GCSE_CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
+const AQA_GCSE_CHEMISTRY_PAPER_2_BENCHMARK_YEARS = [2022, 2023] as const;
 const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const COMPUTER_SCIENCE_PAPER_2_BENCHMARK_YEARS = [2023, 2024] as const;
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS = [2023, 2024] as const;
@@ -223,7 +227,10 @@ function discoverAqaChemistryPaperHigherFromHtml(
     });
   }
 
-  for (const year of CHEMISTRY_BENCHMARK_YEARS) {
+  const benchmarkYears =
+    paperNumber === 1 ? CHEMISTRY_PAPER_1_BENCHMARK_YEARS : CHEMISTRY_PAPER_2_BENCHMARK_YEARS;
+
+  for (const year of benchmarkYears) {
     const sessionLabel = `June ${year}`;
     const links = sessionLinks.get(sessionLabel);
 
@@ -245,9 +252,9 @@ function discoverAqaChemistryPaperHigherFromHtml(
     });
   }
 
-  if (candidates.length !== CHEMISTRY_BENCHMARK_YEARS.length) {
+  if (candidates.length !== benchmarkYears.length) {
     throw new Error(
-      `PMT benchmark discovery contract failed for ${paperPageUrl}: expected ${CHEMISTRY_BENCHMARK_YEARS.length} Chemistry Paper ${paperNumber}H candidate, found ${candidates.length}`,
+      `PMT benchmark discovery contract failed for ${paperPageUrl}: expected ${benchmarkYears.length} Chemistry Paper ${paperNumber}H candidate, found ${candidates.length}`,
     );
   }
 
@@ -291,9 +298,31 @@ export async function discoverAqaChemistryPaper2Higher() {
 }
 
 export function discoverAqaGcseChemistryPaper1HigherFromHtml(html: string) {
+  return discoverAqaGcseChemistryPaperHigherFromHtml(
+    html,
+    1,
+    AQA_GCSE_CHEMISTRY_PAPER_1_URL,
+    AQA_GCSE_CHEMISTRY_BENCHMARK_YEARS,
+  );
+}
+
+export function discoverAqaGcseChemistryPaper2HigherFromHtml(html: string) {
+  return discoverAqaGcseChemistryPaperHigherFromHtml(
+    html,
+    2,
+    AQA_GCSE_CHEMISTRY_PAPER_2_URL,
+    AQA_GCSE_CHEMISTRY_PAPER_2_BENCHMARK_YEARS,
+  );
+}
+
+function discoverAqaGcseChemistryPaperHigherFromHtml(
+  html: string,
+  paperNumber: 1 | 2,
+  paperPageUrl: string,
+  benchmarkYears: readonly number[],
+) {
   const $ = cheerio.load(html);
-  const paperPageUrl = AQA_GCSE_CHEMISTRY_PAPER_1_URL;
-  const prefix = "Paper-1H";
+  const prefix = `Paper-${paperNumber}H`;
   const sessionLinks = collectSessionLinks(
     $,
     `a[href*='${prefix}/QP/']`,
@@ -316,7 +345,7 @@ export function discoverAqaGcseChemistryPaper1HigherFromHtml(html: string) {
     });
   }
 
-  for (const year of AQA_GCSE_CHEMISTRY_BENCHMARK_YEARS) {
+  for (const year of benchmarkYears) {
     const sessionLabel = `June ${year}`;
     const links = sessionLinks.get(sessionLabel);
 
@@ -331,14 +360,14 @@ export function discoverAqaGcseChemistryPaper1HigherFromHtml(html: string) {
       examBoard: "AQA",
       qualification: "GCSE Chemistry",
       subject: "Chemistry",
-      paperNumber: 1,
+      paperNumber,
       tier: "Higher",
       sessionLabel,
       year,
     });
   }
 
-  assertBenchmarkContract(candidates, AQA_GCSE_CHEMISTRY_BENCHMARK_YEARS, paperPageUrl);
+  assertBenchmarkContract(candidates, benchmarkYears, paperPageUrl);
 
   return candidates;
 }
@@ -346,6 +375,11 @@ export function discoverAqaGcseChemistryPaper1HigherFromHtml(html: string) {
 export async function discoverAqaGcseChemistryPaper1Higher() {
   const html = await fetchHtml(AQA_GCSE_CHEMISTRY_PAPER_1_URL);
   return discoverAqaGcseChemistryPaper1HigherFromHtml(html);
+}
+
+export async function discoverAqaGcseChemistryPaper2Higher() {
+  const html = await fetchHtml(AQA_GCSE_CHEMISTRY_PAPER_2_URL);
+  return discoverAqaGcseChemistryPaper2HigherFromHtml(html);
 }
 
 function discoverAqaPhysicsPaperHigherFromHtml(

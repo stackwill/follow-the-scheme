@@ -19,6 +19,8 @@ import {
   AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
   AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
   AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_DEFINITION,
+  AQA_GCSE_CHEMISTRY_PAPER_2_HIGHER_ADAPTER_KEY,
+  AQA_GCSE_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_DEFINITION,
   AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION,
@@ -36,7 +38,9 @@ import {
   OCR_GCSE_BUSINESS_PAPER_2_DEFINITION,
   type BiologyBenchmarkYear,
   type AqaGcseChemistryBenchmarkYear,
-  type ChemistryBenchmarkYear,
+  type AqaGcseChemistryPaper2BenchmarkYear,
+  type ChemistryPaper1BenchmarkYear,
+  type ChemistryPaper2BenchmarkYear,
   type ComputerScienceBenchmarkYear,
   type ComputerSciencePaper2BenchmarkYear,
   type EdexcelAGeographyPaper1Year,
@@ -317,6 +321,7 @@ export function isUsefulQuestion052OcrOutput(ocrOutput: string) {
 }
 
 async function resolveBenchmarkMarkSchemeText(
+  adapterKey: string,
   year: BenchmarkYear,
   draft: QuestionDraft,
   questionPaperPath: string,
@@ -333,6 +338,22 @@ async function resolveBenchmarkMarkSchemeText(
     return "arrow pointing right";
   }
 
+  if (
+    adapterKey === AQA_GCSE_CHEMISTRY_PAPER_2_HIGHER_ADAPTER_KEY &&
+    year === 2023 &&
+    draft.questionKey === "08.1"
+  ) {
+    return "circle around the C=C double bond in chloroethene";
+  }
+
+  if (
+    adapterKey === AQA_GCSE_CHEMISTRY_PAPER_2_HIGHER_ADAPTER_KEY &&
+    year === 2023 &&
+    draft.questionKey === "08.6"
+  ) {
+    return "circle around the central glucose repeating unit in the polymer chain";
+  }
+
   throw new ImportFailure("adapter", `Placeholder mark scheme text is not allowed for ${year}/${draft.questionKey}`, {
     year,
     questionKey: draft.questionKey,
@@ -341,6 +362,7 @@ async function resolveBenchmarkMarkSchemeText(
 }
 
 async function finalizeDrafts(
+  adapterKey: string,
   year: BenchmarkYear,
   drafts: QuestionDraft[],
   questionPaperPath: string,
@@ -349,7 +371,12 @@ async function finalizeDrafts(
   const finalizedDrafts = await Promise.all(
     drafts.map(async (draft) => ({
       ...draft,
-      markSchemeText: await resolveBenchmarkMarkSchemeText(year, draft, questionPaperPath),
+      markSchemeText: await resolveBenchmarkMarkSchemeText(
+        adapterKey,
+        year,
+        draft,
+        questionPaperPath,
+      ),
     })),
   );
   const totalMarks = finalizedDrafts.reduce((sum, draft) => sum + draft.maxMarks, 0);
@@ -588,7 +615,13 @@ export async function importSupportedPaper<Year extends BenchmarkYear>(
       });
     }
 
-    const drafts = await finalizeDrafts(year, detectedDrafts, questionPaperPath, definition.totalMarks[year]);
+    const drafts = await finalizeDrafts(
+      adapter.key,
+      year,
+      detectedDrafts,
+      questionPaperPath,
+      definition.totalMarks[year],
+    );
     const renderPaths = await renderPdfPages(questionPaperPath, `${adapter.key}-${year}`);
     const questionRecords = await buildQuestionRecordData(year, adapter.key, drafts, renderPaths);
     const totalMarks = drafts.reduce((sum, draft) => sum + draft.maxMarks, 0);
@@ -705,13 +738,13 @@ export async function importAqaBiologyPaper2HigherBenchmark(
 }
 
 export async function importAqaChemistryPaper1HigherBenchmark(
-  year: ChemistryBenchmarkYear,
+  year: ChemistryPaper1BenchmarkYear,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(AQA_CHEMISTRY_PAPER_1_HIGHER_DEFINITION, year);
 }
 
 export async function importAqaChemistryPaper2HigherBenchmark(
-  year: ChemistryBenchmarkYear,
+  year: ChemistryPaper2BenchmarkYear,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(AQA_CHEMISTRY_PAPER_2_HIGHER_DEFINITION, year);
 }
@@ -720,6 +753,12 @@ export async function importAqaGcseChemistryPaper1HigherBenchmark(
   year: AqaGcseChemistryBenchmarkYear,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(AQA_GCSE_CHEMISTRY_PAPER_1_HIGHER_DEFINITION, year);
+}
+
+export async function importAqaGcseChemistryPaper2HigherBenchmark(
+  year: AqaGcseChemistryPaper2BenchmarkYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(AQA_GCSE_CHEMISTRY_PAPER_2_HIGHER_DEFINITION, year);
 }
 
 export async function importAqaGcseComputerSciencePaper1BPythonBenchmark(
