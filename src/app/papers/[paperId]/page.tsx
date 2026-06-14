@@ -5,10 +5,7 @@ import { notFound } from "next/navigation";
 import { AnalyticsEvent } from "@/components/analytics/analytics-event";
 import { PaperProgressOverview } from "@/components/questions/paper-progress-overview";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-  AQA_GCSE_PHYSICS_2026_EQUATION_SHEET_URL,
-  shouldShowAqaGcsePhysicsEquationSheet,
-} from "@/lib/exam-resources";
+import { getAqaPhysicsEquationSheetUrl } from "@/lib/exam-resources";
 import { uniqueQuestionGroups } from "@/lib/questions/groups";
 
 export const dynamic = "force-dynamic";
@@ -77,7 +74,7 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
       maxMarks: groupQuestion.maxMarks,
     })),
   }));
-  const showEquationSheet = shouldShowAqaGcsePhysicsEquationSheet(paper);
+  const equationSheetUrl = getAqaPhysicsEquationSheetUrl(paper);
 
   return (
     <main className="page-shell learning-page">
@@ -131,10 +128,10 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
             <Link className="button-link button-link--secondary" href="/">
               Back to library
             </Link>
-            {showEquationSheet ? (
+            {equationSheetUrl ? (
               <a
                 className="button-link button-link--secondary"
-                href={AQA_GCSE_PHYSICS_2026_EQUATION_SHEET_URL}
+                href={equationSheetUrl}
                 target="_blank"
                 rel="noreferrer"
               >
