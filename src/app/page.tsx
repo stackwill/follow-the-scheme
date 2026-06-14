@@ -5,6 +5,7 @@ import { ExamCountdown } from "@/components/exam-countdown";
 import { DemoNotice } from "@/components/demo/demo-notice";
 import { ScrollCue } from "@/components/scroll-cue";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { courseDisplayName, courseDisplayParts } from "@/lib/course-display";
 import { nextExamFromSchedule } from "@/lib/exam-schedule";
 
 export const dynamic = "force-dynamic";
@@ -57,40 +58,6 @@ function paperChoiceDisplayName(course: Course, paperNumber: number) {
   }
 
   return `Paper ${paperNumber}`;
-}
-
-function courseDisplayParts(course: { subject: string; qualification: string }) {
-  if (["Biology", "Chemistry", "Physics"].includes(course.subject)) {
-    return {
-      name: course.subject,
-      detail: course.qualification === "GCSE Chemistry" ? "(triple award)" : "combined science",
-    };
-  }
-
-  if (course.subject === "Computer Science") {
-    return {
-      name: "Computer Science",
-      detail: null,
-    };
-  }
-
-  if (course.subject === "Business") {
-    return {
-      name: "Business",
-      detail: null,
-    };
-  }
-
-  return {
-    name: course.subject,
-    detail: null,
-  };
-}
-
-function courseDisplayName(course: { subject: string; qualification: string }) {
-  const parts = courseDisplayParts(course);
-
-  return parts.detail ? `${parts.name} ${parts.detail}` : parts.name;
 }
 
 function paperDisplayName(paper: {

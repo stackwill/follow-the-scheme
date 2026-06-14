@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { AnalyticsEvent } from "@/components/analytics/analytics-event";
 import { PaperProgressOverview } from "@/components/questions/paper-progress-overview";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { courseDisplayName } from "@/lib/course-display";
 import { getAqaPhysicsEquationSheetUrl } from "@/lib/exam-resources";
 import { uniqueQuestionGroups } from "@/lib/questions/groups";
 
@@ -12,40 +13,6 @@ export const dynamic = "force-dynamic";
 
 function questionHref(paperId: string, questionId: string) {
   return `/papers/${paperId}/questions/${questionId}` as Route;
-}
-
-function subjectDisplayParts(subject: string, qualification: string) {
-  if (["Biology", "Chemistry", "Physics"].includes(subject)) {
-    return {
-      name: subject,
-      detail: qualification === "GCSE Chemistry" ? "(triple award)" : "combined science",
-    };
-  }
-
-  if (subject === "Computer Science") {
-    return {
-      name: "Computer Science",
-      detail: null,
-    };
-  }
-
-  if (subject === "Business") {
-    return {
-      name: "Business",
-      detail: null,
-    };
-  }
-
-  return {
-    name: subject,
-    detail: null,
-  };
-}
-
-function subjectDisplayName(subject: string, qualification: string) {
-  const parts = subjectDisplayParts(subject, qualification);
-
-  return parts.detail ? `${parts.name} ${parts.detail}` : parts.name;
 }
 
 export default async function PaperOverviewPage({ params }: { params: Promise<{ paperId: string }> }) {
@@ -109,7 +76,7 @@ export default async function PaperOverviewPage({ params }: { params: Promise<{ 
         <div className="course-hero__copy">
           <div className="breadcrumb-line">
             <Link href="/">Home</Link>
-            <span>/ {subjectDisplayName(paper.subject, paper.qualification)}</span>
+            <span>/ {courseDisplayName(paper)}</span>
             <span>/ {paper.year}</span>
           </div>
           <p className="eyebrow">{paper.sessionLabel}</p>
