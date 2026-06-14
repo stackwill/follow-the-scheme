@@ -9,6 +9,7 @@ import {
   discoverAqaGcseChemistryPaper2HigherFromHtml,
   discoverAqaGcseComputerSciencePaper1BPythonFromHtml,
   discoverAqaGcseComputerSciencePaper2FromHtml,
+  discoverAqaGcsePhysicsPaper2HigherFromHtml,
   discoverAqaReligiousStudiesShortCourseChristianity,
   discoverAqaReligiousStudiesShortCourseJudaism,
   discoverAqaReligiousStudiesShortCourseThemes,
@@ -54,6 +55,68 @@ describe("parseSessionLabel", () => {
       sessionLabel: "November 2024",
       year: 2024,
     });
+  });
+});
+
+describe("discoverAqaGcsePhysicsPaper2HigherFromHtml", () => {
+  it("selects the separate GCSE Physics June 2022-2024 Paper 2H QP and mark scheme", () => {
+    const html = `
+      <main>
+        <a href="/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/QP/June 2021 QP.PDF">June 2021 QP</a>
+        <a href="/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/MS/June 2021 MS.PDF">June 2021 MS</a>
+        <a href="/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/QP/June 2022 QP.PDF">June 2022 QP</a>
+        <a href="/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/MS/June 2022 MS.PDF">June 2022 MS</a>
+        <a href="/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/QP/June 2023 QP.pdf">June 2023 QP</a>
+        <a href="/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/MS/June 2023 MS.pdf">June 2023 MS</a>
+        <a href="/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/QP/June 2024 QP.pdf">June 2024 QP</a>
+        <a href="/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/MS/June 2024 MS.pdf">June 2024 MS</a>
+      </main>
+    `;
+
+    expect(discoverAqaGcsePhysicsPaper2HigherFromHtml(html)).toEqual([
+      {
+        paperPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-physics/aqa-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/QP/June%202022%20QP.PDF",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/MS/June%202022%20MS.PDF",
+        examBoard: "AQA",
+        qualification: "GCSE Physics",
+        subject: "Physics",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2022",
+        year: 2022,
+      },
+      {
+        paperPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-physics/aqa-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/QP/June%202023%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/MS/June%202023%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Physics",
+        subject: "Physics",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2023",
+        year: 2023,
+      },
+      {
+        paperPageUrl: "https://www.physicsandmathstutor.com/past-papers/gcse-physics/aqa-paper-2/",
+        questionPaperUrl:
+          "https://www.physicsandmathstutor.com/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/QP/June%202024%20QP.pdf",
+        markSchemeUrl:
+          "https://www.physicsandmathstutor.com/download/Physics/GCSE/Past-Papers/AQA/Paper-2H/MS/June%202024%20MS.pdf",
+        examBoard: "AQA",
+        qualification: "GCSE Physics",
+        subject: "Physics",
+        paperNumber: 2,
+        tier: "Higher",
+        sessionLabel: "June 2024",
+        year: 2024,
+      },
+    ]);
   });
 });
 

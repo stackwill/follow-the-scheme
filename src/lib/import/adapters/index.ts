@@ -6,6 +6,7 @@ import {
   aqaCombinedScienceChemistryPaper2HigherAdapter,
   aqaGcseChemistryPaper1HigherAdapter,
   aqaGcseChemistryPaper2HigherAdapter,
+  aqaGcsePhysicsPaper2HigherAdapter,
 } from "@/lib/import/adapters/aqa-combined-science-biology-paper-higher";
 import {
   aqaCombinedSciencePhysicsPaper1HigherAdapter,
@@ -48,6 +49,7 @@ export const adapters: Record<string, PaperImportAdapter> = {
     aqaCombinedScienceChemistryPaper2HigherAdapter,
   [aqaGcseChemistryPaper1HigherAdapter.key]: aqaGcseChemistryPaper1HigherAdapter,
   [aqaGcseChemistryPaper2HigherAdapter.key]: aqaGcseChemistryPaper2HigherAdapter,
+  [aqaGcsePhysicsPaper2HigherAdapter.key]: aqaGcsePhysicsPaper2HigherAdapter,
   [aqaCombinedSciencePhysicsPaper1HigherAdapter.key]:
     aqaCombinedSciencePhysicsPaper1HigherAdapter,
   [aqaCombinedSciencePhysicsPaper2HigherAdapter.key]:
@@ -87,6 +89,7 @@ export {
   aqaCombinedScienceChemistryPaper2HigherAdapter,
   aqaGcseChemistryPaper1HigherAdapter,
   aqaGcseChemistryPaper2HigherAdapter,
+  aqaGcsePhysicsPaper2HigherAdapter,
 };
 export {
   aqaCombinedSciencePhysicsPaper1HigherAdapter,

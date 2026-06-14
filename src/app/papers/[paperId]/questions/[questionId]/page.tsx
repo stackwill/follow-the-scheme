@@ -7,6 +7,10 @@ import { AnswerForm } from "@/components/questions/answer-form";
 import { ProgressHeader } from "@/components/questions/progress-header";
 import { resolveNodeAccessMode } from "@/lib/auth/access-node";
 import { AUTH_COOKIE_NAME, DEMO_AUTH_COOKIE_NAME } from "@/lib/auth/session";
+import {
+  AQA_GCSE_PHYSICS_2026_EQUATION_SHEET_URL,
+  shouldShowAqaGcsePhysicsEquationSheet,
+} from "@/lib/exam-resources";
 import { detectPaperOnlyQuestion, detectSelectionQuestion } from "@/lib/grading/schema";
 import type { LocalQuestionAttempt } from "@/lib/questions/local-attempts";
 import { questionGroupKey, uniqueQuestionGroups } from "@/lib/questions/groups";
@@ -170,6 +174,7 @@ export default async function QuestionPage({
   });
   const previousGroup = groups[currentGroupIndex - 1] ?? null;
   const nextGroup = groups[currentGroupIndex + 1] ?? null;
+  const showEquationSheet = shouldShowAqaGcsePhysicsEquationSheet(paper);
 
   async function submit(_state: FormState, formData: FormData): Promise<FormState> {
     "use server";
@@ -291,6 +296,14 @@ export default async function QuestionPage({
         total={groups.length}
         previousHref={previousGroup ? questionHref(paper.id, previousGroup.firstQuestion.id) : null}
         nextHref={nextGroup ? questionHref(paper.id, nextGroup.firstQuestion.id) : null}
+        resourceLink={
+          showEquationSheet
+            ? {
+                href: AQA_GCSE_PHYSICS_2026_EQUATION_SHEET_URL,
+                label: "Physics equation sheet",
+              }
+            : null
+        }
       />
       <div className="question-flow">
         <AnswerForm

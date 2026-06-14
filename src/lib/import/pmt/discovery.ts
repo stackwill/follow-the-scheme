@@ -20,6 +20,8 @@ const AQA_GCSE_CHEMISTRY_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-chemistry/aqa-paper-1/";
 const AQA_GCSE_CHEMISTRY_PAPER_2_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-chemistry/aqa-paper-2/";
+const AQA_GCSE_PHYSICS_PAPER_2_URL =
+  "https://www.physicsandmathstutor.com/past-papers/gcse-physics/aqa-paper-2/";
 const AQA_GCSE_COMPUTER_SCIENCE_PAPER_1_URL =
   "https://www.physicsandmathstutor.com/past-papers/gcse-computer-science/aqa-paper-1";
 const AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_URL =
@@ -51,6 +53,7 @@ const CHEMISTRY_PAPER_1_BENCHMARK_YEARS = [2023, 2024] as const;
 const CHEMISTRY_PAPER_2_BENCHMARK_YEARS = [2021, 2022, 2023, 2024] as const;
 const AQA_GCSE_CHEMISTRY_BENCHMARK_YEARS = [2023, 2024] as const;
 const AQA_GCSE_CHEMISTRY_PAPER_2_BENCHMARK_YEARS = [2022, 2023] as const;
+const AQA_GCSE_PHYSICS_PAPER_2_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const COMPUTER_SCIENCE_BENCHMARK_YEARS = [2022, 2023, 2024] as const;
 const COMPUTER_SCIENCE_PAPER_2_BENCHMARK_YEARS = [2023, 2024] as const;
 const EDEXCEL_A_GEOGRAPHY_PAPER_1_YEARS = [2023, 2024] as const;
@@ -380,6 +383,77 @@ export async function discoverAqaGcseChemistryPaper1Higher() {
 export async function discoverAqaGcseChemistryPaper2Higher() {
   const html = await fetchHtml(AQA_GCSE_CHEMISTRY_PAPER_2_URL);
   return discoverAqaGcseChemistryPaper2HigherFromHtml(html);
+}
+
+export function discoverAqaGcsePhysicsPaper2HigherFromHtml(html: string) {
+  return discoverAqaGcsePhysicsPaperHigherFromHtml(
+    html,
+    2,
+    AQA_GCSE_PHYSICS_PAPER_2_URL,
+    AQA_GCSE_PHYSICS_PAPER_2_BENCHMARK_YEARS,
+  );
+}
+
+function discoverAqaGcsePhysicsPaperHigherFromHtml(
+  html: string,
+  paperNumber: 1 | 2,
+  paperPageUrl: string,
+  benchmarkYears: readonly number[],
+) {
+  const $ = cheerio.load(html);
+  const prefix = `Paper-${paperNumber}H`;
+  const sessionLinks = collectSessionLinks(
+    $,
+    `a[href*='${prefix}/QP/']`,
+    "questionPaperUrl",
+    paperPageUrl,
+  );
+  const markSchemes = collectSessionLinks(
+    $,
+    `a[href*='${prefix}/MS/']`,
+    "markSchemeUrl",
+    paperPageUrl,
+  );
+  const candidates: PmtPaperCandidate[] = [];
+
+  for (const [sessionLabel, links] of markSchemes) {
+    const existing = sessionLinks.get(sessionLabel) ?? {};
+    sessionLinks.set(sessionLabel, {
+      ...existing,
+      ...links,
+    });
+  }
+
+  for (const year of benchmarkYears) {
+    const sessionLabel = `June ${year}`;
+    const links = sessionLinks.get(sessionLabel);
+
+    if (!links?.questionPaperUrl || !links.markSchemeUrl) {
+      continue;
+    }
+
+    candidates.push({
+      paperPageUrl,
+      questionPaperUrl: links.questionPaperUrl,
+      markSchemeUrl: links.markSchemeUrl,
+      examBoard: "AQA",
+      qualification: "GCSE Physics",
+      subject: "Physics",
+      paperNumber,
+      tier: "Higher",
+      sessionLabel,
+      year,
+    });
+  }
+
+  assertBenchmarkContract(candidates, benchmarkYears, paperPageUrl);
+
+  return candidates;
+}
+
+export async function discoverAqaGcsePhysicsPaper2Higher() {
+  const html = await fetchHtml(AQA_GCSE_PHYSICS_PAPER_2_URL);
+  return discoverAqaGcsePhysicsPaper2HigherFromHtml(html);
 }
 
 function discoverAqaPhysicsPaperHigherFromHtml(

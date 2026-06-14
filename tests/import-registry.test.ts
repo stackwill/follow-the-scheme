@@ -51,6 +51,10 @@ describe("supported paper registry", () => {
         years: [2022, 2023],
       },
       {
+        adapterKey: "aqa-gcse-physics-paper-2-higher",
+        years: [2022, 2023, 2024],
+      },
+      {
         adapterKey: "aqa-gcse-computer-science-paper-1b-python",
         years: [2022, 2023, 2024],
       },

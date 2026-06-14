@@ -23,6 +23,8 @@ import {
   AQA_GCSE_CHEMISTRY_PAPER_2_HIGHER_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_1B_PYTHON_DEFINITION,
   AQA_GCSE_COMPUTER_SCIENCE_PAPER_2_DEFINITION,
+  AQA_GCSE_PHYSICS_PAPER_2_HIGHER_ADAPTER_KEY,
+  AQA_GCSE_PHYSICS_PAPER_2_HIGHER_DEFINITION,
   AQA_PHYSICS_PAPER_1_HIGHER_DEFINITION,
   AQA_PHYSICS_PAPER_2_HIGHER_DEFINITION,
   DEFAULT_SOURCE_PROVIDER,
@@ -39,6 +41,7 @@ import {
   type BiologyBenchmarkYear,
   type AqaGcseChemistryBenchmarkYear,
   type AqaGcseChemistryPaper2BenchmarkYear,
+  type AqaGcsePhysicsPaper2BenchmarkYear,
   type ChemistryPaper1BenchmarkYear,
   type ChemistryPaper2BenchmarkYear,
   type ComputerScienceBenchmarkYear,
@@ -352,6 +355,14 @@ async function resolveBenchmarkMarkSchemeText(
     draft.questionKey === "08.6"
   ) {
     return "circle around the central glucose repeating unit in the polymer chain";
+  }
+
+  if (
+    adapterKey === AQA_GCSE_PHYSICS_PAPER_2_HIGHER_ADAPTER_KEY &&
+    year === 2024 &&
+    draft.questionKey === "01.6"
+  ) {
+    return "ray refracts through the transparent cover and bends away from the normal on leaving";
   }
 
   throw new ImportFailure("adapter", `Placeholder mark scheme text is not allowed for ${year}/${draft.questionKey}`, {
@@ -759,6 +770,12 @@ export async function importAqaGcseChemistryPaper2HigherBenchmark(
   year: AqaGcseChemistryPaper2BenchmarkYear,
 ): Promise<ImportPaperResult> {
   return importSupportedPaper(AQA_GCSE_CHEMISTRY_PAPER_2_HIGHER_DEFINITION, year);
+}
+
+export async function importAqaGcsePhysicsPaper2HigherBenchmark(
+  year: AqaGcsePhysicsPaper2BenchmarkYear,
+): Promise<ImportPaperResult> {
+  return importSupportedPaper(AQA_GCSE_PHYSICS_PAPER_2_HIGHER_DEFINITION, year);
 }
 
 export async function importAqaGcseComputerSciencePaper1BPythonBenchmark(

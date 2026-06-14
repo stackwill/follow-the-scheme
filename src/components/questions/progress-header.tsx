@@ -10,6 +10,10 @@ export function ProgressHeader(props: {
   total: number;
   previousHref: Route | null;
   nextHref: Route | null;
+  resourceLink?: {
+    href: string;
+    label: string;
+  } | null;
 }) {
   const percentage = props.total === 0 ? 0 : Math.round((props.current / props.total) * 100);
 
@@ -21,6 +25,16 @@ export function ProgressHeader(props: {
           <strong>{props.paperTitle}</strong>
         </Link>
         <div className="progress-header__actions">
+          {props.resourceLink ? (
+            <a
+              className="button-link button-link--secondary"
+              href={props.resourceLink.href}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {props.resourceLink.label}
+            </a>
+          ) : null}
           <div className="progress-header__nav" aria-label="Question navigation">
             {props.previousHref ? (
               <Link className="button-link button-link--secondary" href={props.previousHref}>

@@ -519,7 +519,7 @@ function isMarkSchemeReferenceLine(lines: Line[], index: number) {
   });
 }
 
-function buildMarkSchemeBlocks(lines: Line[]) {
+function buildMarkSchemeBlocks(lines: Line[], maxMarkOverrides = new Map<string, number>()) {
   const filteredLines = lines.filter((line) => !isMarkSchemeBoilerplate(line));
   const totalsByMainKey = new Map<string, number>();
   const blockStarts: Array<{ label: string; startIndex: number; labelIndex: number }> = [];
@@ -555,6 +555,10 @@ function buildMarkSchemeBlocks(lines: Line[]) {
     const label = parseMarkSchemeLabel(line);
 
     if (label) {
+      if (blockStarts.at(-1)?.label === label) {
+        return;
+      }
+
       blockStarts.push({
         label,
         startIndex: index - collectMarkSchemePrelude(filteredLines, index).length,
@@ -572,9 +576,11 @@ function buildMarkSchemeBlocks(lines: Line[]) {
     const currentBlockLines = filteredLines.slice(blockStart.startIndex, nextTotalLineIndex);
     const mainKey = blockStart.label.split(".")[0];
     const markSchemeText = buildMarkSchemeText(currentBlockLines);
-    const maxMarks = blockStart.label.includes(".")
-      ? computeBlockMaxMarks(currentBlockLines)
-      : totalsByMainKey.get(mainKey) ?? computeBlockMaxMarks(currentBlockLines);
+    const maxMarks =
+      maxMarkOverrides.get(blockStart.label) ??
+      (blockStart.label.includes(".")
+        ? computeBlockMaxMarks(currentBlockLines)
+        : totalsByMainKey.get(mainKey) ?? computeBlockMaxMarks(currentBlockLines));
     const notes: string[] = [];
 
     if (markSchemeText.startsWith("[Non-textual mark scheme content in source PDF")) {
@@ -620,6 +626,18 @@ function buildMarkSchemeBlocks(lines: Line[]) {
     blocksByLabel: new Map(blocks.map((block) => [block.label, block] as const)),
     fatalErrors,
   };
+}
+
+function getMaxMarkOverrides(adapterKey: string, year: number) {
+  if (adapterKey === "aqa-gcse-physics-paper-2-higher" && year === 2022) {
+    return new Map([["08.2", 6]]);
+  }
+
+  if (adapterKey === "aqa-gcse-physics-paper-2-higher" && year === 2024) {
+    return new Map([["07.4", 6]]);
+  }
+
+  return new Map<string, number>();
 }
 
 function buildPageBandPdfBox(lines: Line[], nextQuestionStartLine: Line | null = null) {
@@ -997,7 +1015,10 @@ export function createAqaCombinedSciencePaperAdapter(key: string): PaperImportAd
         markSchemeItems.filter((item) => item.pageNumber >= MARK_SCHEME_START_PAGE),
         MARK_SCHEME_LINE_Y_TOLERANCE,
       );
-      const { blocksByLabel: markSchemeBlocksByLabel, fatalErrors } = buildMarkSchemeBlocks(markSchemeLines);
+      const { blocksByLabel: markSchemeBlocksByLabel, fatalErrors } = buildMarkSchemeBlocks(
+        markSchemeLines,
+        getMaxMarkOverrides(key, year),
+      );
 
       if (fatalErrors.length > 0) {
         throw new ImportFailure("adapter", "AQA mark scheme validation failed", {
